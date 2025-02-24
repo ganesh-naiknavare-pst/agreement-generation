@@ -1,3 +1,4 @@
+from constants import Model, CHAT_OPENAI_BASE_URL
 import pypandoc
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import ChatOpenAI
@@ -9,13 +10,13 @@ os.environ["OPENAI_API_KEY"] = "XXX"
 
 memory = ConversationBufferMemory(memory_key="chat_history")
 llm = ChatOpenAI(
-    model="gpt-4",
+    model= Model.GPT_4.value,
     temperature=0,
     max_tokens=None,
     timeout=None,
     max_retries=2,
     api_key="",
-    base_url="http://0.0.0.0:1337/v1",
+    base_url=CHAT_OPENAI_BASE_URL,
 )
 
 def generate_agreement(state: State):

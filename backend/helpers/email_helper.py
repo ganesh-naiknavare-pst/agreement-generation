@@ -1,5 +1,6 @@
 import base64
 import requests
+from constants import SMTP2GO_EMAIL_SEND_URL
 from config import SMTP2GO_API_KEY, SENDER_EMAIL, BASE_APPROVAL_URL
 from helpers.state_manager import agreement_state
 
@@ -63,7 +64,6 @@ def generate_email_template(role: str, user_id: str) -> str:
     """
 
 def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str):
-    url = "https://api.smtp2go.com/v3/email/send"
 
     with open(pdf_path, "rb") as attachment_file:
         file_content = attachment_file.read()
@@ -93,5 +93,5 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str):
         "Content-Type": "application/json",
     }
 
-    response = requests.post(url, headers=headers, json=payload)
+    response = requests.post(SMTP2GO_EMAIL_SEND_URL, headers=headers, json=payload)
     return response.status_code == 200, response.text
