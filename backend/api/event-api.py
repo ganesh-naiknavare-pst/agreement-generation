@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 app = FastAPI()
 active_connections = []
 approved_users = set()
+rejected_users = set()
 
 
 @app.websocket("/ws")
@@ -21,24 +22,23 @@ async def websocket_endpoint(websocket: WebSocket):
 async def approve_user(user: str):
     approved_users.add(user)
     response = {"status": "approved", "user_id": user, "approved": True}
-
-    # Notify all WebSocket clients
-    for connection in active_connections:
-        await connection.send_json(response)
-
+    await notify_clients(response)
     return JSONResponse(content=response)
 
 
 @app.get("/sign/{user}/reject")
-async def approve_user(user: str):
-    approved_users.add(user)
+async def reject_user(user: str):
+    rejected_users.add(user)
     response = {"status": "rejected", "user_id": user, "approved": False}
+    await notify_clients(response)
+    return JSONResponse(content=response)
 
+
+async def notify_clients(response: dict):
     # Notify all WebSocket clients
+
     for connection in active_connections:
         await connection.send_json(response)
-
-    return JSONResponse(content=response)
 
 
 if __name__ == "__main__":
