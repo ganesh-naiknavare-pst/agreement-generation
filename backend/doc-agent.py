@@ -1,3 +1,4 @@
+import os
 import pypandoc
 import base64
 import requests
@@ -6,7 +7,6 @@ import websockets
 import json
 from typing import Annotated
 from typing_extensions import TypedDict
-from pypdf import PdfReader
 from langchain.chat_models import ChatOpenAI
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, START, END
@@ -15,12 +15,16 @@ from langchain.memory import ConversationBufferMemory
 from langchain.agents import initialize_agent, Tool, AgentType
 from datetime import datetime
 import uuid
+import os
 from config import (
     SMTP2GO_API_KEY,
     SENDER_EMAIL,
     WEBSOCKET_URL,
     BASE_APPROVAL_URL,
 )
+
+
+os.environ["OPENAI_API_KEY"] = "XXX"
 
 
 class ApprovalTimeoutError(Exception):
@@ -108,17 +112,23 @@ class State(TypedDict):
 class AgreementState:
     def __init__(self):
         self.owner_id = str(uuid.uuid4())
-        self.tenants = {}  # Dict to store multiple tenants {tenant_id: approval_status}
+        self.owner_name = ""
+        self.tenants = {}
+        self.tenant_names = {}
         self.owner_approved = False
         self.agreement_text = ""
         self.owner_signature = ""
-        self.tenant_signatures = {}  # Dict to store tenant signatures {tenant_id: signature}
+        self.tenant_signatures = {}
 
-    def add_tenant(self, tenant_email):
+    def add_tenant(self, tenant_email, tenant_name):
         tenant_id = str(uuid.uuid4())
         self.tenants[tenant_id] = False
         self.tenant_signatures[tenant_id] = ""
+        self.tenant_names[tenant_id] = tenant_name
         return tenant_id
+
+    def set_owner(self, owner_name):
+        self.owner_name = owner_name
 
     def is_fully_approved(self):
         return self.owner_approved and all(self.tenants.values())
@@ -126,13 +136,6 @@ class AgreementState:
 
 agreement_state = AgreementState()
 
-
-def read_pdf_pypdf(file_path):
-    reader = PdfReader(file_path)
-    text = "\n".join(
-        [page.extract_text() for page in reader.pages if page.extract_text()]
-    )
-    return text
 
 
 def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, user_id=None):
@@ -207,10 +210,11 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
                     if user_id in agreement_state.tenants:
                         agreement_state.tenants[user_id] = data.get("approved", False)
                         if agreement_state.tenants[user_id]:
+                            tenant_name = agreement_state.tenant_names[user_id]
                             agreement_state.tenant_signatures[user_id] = (
-                                f"APPROVED BY TENANT - {datetime.now()}"
+                                f"APPROVED BY {tenant_name} - {datetime.now()}"
                             )
-                            print(f"Tenant {user_id} has approved!")
+                            print(f"Tenant {tenant_name} has approved!")
                         else:
                             print(f"Tenant {user_id} has rejected!")
                             return False
@@ -219,15 +223,15 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
                         agreement_state.owner_approved = data.get("approved", False)
                         if agreement_state.owner_approved:
                             agreement_state.owner_signature = (
-                                f"APPROVED BY OWNER - {datetime.now()}"
+                                f"APPROVED BY {agreement_state.owner_name} - {datetime.now()}"
                             )
-                            print("Owner has approved!")
+                            print(f"Owner {agreement_state.owner_name} has approved!")
                         else:
                             print("Owner has rejected!")
                             return False
-
+                    # Check if both parties have responded
                     if agreement_state.is_fully_approved():
-                        print("Owner and all tenants have approved!")
+                        print("Both parties have approved!")
                         return True
 
                 except asyncio.TimeoutError:
@@ -261,9 +265,10 @@ def generate_agreement(state: State):
         5. Start directly with the agreement content
         6. Include placeholder text [TENANT 1 SIGNATURE], [TENANT 2 SIGNATURE] etc. for each tenant and [OWNER SIGNATURE] for owner
         7. Make sure to add all the details for all points mentioned
-        8. Use 'Rs.' instead of any currency symbols
+        8. For currency amounts, ALWAYS write 'Rs.' followed by the number (example: Rs. 5000)
         9. Number each tenant as TENANT 1, TENANT 2, etc. in the agreement
-        10. NEVER use the ₹ symbol - always use 'Rs.' instead
+        10. STRICTLY FORBIDDEN: Do not use the Rupee symbol (₹) anywhere in the text
+        11. Format all currency amounts as 'Rs. X' where X is the amount
         """,
     }
     messages = [system_msg] + state["messages"]
@@ -283,6 +288,12 @@ def create_pdf(state: State):
         for i, (tenant_id, signature) in enumerate(agreement_state.tenant_signatures.items(), 1):
             placeholder = f"[TENANT {i} SIGNATURE]"
             content = content.replace(placeholder, signature)
+
+    # Ensure no Rupee symbols make it through to the PDF
+    content = content.replace("₹", "Rs.")
+    
+    # Remove any potential Unicode characters that might cause LaTeX issues
+    content = content.encode('ascii', 'ignore').decode()
 
     pypandoc.convert_text(
         content, "pdf", "md", encoding="utf-8", outputfile="rental-agreement.pdf"
@@ -346,6 +357,7 @@ async def main():
     # Get owner information
     owner_name = input("Enter owner's name: ").strip()
     owner_email = input("Enter owner's email: ").strip()
+    agreement_state.set_owner(owner_name)  # Store owner name
     
     # First ask for number of tenants
     while True:
@@ -368,7 +380,7 @@ async def main():
             tenant_name = input(f"Enter name for Tenant {i+1}: ").strip()
             tenant_email = input(f"Enter email for Tenant {i+1}: ").strip()
             if tenant_email and tenant_name:
-                tenant_id = agreement_state.add_tenant(tenant_email)
+                tenant_id = agreement_state.add_tenant(tenant_email, tenant_name)  # Pass tenant name
                 tenants.append((tenant_id, tenant_email))
                 tenant_details.append({"name": tenant_name, "email": tenant_email})
                 break
@@ -392,7 +404,7 @@ Tenants:
 Property Details:
 - Address: {property_address}
 - City: {city}
-- Rent Amount in Rs :{rent_amount} 
+- Monthly Rent: Rs. {rent_amount}
 - Agreement Start Date: {start_date}
 - Duration: 11 months
 
@@ -405,6 +417,7 @@ Additional Terms:
 
     try:
         print("\nGenerating agreement...")
+        # Generate initial agreement
         response = agent.run(agreement_details)
 
         print("\nSending emails to owner and tenants...")
@@ -431,10 +444,12 @@ Additional Terms:
             print("\nWaiting for approvals (timeout: 5 minutes)...")
 
             try:
+                # Wait for approvals with timeout
                 approved = await listen_for_approval(timeout_seconds=300)
 
                 if approved:
-                    print("\nAll parties approved! Generating final agreement...")
+                    print("\nBoth parties approved! Generating final agreement...")
+                    # Generate final PDF with signatures
                     _ = agent.run(agreement_details)
 
                     print("\nSending final signed agreement to all parties...")
