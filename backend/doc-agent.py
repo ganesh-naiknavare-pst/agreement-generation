@@ -6,7 +6,6 @@ import websockets
 import json
 from typing import Annotated
 from typing_extensions import TypedDict
-from pypdf import PdfReader
 from langchain.chat_models import ChatOpenAI
 from langgraph.graph.message import add_messages
 from langgraph.graph import StateGraph, START, END
@@ -15,12 +14,16 @@ from langchain.memory import ConversationBufferMemory
 from langchain.agents import initialize_agent, Tool, AgentType
 from datetime import datetime
 import uuid
+import os
 from config import (
     SMTP2GO_API_KEY,
     SENDER_EMAIL,
     WEBSOCKET_URL,
     BASE_APPROVAL_URL,
 )
+
+
+os.environ["OPENAI_API_KEY"] = "XXX"
 
 
 class ApprovalTimeoutError(Exception):
@@ -120,14 +123,6 @@ class AgreementState:
 
 
 agreement_state = AgreementState()
-
-
-def read_pdf_pypdf(file_path):
-    reader = PdfReader(file_path)
-    text = "\n".join(
-        [page.extract_text() for page in reader.pages if page.extract_text()]
-    )
-    return text
 
 
 def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str):
