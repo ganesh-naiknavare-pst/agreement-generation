@@ -22,6 +22,8 @@ from config import (
     WEBSOCKET_URL,
     BASE_APPROVAL_URL,
 )
+from prompts import AGREEMENT_SYSTEM_PROMPT, AGENT_PREFIX
+from templates import generate_email_template, format_agreement_details
 
 
 os.environ["OPENAI_API_KEY"] = "XXX"
@@ -29,65 +31,6 @@ os.environ["OPENAI_API_KEY"] = "XXX"
 
 class ApprovalTimeoutError(Exception):
     pass
-
-
-def generate_email_template(role: str, user_id: str) -> str:
-    approve_url = f"{BASE_APPROVAL_URL}/{user_id}/approve"
-    reject_url = f"{BASE_APPROVAL_URL}/{user_id}/reject"
-
-    return f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Rental Agreement for {role}</title>
-        <style>
-            body {{
-                font-family: Arial, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                padding: 20px;
-                background-color: #f4f4f4;
-            }}
-            .container {{
-                max-width: 600px;
-                margin: 0 auto;
-                background: #fff;
-                padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            }}
-            .button {{
-                display: inline-block;
-                padding: 10px 20px;
-                margin: 10px 5px;
-                border-radius: 5px;
-                text-decoration: none;
-                color: white;
-            }}
-            .approve {{
-                background-color: #28a745;
-            }}
-            .reject {{
-                background-color: #dc3545;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <p>Hello,</p>
-            <p>Please review and sign the attached rental agreement document.</p>
-            <p>Click on one of the following links to approve or reject the agreement:</p>
-            <p>
-                <a href="{approve_url}" class="button approve">Approve Agreement</a>
-                <a href="{reject_url}" class="button reject">Reject Agreement</a>
-            </p>
-            <p>Best regards,<br>Docu Sign Team</p>
-        </div>
-    </body>
-    </html>
-    """
 
 
 download_pandoc()
@@ -137,7 +80,6 @@ class AgreementState:
 agreement_state = AgreementState()
 
 
-
 def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, user_id=None):
     url = "https://api.smtp2go.com/v3/email/send"
 
@@ -151,7 +93,7 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, u
     elif user_id is None:
         user_id = agreement_state.owner_id  # fallback, though this shouldn't happen
 
-    email_body = generate_email_template(role, user_id)
+    email_body = generate_email_template(role, user_id, BASE_APPROVAL_URL)
 
     payload = {
         "sender": SENDER_EMAIL,
@@ -256,20 +198,7 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
 def generate_agreement(state: State):
     system_msg = {
         "role": "system",
-        "content": """You are a rental agreement generator. Your task is to fill in the rental agreement template with the provided details.
-        IMPORTANT RULES:
-        1. Output ONLY the agreement text itself
-        2. Do NOT add any introductory text
-        3. Do NOT add any concluding text
-        4. Do NOT add any notes or comments
-        5. Start directly with the agreement content
-        6. Include placeholder text [TENANT 1 SIGNATURE], [TENANT 2 SIGNATURE] etc. for each tenant and [OWNER SIGNATURE] for owner
-        7. Make sure to add all the details for all points mentioned
-        8. For currency amounts, ALWAYS write 'Rs.' followed by the number (example: Rs. 5000)
-        9. Number each tenant as TENANT 1, TENANT 2, etc. in the agreement
-        10. STRICTLY FORBIDDEN: Do not use the Rupee symbol (₹) anywhere in the text
-        11. Format all currency amounts as 'Rs. X' where X is the amount
-        """,
+        "content": AGREEMENT_SYSTEM_PROMPT,
     }
     messages = [system_msg] + state["messages"]
     response = llm.invoke(messages)
@@ -341,11 +270,7 @@ agent = initialize_agent(
     max_iterations=1,
     early_stopping_method="generate",
     agent_kwargs={
-        "prefix": """You are just a legal agreement generator. Your task is to use the generate_agreement tool to create agreements.
-        IMPORTANT: The tool will output only the agreement text without any symbols in it such as currency symbols etc. Do not add any additional text, comments, or formatting.
-        Use this exact format:
-        Action: generate_agreement
-        Action Input: <user input>"""
+        "prefix": AGENT_PREFIX
     },
 )
 
@@ -392,28 +317,15 @@ async def main():
     rent_amount = input("Enter monthly rent amount: ").strip()
     start_date = input("Enter agreement start date (YYYY-MM-DD): ").strip()
     
-    # Format the agreement details in a structured way
-    agreement_details = f"""
-Create a rental agreement with the following details:
-
-Owner: {owner_name}
-
-Tenants:
-{chr(10).join(f'{i+1}. {t["name"]}' for i, t in enumerate(tenant_details))}
-
-Property Details:
-- Address: {property_address}
-- City: {city}
-- Monthly Rent: Rs. {rent_amount}
-- Agreement Start Date: {start_date}
-- Duration: 11 months
-
-Additional Terms:
-- Rent will be split equally among all tenants
-- Each tenant is jointly and severally liable for the full rent amount
-- All tenants must agree to any changes in the agreement
-- Security deposit will be Rs. {rent_amount} (collected equally from each tenant)
-"""
+    # Replace the agreement_details string with the template function
+    agreement_details = format_agreement_details(
+        owner_name=owner_name,
+        tenant_details=tenant_details,
+        property_address=property_address,
+        city=city,
+        rent_amount=rent_amount,
+        start_date=start_date
+    )
 
     try:
         print("\nGenerating agreement...")
