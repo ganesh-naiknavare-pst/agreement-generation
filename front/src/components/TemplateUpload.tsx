@@ -32,7 +32,7 @@ export default function UploadTemplatePage() {
 
   return (
     <div style={{ maxWidth: 500, margin: "auto", padding: "2rem" }}>
-      <Dropzone onDrop={handleDrop} accept={[".pdf"]}>
+      <Dropzone onDrop={handleDrop} accept={[".pdf", ".doc", ".docx"]}>
         <Group align="center" gap="xl">
           <IconUpload size={50} />
           <Text>Drag a file here or click to upload</Text>
