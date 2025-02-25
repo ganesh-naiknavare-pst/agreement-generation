@@ -18,6 +18,7 @@ import {
 import { useState } from "react";
 import { SidebarLink } from "../components/sidebar/SideBar";
 import { COLORS } from "../colors";
+import { UserButton } from "@clerk/clerk-react";
 
 export const AppLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -44,13 +45,15 @@ export const AppLayout = () => {
         >
           {colorScheme === "dark" ? <IconSun /> : <IconMoon />}
         </ThemeIcon>
+        <UserButton />
       </AppShell.Header>
-      <AppShell.Navbar p={8} mt={10} style={{ transition: "width 200ms" }}>
+      <AppShell.Navbar style={{ transition: "width 300ms" }}>
         <Group p={7} mt={3} wrap="nowrap">
           <ThemeIcon
             size="lg"
             bg="transparent"
             style={{ textDecoration: "none", fontWeight: "bold" }}
+            c={colorScheme === "dark" ? COLORS.titleColor : COLORS.themeIconLight}
           >
             <IconCloudLock style={{ width: rem(28), height: rem(28) }} />
           </ThemeIcon>
