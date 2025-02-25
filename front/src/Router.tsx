@@ -5,7 +5,7 @@ import {
   createBrowserRouter,
 } from "react-router-dom";
 import { AuthGuard } from "./Components/authentication/authGuard";
-import { AppLayout } from "./Layout/AppLayout";
+import { AppLayout } from "./layout/AppLayout";
 import UploadTemplatePage from "./Components/TemplateUpload";
 
 export const router = createBrowserRouter(

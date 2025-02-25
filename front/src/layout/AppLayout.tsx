@@ -16,7 +16,7 @@ import {
   IconSun,
 } from "@tabler/icons-react";
 import { useState } from "react";
-import { SidebarLink } from "../components/sidebar/SideBar";
+import { SidebarLink } from "../Components/sidebar/SideBar";
 import { COLORS } from "../colors";
 
 export const AppLayout = () => {
