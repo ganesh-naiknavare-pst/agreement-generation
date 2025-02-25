@@ -34,19 +34,19 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     name: PageTitle.Agreements,
     position: 'top',
     icon: IconContract,
-    order: 1,
+    order: 2,
   },
   {
     path: 'templates',
     name: PageTitle.Templates,
     position: 'top',
     icon: IconTemplate,
-    order: 2,
+    order: 3,
   },
 ];
 
 export const SidebarLink = ({ isCollapsed }: { isCollapsed: boolean }) => {
-  const [state, setstate] = useState<PageTitle>(PageTitle.Agreement);
+  const [state, setstate] = useState<PageTitle>(PageTitle.Agreements);
   const items = SIDEBAR_ITEMS.map((item) => (
     <NavLink to={item.path ?? "/"} key={item.name}>
       <Box
