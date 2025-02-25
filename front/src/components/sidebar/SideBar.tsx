@@ -18,7 +18,7 @@ export type SidebarItem = {
   order: number;
 };
 import { PageTitle } from "../../types";
-import { IconHome, IconBrain } from '@tabler/icons-react';
+import { IconHome, IconTemplate } from '@tabler/icons-react';
 import { useState } from "react";
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
@@ -30,11 +30,11 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     order: 1,
   },
   {
-    path: 'upload',
+    path: 'templates',
     name: PageTitle.Upload,
     position: 'top',
     tooltip: 'Upload your file',
-    icon: IconBrain,
+    icon: IconTemplate,
     order: 2,
   },
 ];
