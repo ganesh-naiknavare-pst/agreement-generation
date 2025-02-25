@@ -31,7 +31,7 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   },
   {
     path: 'agreement',
-    name: PageTitle.Agreement,
+    name: PageTitle.Agreements,
     position: 'top',
     icon: IconContract,
     order: 1,
