@@ -7,7 +7,7 @@ import {
   import { AuthGuard } from "./components/authentication/authGuard";
   import { AppLayout } from "./layout/AppLayout"
   import { Agreement } from "./pages/Agreement";
-  import UploadTemplatePage from "./components/TemplateUpload";
+  import { Templates } from "./pages/Templates";
   import { HomePage } from "./pages/HomePage";
 
   export const router = createBrowserRouter(
@@ -17,7 +17,7 @@ import {
           <Route index element={<Navigate to="home" replace />} />
           <Route path="home" element={<HomePage />} />
           <Route path="agreement" element={<Agreement />} />
-          <Route path="templates" element={<UploadTemplatePage />} />
+          <Route path="templates" element={<Templates />} />
         </Route>
       </Route>
     )
