@@ -23,24 +23,24 @@ check-poetry: check-python
 
 install: check-poetry
 	@echo "Installing dependencies within Poetry shell..."
-	poetry install
+	$(POETRY_CMD) install
 
 prisma-generate: install
 	@echo "Generating Prisma client..."
-	poetry run prisma generate
+	$(POETRY_CMD) run prisma generate
 
 prisma-db-push: prisma-generate
 	@echo "Pushing Prisma schema to the database..."
-	poetry run prisma db push
+	$(POETRY_CMD) run prisma db push
 
-run-event-api: install
-	@echo "Starting event-api.py..."
-	poetry run python3 api/event-api.py
+run: install
+	@echo "Running the backend project..."
+	$(POETRY_CMD) run $(PYTHON_CMD) main.py
 
-run-server: install
-	@echo "Starting server.py..."
-	poetry run python3 server.py
+run-g4f-server: install
+	@echo "Starting g4f server..."
+	$(POETRY_CMD) run $(PYTHON_CMD) -m g4f.api.run
 
 run-doc-agent: install
 	@echo "Starting doc-agent.py..."
-	poetry run python3 doc-agent.py
+	$(POETRY_CMD) run $(PYTHON_CMD) doc-agent.py
