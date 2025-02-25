@@ -52,16 +52,16 @@ make prisma-db-push
 
 ## **Running the Backend Services**
 
-### **1. Event API**
-Handles event-driven workflows.
+### **1. Backend Service **
+Starts the main backend server for the Agreement Agent.
 ```bash
-make run-event-api
+make run
 ```
 
-### **2. Main Server**
-Starts the primary FastAPI server.
+### **2. g4f Server**
+Starts g4f server.
 ```bash
-make run-server
+make run-g4f-server
 ```
 
 ### **3. Document Generation Agent**
