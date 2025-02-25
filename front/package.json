@@ -11,6 +11,10 @@
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.23.0",
+    "@mantine/core": "^7.17.0",
+    "@mantine/dropzone": "^7.17.0",
+    "@mantine/hooks": "^7.17.0",
+    "@tabler/icons-react": "^3.30.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.2.0"
