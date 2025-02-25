@@ -59,7 +59,7 @@ export const AppLayout = () => {
               <Title
                 style={{
                   fontSize: rem(22),
-                  fontWeight: "bold",
+                  fontWeight: "medium",
                 }}
               >
                 Agreement AI Agent
@@ -86,7 +86,7 @@ export const AppLayout = () => {
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main>
-        <Container fluid mih="calc(100dvh - 64px)" p={0} m={0}>
+        <Container fluid mih="calc(100dvh - 64px)" p={0} m={0} style={{ maxWidth: "100%" }}>
           <Outlet />
         </Container>
       </AppShell.Main>
