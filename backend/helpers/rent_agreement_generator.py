@@ -1,3 +1,4 @@
+import tempfile
 from constants import Model, CHAT_OPENAI_BASE_URL
 import pypandoc
 from langgraph.graph import StateGraph, START, END
@@ -49,9 +50,15 @@ def create_pdf(state: State):
         )
         content = content.replace("[OWNER SIGNATURE]", agreement_state.owner_signature)
 
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Create a temporary file
+    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
+    temp_pdf_path = temp_pdf.name
+
     pypandoc.convert_text(
-        content, "pdf", "md", encoding="utf-8", outputfile="rental-agreement.pdf"
+        content, "pdf", "md", encoding="utf-8", outputfile=temp_pdf_path
     )
+    agreement_state.pdf_file_path = temp_pdf_path
     return {"messages": content}
 
 

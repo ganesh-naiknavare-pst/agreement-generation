@@ -3,6 +3,8 @@ from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
 from langchain.agents import initialize_agent, Tool, AgentType
 from helpers.rent_agreement_generator import llm, memory, graph
+from helpers.state_manager import agreement_state
+import os
 
 def run_agreement_tool(user_input: str) -> str:
     output = None
@@ -41,6 +43,17 @@ agent = initialize_agent(
     },
 )
 
+def delete_temp_file():
+    """Deletes the temporary agreement file if it exists."""
+    try:
+        if agreement_state.pdf_file_path and os.path.exists(agreement_state.pdf_file_path):
+            os.remove(agreement_state.pdf_file_path)
+            print(f"Temporary file deleted: {agreement_state.pdf_file_path}")
+        else:
+            print(f"Temp file not found: {agreement_state.pdf_file_path}")
+    except Exception as e:
+        print(f"Error deleting temp file: {str(e)}")
+
 
 async def main():
     print("\nWelcome to the Rental Agreement Generator")
@@ -57,14 +70,15 @@ async def main():
         print("\nSending emails to tenant and owner...")
         # Send initial emails
         tenant_success, _ = send_email_with_attachment(
-            tenant_email, "rental-agreement.pdf", "tenant"
+            tenant_email, agreement_state.pdf_file_path, "tenant"
         )
         owner_success, _ = send_email_with_attachment(
-            owner_email, "rental-agreement.pdf", "owner"
+            owner_email, agreement_state.pdf_file_path, "owner"
         )
 
         if tenant_success and owner_success:
             print("Initial agreements sent successfully!")
+            delete_temp_file()
             print("\nWaiting for approvals (timeout: 5 minutes)...")
 
             try:
@@ -78,10 +92,10 @@ async def main():
 
                     # Send final signed version
                     send_email_with_attachment(
-                        tenant_email, "rental-agreement.pdf", "tenant"
+                        tenant_email, agreement_state.pdf_file_path, "tenant"
                     )
                     send_email_with_attachment(
-                        owner_email, "rental-agreement.pdf", "owner"
+                        owner_email, agreement_state.pdf_file_path, "owner"
                     )
                     print("Final signed agreement sent to both parties!")
                 else:
@@ -89,6 +103,8 @@ async def main():
 
             except ApprovalTimeoutError:
                 print("\nApproval process timed out. Please try again later.")
+            finally:
+                delete_temp_file()
 
         else:
             print("Error sending initial emails.")
