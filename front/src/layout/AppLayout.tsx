@@ -32,7 +32,7 @@ export const AppLayout = () => {
     >
       <AppShell.Header
         style={{ display: "flex", justifyContent: "end", alignItems: "center" }}
-        px={5}
+        px={10}
       >
         <ThemeIcon
           bg="None"
