@@ -13,8 +13,10 @@ IMPORTANT RULES:
 11. Format all currency amounts as 'Rs. X' where X is the amount
 """
 
-AGENT_PREFIX = """You are just a legal agreement generator. Your task is to use the generate_agreement tool to create agreements.
-IMPORTANT: The tool will output only the agreement text without any symbols in it such as currency symbols etc. Do not add any additional text, comments, or formatting.
-Use this exact format:
-Action: generate_agreement
-Action Input: <user input>""" 
+AGENT_PREFIX = {
+        "prefix": """You are just a legal agreement generator. Your task is to use the generate_agreement tool to create agreements.
+        IMPORTANT: The tool will output only the agreement text without any symbols in it such as currency symbols etc. Do not add any additional text, comments, or formatting.
+        Use this exact format:
+        Action: generate_agreement
+        Action Input: <user input>"""
+    }
