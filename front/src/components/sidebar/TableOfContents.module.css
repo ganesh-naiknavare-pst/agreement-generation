@@ -1,3 +1,7 @@
+@mixin hover-bg($light, $dark) {
+  background-color: var(--link-hover-bg, light-dark($light, $dark));
+}
+
 .link {
   display: block;
   text-decoration: none;
@@ -6,18 +10,27 @@
   font-size: var(--mantine-font-size-sm);
   padding: var(--mantine-spacing-xs);
   border-radius: var(--mantine-radius-sm);
+  transition: background-color 0.2s ease, color 0.2s ease;
 
-  @mixin hover {
-    background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+  &:hover {
+    @include hover-bg(var(--mantine-color-gray-1), var(--mantine-color-dark-6));
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mantine-color-blue-6);
+    outline-offset: 2px;
   }
 }
 
 .linkActive {
-  font-weight: 500;
-  color: light-dark(var(--mantine-color-blue-6), var(--mantine-color-blue-4));
+  font-weight: 600;
+  color: var(--mantine-color-blue-6);
+  background-color: var(--mantine-color-blue-light);
+  transition: background-color 0.2s ease, color 0.2s ease;
 
-  &,
-  &:hover {
-    background-color: var(--mantine-color-blue-light) !important;
+  &:hover,
+  &:focus-visible {
+    background-color: light-dark(var(--mantine-color-blue-5), var(--mantine-color-blue-8));
+    color: var(--mantine-color-white);
   }
 }
