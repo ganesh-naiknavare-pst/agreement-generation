@@ -4,22 +4,20 @@ import {
     createRoutesFromElements,
     createBrowserRouter,
   } from "react-router-dom";
-  import { AuthGuard } from "./Components/authentication/authGuard";
-  import { AppLayout } from "./Components/AppLayout";
-//   import UploadPage from "./Components/FileUpload";
-  
+  import { AuthGuard } from "./components/authentication/authGuard";
+  import { AppLayout } from "./layout/AppLayout"
+  import { Agreement } from "../pages/Agreement";
+  import UploadTemplatePage from "./components/TemplateUpload";
+  import { HomePage } from "../pages/HomePage";
+
   export const router = createBrowserRouter(
     createRoutesFromElements(
       <Route element={<AuthGuard />}>
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="home" replace />} />
-          <Route
-            path="home"
-            element={<div>Welcome to Agreement AI Agent</div>}
-          />
-          {/* <Route path="upload">
-            <Route index element={<UploadPage />} />
-          </Route> */}
+          <Route path="home" element={<HomePage />} />
+          <Route path="agreement" element={<Agreement />} />
+          <Route path="templates" element={<UploadTemplatePage />} />
         </Route>
       </Route>
     )

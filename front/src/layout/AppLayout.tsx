@@ -16,7 +16,7 @@ import {
   IconSun,
 } from "@tabler/icons-react";
 import { useState } from "react";
-import { SidebarLink } from "./sidebar/SideBar";
+import { SidebarLink } from "../components/sidebar/SideBar";
 import { COLORS } from "../colors";
 
 export const AppLayout = () => {
@@ -33,11 +33,7 @@ export const AppLayout = () => {
         style={{ display: "flex", justifyContent: "end", alignItems: "center" }}
       >
         <ThemeIcon
-          bg={
-            colorScheme === "dark"
-              ? COLORS.darkBackground
-              : COLORS.lightBackground
-          }
+          bg="None"
           c={
             colorScheme === "dark"
               ? COLORS.themeIconDark
@@ -49,11 +45,7 @@ export const AppLayout = () => {
           {colorScheme === "dark" ? <IconSun /> : <IconMoon />}
         </ThemeIcon>
       </AppShell.Header>
-      <AppShell.Navbar
-        p={8}
-        mt={10}
-        style={{ transition: "width 200ms" }}
-      >
+      <AppShell.Navbar p={8} mt={10} style={{ transition: "width 200ms" }}>
         <Group p={7} mt={3} wrap="nowrap">
           <ThemeIcon
             size="lg"
@@ -67,11 +59,11 @@ export const AppLayout = () => {
               <Title
                 style={{
                   fontSize: rem(22),
-                  fontWeight: "bold",
+                  fontWeight: "medium",
                 }}
               >
                 Agreement AI Agent
-                </Title>
+              </Title>
             </div>
           )}
         </Group>
@@ -94,7 +86,7 @@ export const AppLayout = () => {
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main>
-        <Container fluid mih="calc(100dvh - 64px)" p={0} m={0}>
+        <Container fluid mih="calc(100dvh - 64px)" p={0} m={0} style={{ maxWidth: "100%" }}>
           <Outlet />
         </Container>
       </AppShell.Main>

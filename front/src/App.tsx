@@ -5,6 +5,7 @@ import { router } from "./Router";
 import { MantineProvider } from "@mantine/core";
 import { theme } from "./theme";
 import { ClerkProvider } from "@clerk/clerk-react";
+import '@mantine/dropzone/styles.css';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 

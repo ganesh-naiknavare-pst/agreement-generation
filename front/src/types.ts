@@ -1,4 +1,5 @@
 export enum PageTitle {
-    Home = "Home",
-    Upload = "Scan",
+    Home      = "Home",
+    Agreement = "Agreement",
+    Templates = "Templates",
   }
