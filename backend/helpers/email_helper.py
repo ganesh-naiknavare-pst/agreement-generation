@@ -5,8 +5,8 @@ from helpers.state_manager import agreement_state
 
 
 def generate_email_template(role: str, user_id: str) -> str:
-    approve_url = f"{BASE_APPROVAL_URL}/{user_id}/approve"
-    reject_url = f"{BASE_APPROVAL_URL}/{user_id}/reject"
+    approve_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/approve"
+    reject_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/reject"
 
     return f"""
     <!DOCTYPE html>
