@@ -18,7 +18,7 @@ export type SidebarItem = {
   order: number;
 };
 import { PageTitle } from "../../types";
-import { IconHome, IconBrain, IconTemplate } from '@tabler/icons-react';
+import { IconHome, IconContract, IconTemplate } from '@tabler/icons-react';
 import { useState } from "react";
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
@@ -33,14 +33,14 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     path: 'agreement',
     name: PageTitle.Agreement,
     position: 'top',
-    icon: IconTemplate,
+    icon: IconContract,
     order: 1,
   },
   {
     path: 'templates',
     name: PageTitle.Templates,
     position: 'top',
-    icon: IconBrain,
+    icon: IconTemplate,
     order: 2,
   },
 ];
