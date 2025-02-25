@@ -3,7 +3,7 @@ MAKEFLAGS += --silent
 PYTHON_CMD ?= python3
 POETRY_CMD ?= $(shell command -v poetry)
 
-.PHONY: check-python check-poetry init-poetry-shell install prisma-generate prisma-db-push run-server run-doc-agent run-event-api  
+.PHONY: check-python check-poetry init-poetry-shell install prisma-generate prisma-db-push run-server run-doc-agent run-event-api
 
 check-python:
 	@if [ -z "$(PYTHON_CMD)" ]; then \
@@ -21,11 +21,7 @@ check-poetry: check-python
 		echo "Using Poetry: $(POETRY_CMD)"; \
 	fi
 
-init-poetry-shell: check-poetry
-	@echo "Activating Poetry shell..."
-	poetry shell
-
-install: init-poetry-shell
+install: check-poetry
 	@echo "Installing dependencies within Poetry shell..."
 	poetry install
 
