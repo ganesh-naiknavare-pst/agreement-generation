@@ -60,4 +60,8 @@ gcp-creds.json
 packages/back/creds.json
 .cursorrules
 
+#backend
 __pycache__/
+har_and_cookies
+pandoc-*
+
