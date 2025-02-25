@@ -32,6 +32,7 @@ export const AppLayout = () => {
     >
       <AppShell.Header
         style={{ display: "flex", justifyContent: "end", alignItems: "center" }}
+        px={5}
       >
         <ThemeIcon
           bg="None"
@@ -53,7 +54,9 @@ export const AppLayout = () => {
             size="lg"
             bg="transparent"
             style={{ textDecoration: "none", fontWeight: "bold" }}
-            c={colorScheme === "dark" ? COLORS.titleColor : COLORS.themeIconLight}
+            c={
+              colorScheme === "dark" ? COLORS.titleColor : COLORS.themeIconLight
+            }
           >
             <IconCloudLock style={{ width: rem(28), height: rem(28) }} />
           </ThemeIcon>
@@ -89,7 +92,13 @@ export const AppLayout = () => {
         </Stack>
       </AppShell.Navbar>
       <AppShell.Main>
-        <Container fluid mih="calc(100dvh - 64px)" p={0} m={0} style={{ maxWidth: "100%" }}>
+        <Container
+          fluid
+          mih="calc(100dvh - 64px)"
+          p={0}
+          m={0}
+          style={{ maxWidth: "100%" }}
+        >
           <Outlet />
         </Container>
       </AppShell.Main>
