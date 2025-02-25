@@ -5,6 +5,7 @@ export const COLORS = {
   themeIconLight: "#0b090a",
   titleColor: "#FFFFFF",
   editorBackground: "#F5F5F5",
+  loadingColor: "#228be6",
   editorBackgroundDark: "#1A1A1A",
   Button: "#1A5B8F",
   githubIcon: "#008000",
