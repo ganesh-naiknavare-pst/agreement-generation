@@ -65,13 +65,34 @@ def create_pdf(state: State):
         content = state["messages"][-1].content
 
     if agreement_state.is_fully_approved():
-        # Replace owner signature
-        content = content.replace("[OWNER SIGNATURE]", agreement_state.owner_signature)
+        # Replace owner signature with image
+        owner_signature_path = os.path.abspath(agreement_state.owner_signature)
+        owner_signature_exists = os.path.isfile(owner_signature_path)
 
-        # Replace tenant signatures with numbered placeholders
+        if owner_signature_exists:
+            owner_signature_data, owner_signature_format = resize_image(owner_signature_path, 60, 30)
+            if owner_signature_data:
+                content = content.replace(
+                    "[OWNER SIGNATURE]", f"![Owner Signature]({owner_signature_data})"
+                )
+        else:
+            content = content.replace("[OWNER SIGNATURE]", "Owner Name")
+
+        # Replace tenant signatures with numbered placeholders and images
         for i, (tenant_id, signature) in enumerate(agreement_state.tenant_signatures.items(), 1):
             placeholder = f"[TENANT {i} SIGNATURE]"
-            content = content.replace(placeholder, signature)
+            tenant_signature_path = os.path.abspath(signature)
+            tenant_signature_exists = os.path.isfile(tenant_signature_path)
+
+            if tenant_signature_exists:
+                tenant_signature_data, _ = resize_image(tenant_signature_path, 60, 30)
+                if tenant_signature_data:
+                    content = content.replace(
+                        placeholder, f"![Tenant {i} Signature]({tenant_signature_data})"
+                    )
+
+            else:
+                content = content.replace(placeholder, f"Tenant {i} Name")
 
     # Ensure no Rupee symbols make it through to the PDF
     content = content.replace("₹", "Rs.")

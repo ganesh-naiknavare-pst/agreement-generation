@@ -36,9 +36,7 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
                         agreement_state.tenants[user_id] = data.get("approved", False)
                         if agreement_state.tenants[user_id]:
                             tenant_name = agreement_state.tenant_names[user_id]
-                            agreement_state.tenant_signatures[user_id] = (
-                                f"APPROVED BY {tenant_name} - {datetime.now()}"
-                            )
+                            agreement_state.tenant_signatures[user_id] = "utils/tenant_signature.jpeg"
                             print(f"Tenant {tenant_name} has approved!")
                         else:
                             print(f"Tenant {user_id} has rejected!")
@@ -47,9 +45,7 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
                     elif user_id == agreement_state.owner_id:
                         agreement_state.owner_approved = data.get("approved", False)
                         if agreement_state.owner_approved:
-                            agreement_state.owner_signature = (
-                                f"APPROVED BY {agreement_state.owner_name} - {datetime.now()}"
-                            )
+                            agreement_state.owner_signature = "utils/owner_signature.jpeg"
                             print(f"Owner {agreement_state.owner_name} has approved!")
                         else:
                             print("Owner has rejected!")
