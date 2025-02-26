@@ -19,7 +19,7 @@ import { DateInput } from "@mantine/dates";
 import { COLORS } from "../colors";
 
 export function AgreementGenerator() {
-  const [active, setActive] = useState(3);
+  const [active, setActive] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const { colorScheme } = useMantineColorScheme();
@@ -195,14 +195,6 @@ export function AgreementGenerator() {
             label="Start date"
             placeholder="Start date"
             key={form.key("date")}
-            style={{
-              // controls: { height: "30px", gap: "4px" }, // Adjust container size
-              // control: { width: "24px", height: "24px", fontSize: "14px", padding: "2px" }, // Fix button size                        // textAlign: "start",
-              // calendarHeaderControlIcon: {
-              //   width: "1.5rem",
-              //   height: "1.5rem",
-              // },
-            }}
             {...form.getInputProps("date")}
             withAsterisk
             hideOutsideDates
