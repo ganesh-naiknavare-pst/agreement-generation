@@ -40,7 +40,7 @@ def generate_email_template(role: str, user_id: str) -> str:
                 <p>Hello,</p>
                 <p>The rental agreement has been approved</p>
                 <p>Please find the signed agreement attached for your reference.</p>
-                <p>Best regards,<br>Docu Sign Team</p>
+                <p>Best regards,<br>Agreement Agent Team</p>
             </div>
         </body>
         </html>
@@ -95,7 +95,7 @@ def generate_email_template(role: str, user_id: str) -> str:
                     <a href="{approve_url}" class="button approve">Approve Agreement</a>
                     <a href="{reject_url}" class="button reject">Reject Agreement</a>
                 </p>
-                <p>Best regards,<br>Docu Sign Team</p>
+                <p>Best regards,<br>Agreement Agent Team</p>
             </div>
         </body>
         </html>
