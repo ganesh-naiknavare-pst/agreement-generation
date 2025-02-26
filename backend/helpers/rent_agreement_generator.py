@@ -6,6 +6,8 @@ from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from helpers.state_manager import State, agreement_state
 import os
+from PIL import Image
+import io
 
 os.environ["OPENAI_API_KEY"] = "XXX"
 
@@ -42,16 +44,64 @@ def generate_agreement(state: State):
     agreement_state.agreement_text = response.content
     return {"messages": response}
 
+def resize_image(image_path, max_width, max_height):
+    try:
+        if not os.path.isfile(image_path):
+            raise FileNotFoundError(f"Image file not found: {image_path}")
+        
+        with Image.open(image_path) as img:
+            if image_path.lower().endswith('.jfif'):
+                img = img.convert("RGB")  
+
+            img.thumbnail((max_width, max_height), Image.LANCZOS)
+
+            temp_image = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            temp_image_path = temp_image.name
+            img.save(temp_image_path, format='JPEG')
+            temp_image.close()
+
+            return temp_image_path, 'jpeg'
+    except Exception as e:
+        print(f"Error resizing image: {e}")
+        return None, None
+
+
 
 def create_pdf(state: State):
     if agreement_state.is_pdf_generated:
-        content= agreement_state.agreement_text
+        content = agreement_state.agreement_text
     else:
         content = state["messages"][-1].content
 
     if agreement_state.is_fully_approved():
-        content = content.replace("[TENANT SIGNATURE]", agreement_state.tenant_signature)
-        content = content.replace("[OWNER SIGNATURE]", agreement_state.owner_signature)
+        tenant_signature_path = os.path.abspath(agreement_state.tenant_signature)
+        owner_signature_path = os.path.abspath(agreement_state.owner_signature)
+
+        tenant_signature_exists = os.path.isfile(tenant_signature_path)
+        owner_signature_exists = os.path.isfile(owner_signature_path)
+
+        if tenant_signature_exists:
+            tenant_signature_data, tenant_signature_format = resize_image(tenant_signature_path, 60, 30)
+            if tenant_signature_data:
+                content = content.replace(
+                    "[TENANT SIGNATURE]", f"![Tenant Signature]({tenant_signature_data})"
+                )
+
+            else:
+                content = content.replace(
+                    "[TENANT SIGNATURE]", "Tenant Name"
+                )
+
+        if owner_signature_exists:
+            owner_signature_data, owner_signature_format = resize_image(owner_signature_path, 60, 30)
+            if owner_signature_data:
+                content = content.replace(
+                    "[OWNER SIGNATURE]", f"![Owner Signature]({owner_signature_data})"
+                )
+            else:
+                content = content.replace(
+                    "[OWNER SIGNATURE]", "Owner Name"
+                )
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     # Create a temporary file
