@@ -54,7 +54,7 @@ def create_pdf(state: State):
 
     # Remove any potential Unicode characters that might cause LaTeX issues
     content = content.encode('ascii', 'ignore').decode()
-
+    
     base_dir = os.path.dirname(os.path.abspath(__file__))
     # Create a temporary file
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)

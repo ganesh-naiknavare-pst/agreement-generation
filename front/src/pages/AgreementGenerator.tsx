@@ -114,6 +114,8 @@ export function AgreementGenerator() {
 
   return (
     <>
+    <Center style={{ height: '90vh' }}> {/* Centers vertically & horizontally */}
+    <div style={{ width: '120%' }}> {/* Adjust width as needed */}
       <Stepper active={active}>
         <Stepper.Step label="Step 1" description="Owner Details">
           <TextInput
@@ -193,15 +195,9 @@ export function AgreementGenerator() {
             label="Start date"
             placeholder="Start date"
             key={form.key("date")}
-            style={{
-              textAlign: "start",
-              calendarHeaderControlIcon: {
-                width: "1.5rem",
-                height: "1.5rem",
-              },
-            }}
             {...form.getInputProps("date")}
             withAsterisk
+            hideOutsideDates
           />
         </Stepper.Step>
 
@@ -274,6 +270,8 @@ export function AgreementGenerator() {
           </Button>
         )}
       </Group>
+      </div>
+      </Center>
     </>
   );
 }
