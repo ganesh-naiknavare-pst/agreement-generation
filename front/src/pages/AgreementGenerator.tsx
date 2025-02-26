@@ -10,8 +10,10 @@ export function AgreementGenerator() {
     initialValues: {
       ownerFullName: '',
       ownerEmailAddress: '',
+      ownerAddress: '',
       tenantFullName: '',
       tenantEmailAddress: '',
+      tenantAddress: '',
       website: '',
       github: '',
     },
@@ -31,6 +33,13 @@ export function AgreementGenerator() {
         };
       }
 
+      // if (active === 2) {
+      //   return {
+      //     tenantFullName: values.tenantFullName.trim().length < 2 ? 'Name must include at least 2 characters' : null,
+      //     tenantEmailAddress: /^\S+@\S+$/.test(values.tenantEmailAddress) ? null : 'Invalid email',
+      //   };
+      // }
+
       return {};
     },
   });
@@ -40,7 +49,7 @@ export function AgreementGenerator() {
       if (form.validate().hasErrors) {
         return current;
       }
-      return current < 3 ? current + 1 : current;
+      return current < 4 ? current + 1 : current;
     });
 
   const prevStep = () => setActive((current) => (current > 0 ? current - 1 : current));
@@ -62,6 +71,13 @@ export function AgreementGenerator() {
             key={form.key('ownerEmailAddress')}
             {...form.getInputProps('ownerEmailAddress')}
           />
+          <TextInput
+            mt="md"
+            label="Address"
+            placeholder="Type owner's address here"
+            key={form.key('ownerAddress')}
+            {...form.getInputProps('ownerAddress')}
+          />
         </Stepper.Step>
 
         <Stepper.Step label="Second step" description="Tenant Details">
@@ -78,9 +94,32 @@ export function AgreementGenerator() {
             key={form.key('tenantEmailAddress')}
             {...form.getInputProps('tenantEmailAddress')}
           />
+          <TextInput
+            mt="md"
+            label="Address"
+            placeholder="Type tenant's address here"
+            key={form.key('tenantAddress')}
+            {...form.getInputProps('tenantAddress')}
+          />
         </Stepper.Step>
 
-        <Stepper.Step label="Final step" description="Agreement Details">
+        <Stepper.Step label="Third step" description="Agreement Details">
+          <TextInput
+            label="Website"
+            placeholder="Website"
+            key={form.key('website')}
+            {...form.getInputProps('website')}
+          />
+          <TextInput
+            mt="md"
+            label="GitHub"
+            placeholder="GitHub"
+            key={form.key('github')}
+            {...form.getInputProps('github')}
+          />
+        </Stepper.Step>
+
+        <Stepper.Step label="Fourth step" description="Photo and documents upload">
           <TextInput
             label="Website"
             placeholder="Website"
@@ -109,7 +148,7 @@ export function AgreementGenerator() {
             Back
           </Button>
         )}
-        {active !== 3 && <Button onClick={nextStep}>Next step</Button>}
+        {active !== 4 && <Button onClick={nextStep}>Next step</Button>}
       </Group>
     </>
   );
