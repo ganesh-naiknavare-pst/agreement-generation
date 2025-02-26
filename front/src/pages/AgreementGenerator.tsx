@@ -133,13 +133,6 @@ export function AgreementGenerator() {
             {...form.getInputProps("ownerEmailAddress")}
             withAsterisk
           />
-          <TextInput
-            mt="md"
-            label="Address"
-            placeholder="Type owner's address here"
-            key={form.key('ownerAddress')}
-            {...form.getInputProps('ownerAddress')}
-          />
         </Stepper.Step>
 
         <Stepper.Step label="Step 2" description="No. of Tenants">
