@@ -1,35 +1,26 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import "./App.css";
+import "@mantine/core/styles.css";
+import { RouterProvider } from "react-router-dom";
+import { router } from "./Router";
+import { MantineProvider } from "@mantine/core";
+import { theme } from "./theme";
+import { ClerkProvider } from "@clerk/clerk-react";
+import '@mantine/dropzone/styles.css';
 
-function App() {
-  const [count, setCount] = useState(0)
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+if (!PUBLISHABLE_KEY) {
+  throw new Error("Add your Clerk Publishable Key to the .env.local file");
 }
 
-export default App
+function App() {
+  return (
+    <MantineProvider theme={theme}>
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+        <RouterProvider router={router} />
+      </ClerkProvider>
+    </MantineProvider>
+  );
+}
+
+export default App;
