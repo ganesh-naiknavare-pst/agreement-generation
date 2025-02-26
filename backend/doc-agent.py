@@ -75,6 +75,7 @@ async def main():
         owner_success, _ = send_email_with_attachment(
             owner_email, agreement_state.pdf_file_path, "owner"
         )
+        agreement_state.is_pdf_generated = True
 
         if tenant_success and owner_success:
             print("Initial agreements sent successfully!")

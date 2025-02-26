@@ -17,6 +17,7 @@ class AgreementState:
         self.tenant_signature = ""
         self.owner_signature = ""
         self.pdf_file_path = ""
+        self.is_pdf_generated = False
 
     def is_fully_approved(self):
         return self.tenant_approved and self.owner_approved

@@ -21,6 +21,8 @@ llm = ChatOpenAI(
 )
 
 def generate_agreement(state: State):
+    if agreement_state.is_pdf_generated:
+        return {"messages": agreement_state.agreement_text}
     system_msg = {
         "role": "system",
         "content": """You are a rental agreement generator. Your task is to fill in the rental agreement template with the provided details.
@@ -42,12 +44,13 @@ def generate_agreement(state: State):
 
 
 def create_pdf(state: State):
-    content = state["messages"][-1].content
+    if agreement_state.is_pdf_generated:
+        content= agreement_state.agreement_text
+    else:
+        content = state["messages"][-1].content
 
     if agreement_state.is_fully_approved():
-        content = content.replace(
-            "[TENANT SIGNATURE]", agreement_state.tenant_signature
-        )
+        content = content.replace("[TENANT SIGNATURE]", agreement_state.tenant_signature)
         content = content.replace("[OWNER SIGNATURE]", agreement_state.owner_signature)
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
