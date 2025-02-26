@@ -7,10 +7,6 @@ export const AuthGuard = () => {
   const location = useLocation();
   const redirectUrl = encodeURI(location.pathname + location.search);
 
-//   if (isError) {
-//     return <div>Please login</div>;
-//   }
-
   if (showLoader) {
     return <div>loading...</div>;
   }

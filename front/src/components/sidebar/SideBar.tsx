@@ -18,7 +18,7 @@ export type SidebarItem = {
   order: number;
 };
 import { PageTitle } from "../../types";
-import { IconHome, IconBrain, IconTemplate } from '@tabler/icons-react';
+import { IconHome, IconContract, IconTemplate } from '@tabler/icons-react';
 import { useState } from "react";
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
@@ -31,22 +31,22 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
   },
   {
     path: 'agreement',
-    name: PageTitle.Agreement,
+    name: PageTitle.Agreements,
     position: 'top',
-    icon: IconTemplate,
-    order: 1,
+    icon: IconContract,
+    order: 2,
   },
   {
     path: 'templates',
     name: PageTitle.Templates,
     position: 'top',
-    icon: IconBrain,
-    order: 2,
+    icon: IconTemplate,
+    order: 3,
   },
 ];
 
 export const SidebarLink = ({ isCollapsed }: { isCollapsed: boolean }) => {
-  const [state, setstate] = useState<PageTitle>(PageTitle.Agreement);
+  const [state, setstate] = useState<PageTitle>(PageTitle.Agreements);
   const items = SIDEBAR_ITEMS.map((item) => (
     <NavLink to={item.path ?? "/"} key={item.name}>
       <Box
