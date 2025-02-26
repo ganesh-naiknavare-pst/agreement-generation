@@ -19,23 +19,14 @@ llm = ChatOpenAI(
     api_key="",
     base_url=CHAT_OPENAI_BASE_URL,
 )
+from prompts import AGREEMENT_SYSTEM_PROMPT
 
 def generate_agreement(state: State):
     if agreement_state.is_pdf_generated:
         return {"messages": agreement_state.agreement_text}
     system_msg = {
         "role": "system",
-        "content": """You are a rental agreement generator. Your task is to fill in the rental agreement template with the provided details.
-        IMPORTANT RULES:
-        1. Output ONLY the agreement text itself
-        2. Do NOT add any introductory text
-        3. Do NOT add any concluding text
-        4. Do NOT add any notes or comments
-        5. Start directly with the agreement content
-        6. Include placeholder text [TENANT SIGNATURE] and [OWNER SIGNATURE] where signatures should go
-        7. Make sure to add all the details for all points mentioned
-        8. Dont include any symbols in the text such as currency symobls like ₹, etc.
-        """,
+        "content": AGREEMENT_SYSTEM_PROMPT,
     }
     messages = [system_msg] + state["messages"]
     response = llm.invoke(messages)
@@ -50,9 +41,20 @@ def create_pdf(state: State):
         content = state["messages"][-1].content
 
     if agreement_state.is_fully_approved():
-        content = content.replace("[TENANT SIGNATURE]", agreement_state.tenant_signature)
+        # Replace owner signature
         content = content.replace("[OWNER SIGNATURE]", agreement_state.owner_signature)
 
+        # Replace tenant signatures with numbered placeholders
+        for i, (tenant_id, signature) in enumerate(agreement_state.tenant_signatures.items(), 1):
+            placeholder = f"[TENANT {i} SIGNATURE]"
+            content = content.replace(placeholder, signature)
+
+    # Ensure no Rupee symbols make it through to the PDF
+    content = content.replace("₹", "Rs.")
+
+    # Remove any potential Unicode characters that might cause LaTeX issues
+    content = content.encode('ascii', 'ignore').decode()
+    
     base_dir = os.path.dirname(os.path.abspath(__file__))
     # Create a temporary file
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
@@ -63,8 +65,6 @@ def create_pdf(state: State):
     )
     agreement_state.pdf_file_path = temp_pdf_path
     return {"messages": content}
-
-
 # Build graph
 graph_builder = StateGraph(State)
 graph_builder.add_node("generate", generate_agreement)
@@ -72,5 +72,4 @@ graph_builder.add_node("create_pdf", create_pdf)
 graph_builder.add_edge(START, "generate")
 graph_builder.add_edge("generate", "create_pdf")
 graph_builder.add_edge("create_pdf", END)
-
 graph = graph_builder.compile()
