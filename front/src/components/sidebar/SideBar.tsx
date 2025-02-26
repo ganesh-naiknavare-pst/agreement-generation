@@ -18,7 +18,7 @@ export type SidebarItem = {
   order: number;
 };
 import { PageTitle } from "../../types";
-import { IconHome, IconContract, IconTemplate } from '@tabler/icons-react';
+import { IconHome, IconContract, IconTemplate, IconFileSettings } from '@tabler/icons-react';
 import { useState } from "react";
 
 export const SIDEBAR_ITEMS: SidebarItem[] = [
@@ -43,6 +43,13 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     icon: IconTemplate,
     order: 3,
   },
+  {
+    path: 'agreement-generator',
+    name: PageTitle.AgreementGenerator,
+    position: 'top',
+    icon: IconFileSettings,
+    order: 4
+  }
 ];
 
 export const SidebarLink = ({ isCollapsed }: { isCollapsed: boolean }) => {

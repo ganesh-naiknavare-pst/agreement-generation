@@ -17,6 +17,8 @@ class AgreementState:
         self.agreement_text = ""
         self.owner_signature = ""
         self.tenant_signatures = {}
+        self.pdf_file_path = ""
+        self.is_pdf_generated = False
 
     def add_tenant(self, tenant_email, tenant_name):
         tenant_id = str(uuid.uuid4())

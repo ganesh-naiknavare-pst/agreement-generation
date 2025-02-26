@@ -1,3 +1,5 @@
+import tempfile
+from constants import Model, CHAT_OPENAI_BASE_URL
 import pypandoc
 from langgraph.graph import StateGraph, START, END
 from langchain.chat_models import ChatOpenAI
@@ -9,17 +11,19 @@ os.environ["OPENAI_API_KEY"] = "XXX"
 
 memory = ConversationBufferMemory(memory_key="chat_history")
 llm = ChatOpenAI(
-    model="gpt-4",
+    model= Model.GPT_4.value,
     temperature=0,
     max_tokens=None,
     timeout=None,
     max_retries=2,
     api_key="",
-    base_url="http://0.0.0.0:1337/v1",
+    base_url=CHAT_OPENAI_BASE_URL,
 )
 from prompts import AGREEMENT_SYSTEM_PROMPT
 
 def generate_agreement(state: State):
+    if agreement_state.is_pdf_generated:
+        return {"messages": agreement_state.agreement_text}
     system_msg = {
         "role": "system",
         "content": AGREEMENT_SYSTEM_PROMPT,
@@ -31,7 +35,10 @@ def generate_agreement(state: State):
 
 
 def create_pdf(state: State):
-    content = state["messages"][-1].content
+    if agreement_state.is_pdf_generated:
+        content= agreement_state.agreement_text
+    else:
+        content = state["messages"][-1].content
 
     if agreement_state.is_fully_approved():
         # Replace owner signature
@@ -48,9 +55,15 @@ def create_pdf(state: State):
     # Remove any potential Unicode characters that might cause LaTeX issues
     content = content.encode('ascii', 'ignore').decode()
 
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    # Create a temporary file
+    temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
+    temp_pdf_path = temp_pdf.name
+
     pypandoc.convert_text(
-        content, "pdf", "md", encoding="utf-8", outputfile="rental-agreement.pdf"
+        content, "pdf", "md", encoding="utf-8", outputfile=temp_pdf_path
     )
+    agreement_state.pdf_file_path = temp_pdf_path
     return {"messages": content}
 # Build graph
 graph_builder = StateGraph(State)

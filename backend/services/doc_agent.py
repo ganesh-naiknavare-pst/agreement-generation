@@ -7,7 +7,7 @@ from templates import  format_agreement_details
 from helpers.state_manager import  agreement_state
 from fastapi import HTTPException
 from pydantic import BaseModel
-
+import os
 class AgreementRequest(BaseModel):
     owner_name: str
     owner_email: str
@@ -33,6 +33,17 @@ tools = [
         description="Generate a rental agreement PDF from the provided details. Output only the agreement text.",
     )
 ]
+
+def delete_temp_file():
+    """Deletes the temporary agreement file if it exists."""
+    try:
+        if agreement_state.pdf_file_path and os.path.exists(agreement_state.pdf_file_path):
+            os.remove(agreement_state.pdf_file_path)
+            print(f"Temporary file deleted: {agreement_state.pdf_file_path}")
+        else:
+            print(f"Temp file not found: {agreement_state.pdf_file_path}")
+    except Exception as e:
+        print(f"Error deleting temp file: {str(e)}")
 
 # Initialize agent
 agent = initialize_agent(
@@ -72,29 +83,29 @@ async def create_agreement_details(request: AgreementRequest):
         # Generate initial agreement
         try:
             response = agent.run(agreement_details)
-            initial_agreement_file = "rental-agreement.pdf"
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error generating agreement: {str(e)}")
 
         # Send initial agreement emails
-        owner_success, _ = send_email_with_attachment(request.owner_email, initial_agreement_file, "owner")
+        owner_success, _ = send_email_with_attachment(request.owner_email, agreement_state.pdf_file_path, "owner")
         tenant_successes = []
         for tenant_id, tenant_email in tenants:
-            success, _ = send_email_with_attachment(tenant_email, initial_agreement_file, "tenant", tenant_id)
+            success, _ = send_email_with_attachment(tenant_email, agreement_state.pdf_file_path, "tenant", tenant_id)
             tenant_successes.append(success)
+        agreement_state.is_pdf_generated = True
 
         if owner_success and all(tenant_successes):
+            delete_temp_file()
             try:
                 # Wait for approvals
                 approved = await listen_for_approval(timeout_seconds=300)
                 if approved:
                     final_response = agent.run(agreement_details)
-                    final_agreement_file = "rental-agreement.pdf"
                     # Send final agreement emails
-                    owner_success, _ = send_email_with_attachment(request.owner_email, final_agreement_file, "owner")
+                    owner_success, _ = send_email_with_attachment(request.owner_email, agreement_state.pdf_file_path, "owner")
                     for tenant_id, tenant_email in tenants:
-                        send_email_with_attachment(tenant_email, final_agreement_file, "tenant", tenant_id)
-                    
+                        send_email_with_attachment(tenant_email, agreement_state.pdf_file_path, "tenant", tenant_id)
+                    delete_temp_file()
                     return {"message": "Final signed agreement sent to all parties!"}
                 else:
                     return {"message": "Agreement was rejected or approval process failed."}

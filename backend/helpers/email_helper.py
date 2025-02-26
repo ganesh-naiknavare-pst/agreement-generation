@@ -1,5 +1,6 @@
 import base64
 import requests
+from constants import SMTP2GO_EMAIL_SEND_URL
 from config import SMTP2GO_API_KEY, SENDER_EMAIL, BASE_APPROVAL_URL
 from helpers.state_manager import agreement_state
 from templates import generate_email_template
@@ -38,7 +39,7 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, u
         "Content-Type": "application/json",
     }
 
-    response = requests.post(url, headers=headers, json=payload)
+    response = requests.post(SMTP2GO_EMAIL_SEND_URL, headers=headers, json=payload)
     if response.status_code == 200:
         print(f"Successfully sent email to {recipient_email}")
     else:
