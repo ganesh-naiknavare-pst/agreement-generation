@@ -27,7 +27,9 @@
   color: var(--mantine-color-blue-6);
   background-color: var(--mantine-color-blue-light);
   transition: background-color 0.2s ease, color 0.2s ease;
+}
 
+.linkHover {
   &:hover,
   &:focus-visible {
     background-color: light-dark(var(--mantine-color-blue-5), var(--mantine-color-blue-8));
