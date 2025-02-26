@@ -58,8 +58,8 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
 ];
 
 export const SidebarLink = ({ isCollapsed }: { isCollapsed: boolean }) => {
-  const [state, setState] = useState<PageTitle>(PageTitle.Agreements);
-  const [hover, setHover] = useState<PageTitle>(PageTitle.Agreements);
+  const [state, setState] = useState<PageTitle>(PageTitle.Home);
+  const [hover, setHover] = useState<PageTitle>(PageTitle.Home);
 
   return (
     <>
