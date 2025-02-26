@@ -12,6 +12,8 @@ import {
   Center,
   ThemeIcon,
   useMantineColorScheme,
+  Title,
+  Divider,
 } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
@@ -114,9 +116,14 @@ export function AgreementGenerator() {
 
   return (
     <>
-    <Center style={{ height: '90vh' }}> {/* Centers vertically & horizontally */}
-    <div style={{ width: '120%' }}> {/* Adjust width as needed */}
-      <Stepper active={active}>
+      <Title
+        c={colorScheme === "dark" ? COLORS.grayDark : COLORS.grayLight}
+        order={3}
+      >
+        Generate Rent Agreement
+      </Title>
+      <Divider my="2rem" />
+      <Stepper active={active} pt="2rem">
         <Stepper.Step label="Step 1" description="Owner Details">
           <TextInput
             label="Full name"
@@ -270,8 +277,6 @@ export function AgreementGenerator() {
           </Button>
         )}
       </Group>
-      </div>
-      </Center>
     </>
   );
 }
