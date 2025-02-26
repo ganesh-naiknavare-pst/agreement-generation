@@ -146,13 +146,6 @@ export function AgreementGenerator() {
             onChange={(value) => updateTenants(Number(value) || 1)}
             withAsterisk
           />
-          <TextInput
-            mt="md"
-            label="Address"
-            placeholder="Type tenant's address here"
-            key={form.key('tenantAddress')}
-            {...form.getInputProps('tenantAddress')}
-          />
         </Stepper.Step>
 
         <Stepper.Step label="Step 3" description="Tenant Details">
