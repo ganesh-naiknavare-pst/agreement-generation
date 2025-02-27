@@ -8,6 +8,7 @@ from helpers.state_manager import  agreement_state
 from fastapi import HTTPException
 from pydantic import BaseModel
 import os
+
 class AgreementRequest(BaseModel):
     owner_name: str
     owner_email: str
@@ -90,7 +91,7 @@ async def create_agreement_details(request: AgreementRequest):
         owner_success, _ = send_email_with_attachment(request.owner_email, agreement_state.pdf_file_path, "owner")
         tenant_successes = []
         for tenant_id, tenant_email in tenants:
-            success, _ = send_email_with_attachment(tenant_email, agreement_state.pdf_file_path, "tenant", tenant_id)
+            success, _ = send_email_with_attachment(tenant_email, agreement_state.pdf_file_path, "tenant", False, tenant_id)
             tenant_successes.append(success)
         agreement_state.is_pdf_generated = True
 
@@ -98,13 +99,13 @@ async def create_agreement_details(request: AgreementRequest):
             delete_temp_file()
             try:
                 # Wait for approvals
-                approved = await listen_for_approval(timeout_seconds=300)
+                approved = await listen_for_approval(timeout_seconds=300, is_template=False)
                 if approved:
                     final_response = agent.run(agreement_details)
                     # Send final agreement emails
-                    owner_success, _ = send_email_with_attachment(request.owner_email, agreement_state.pdf_file_path, "owner")
+                    owner_success, _ = send_email_with_attachment(request.owner_email, agreement_state.pdf_file_path, "owner", False)
                     for tenant_id, tenant_email in tenants:
-                        send_email_with_attachment(tenant_email, agreement_state.pdf_file_path, "tenant", tenant_id)
+                        send_email_with_attachment(tenant_email, agreement_state.pdf_file_path, "tenant", False, tenant_id)
                     delete_temp_file()
                     return {"message": "Final signed agreement sent to all parties!"}
                 else:
