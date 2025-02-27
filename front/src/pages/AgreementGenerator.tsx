@@ -147,14 +147,14 @@ export function AgreementGenerator() {
       rent_amount: "1500",
       start_date: form.values.date.toISOString().split("T")[0],
     };
-    // try {
-    //   await fetchData({
-    //     method: "POST",
-    //     data: requestData,
-    //   });
-    // } catch (error) {
-    //   console.error("Error creating agreement:", error);
-    // }
+    try {
+      await fetchData({
+        method: "POST",
+        data: requestData,
+      });
+    } catch (error) {
+      console.error("Error creating agreement:", error);
+    }
   };
 
   return (
