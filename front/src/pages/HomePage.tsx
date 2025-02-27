@@ -1,11 +1,9 @@
-import React from "react";
-
+import { Center, Title } from "@mantine/core";
 
 export function HomePage() {
-    return (
-      <div>
-        <h1>Welcome to the Agreement AI Agent</h1>
-      </div>
-    );
-  }
-  
+  return (
+    <Center>
+      <Title order={2}>Welcome to the Agreement AI Agent</Title>
+    </Center>
+  );
+}

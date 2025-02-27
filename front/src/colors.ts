@@ -6,4 +6,5 @@ export const COLORS = {
   themeIconDark: "#FFD700",
   themeIconLight: "#0b090a",
   titleColor: "#FFFFFF",
+  loadingColor: "#228be6",
 };
