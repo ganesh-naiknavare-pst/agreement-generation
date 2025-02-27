@@ -9,17 +9,31 @@ class State(TypedDict):
 
 class AgreementState:
     def __init__(self):
-        self.tenant_id = str(uuid.uuid4())
         self.owner_id = str(uuid.uuid4())
-        self.tenant_approved = False
+        self.owner_name = ""
+        self.tenants = {}
+        self.tenant_names = {}
         self.owner_approved = False
         self.agreement_text = ""
-        self.tenant_signature = ""
         self.owner_signature = ""
+        self.tenant_signatures = {}
+        self.pdf_file_path = ""
+        self.is_pdf_generated = False
+
+    def add_tenant(self, tenant_email, tenant_name):
+        tenant_id = str(uuid.uuid4())
+        self.tenants[tenant_id] = False
+        self.tenant_signatures[tenant_id] = ""
+        self.tenant_names[tenant_id] = tenant_name
+        return tenant_id
+
+    def set_owner(self, owner_name):
+        self.owner_name = owner_name
         self.pdf_file_path = ""
         self.is_pdf_generated = False
 
     def is_fully_approved(self):
-        return self.tenant_approved and self.owner_approved
+        return self.owner_approved and all(self.tenants.values())
+
 
 agreement_state = AgreementState()

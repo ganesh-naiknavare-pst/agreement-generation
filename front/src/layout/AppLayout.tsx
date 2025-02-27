@@ -1,104 +1,82 @@
 import {
   Container,
   AppShell,
-  Group,
+  ScrollArea,
   Title,
-  Stack,
-  ThemeIcon,
   rem,
-  useMantineColorScheme,
+  Divider,
+  Center,
 } from "@mantine/core";
 import { Outlet } from "react-router-dom";
-import {
-  IconChevronLeftPipe,
-  IconCloudLock,
-  IconMoon,
-  IconSun,
-} from "@tabler/icons-react";
 import { useState } from "react";
-import { SidebarLink } from "../components/sidebar/SideBar";
-import { COLORS } from "../colors";
-import { UserButton } from "@clerk/clerk-react";
+import { Header } from "../components/header/Header";
+import { IconChevronLeftPipe, IconCloudLock } from "@tabler/icons-react";
+import { SidebarLink } from "../components/sidebar/SideBarLinks";
 
 export const AppLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   return (
     <AppShell
-      header={{ height: 64 }}
-      footer={{ height: 0 }}
+      header={{ height: "8%" }}
       navbar={{ width: isCollapsed ? 70 : 280, breakpoint: "xs" }}
       layout="alt"
+      h="70vh"
     >
       <AppShell.Header
-        style={{ display: "flex", justifyContent: "end", alignItems: "center" }}
-        pr={18}
+        style={{
+          display: "flex",
+          justifyContent: "end",
+          alignItems: "center",
+          border: "None",
+          background: "transparent",
+        }}
+        px={10}
       >
-        <ThemeIcon
-          bg="None"
-          c={
-            colorScheme === "dark"
-              ? COLORS.themeIconDark
-              : COLORS.themeIconLight
-          }
-          onClick={toggleColorScheme}
-          mr={10}
-        >
-          {colorScheme === "dark" ? <IconSun /> : <IconMoon />}
-        </ThemeIcon>
-        <UserButton />
+        <Header />
       </AppShell.Header>
       <AppShell.Navbar style={{ transition: "width 300ms" }}>
-        <Group p={7} mt={3} wrap="nowrap">
-          <ThemeIcon
-            size="lg"
-            bg="transparent"
-            style={{ textDecoration: "none", fontWeight: "bold" }}
-            c={
-              colorScheme === "dark" ? COLORS.titleColor : COLORS.themeIconLight
-            }
-          >
-            <IconCloudLock style={{ width: rem(28), height: rem(28) }} />
-          </ThemeIcon>
+        <AppShell.Section
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+          mx={10}
+          my={18}
+        >
+          <IconCloudLock
+            style={{ width: rem(28), height: rem(28), marginRight: rem(4) }}
+          />
           {!isCollapsed && (
-            <div>
-              <Title
-                style={{
-                  fontSize: rem(22),
-                  fontWeight: "medium",
-                }}
-              >
-                Agreement AI Agent
-              </Title>
-            </div>
+            <Title
+              style={{
+                fontSize: rem(22),
+                fontWeight: "medium",
+              }}
+            >
+              Agreement AI Agent
+            </Title>
           )}
-        </Group>
-        <Stack h="100%" justify="space-between" mt={6}>
-          <Stack py={16} gap={8}>
-            <SidebarLink isCollapsed={isCollapsed} />
-          </Stack>
-          <ThemeIcon
-            size="sm"
-            c="gray.4"
-            bg="transparent"
-            style={{
-              transition: "transform 200ms",
-              transform: isCollapsed ? "rotate(180deg)" : "rotate(0)",
-            }}
-            onClick={() => setIsCollapsed((prevCollapsed) => !prevCollapsed)}
-          >
-            <IconChevronLeftPipe />
-          </ThemeIcon>
-        </Stack>
+        </AppShell.Section>
+        <Divider mb="sm" mx="sm" />
+        <AppShell.Section grow component={ScrollArea}>
+          <SidebarLink isCollapsed={isCollapsed} />
+        </AppShell.Section>
+        <AppShell.Section>
+          <Center>
+            <IconChevronLeftPipe
+              style={{
+                transition: "transform 200ms",
+                transform: isCollapsed ? "rotate(180deg)" : "rotate(0)",
+                background: "transparent",
+              }}
+              onClick={() => setIsCollapsed((prevCollapsed) => !prevCollapsed)}
+            />
+          </Center>
+        </AppShell.Section>
       </AppShell.Navbar>
       <AppShell.Main>
-        <Container
-          fluid
-          mih="calc(100dvh - 64px)"
-          p={0}
-          m={0}
-          style={{ maxWidth: "100%" }}
-        >
+        <Container p="sm">
           <Outlet />
         </Container>
       </AppShell.Main>
