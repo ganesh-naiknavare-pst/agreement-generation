@@ -10,7 +10,7 @@ import {
 import { Outlet } from "react-router-dom";
 import { useState } from "react";
 import { Header } from "../components/header/Header";
-import { IconChevronLeftPipe, IconCloudLock } from "@tabler/icons-react";
+import { IconChevronLeftPipe, IconFileAi } from "@tabler/icons-react";
 import { SidebarLink } from "../components/sidebar/SideBarLinks";
 
 export const AppLayout = () => {
@@ -35,29 +35,30 @@ export const AppLayout = () => {
         <Header />
       </AppShell.Header>
       <AppShell.Navbar style={{ transition: "width 300ms" }}>
-        <AppShell.Section
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-          }}
-          mx={10}
-          my={18}
-        >
-          <IconCloudLock
-            style={{ width: rem(28), height: rem(28), marginRight: rem(4) }}
-          />
-          {!isCollapsed && (
-            <Title
-              style={{
-                fontSize: rem(22),
-                fontWeight: "medium",
-              }}
-            >
-              Agreement AI Agent
-            </Title>
-          )}
-        </AppShell.Section>
+        <Center>
+          <AppShell.Section
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+            }}
+            my={18}
+          >
+            <IconFileAi
+              style={{ width: rem(28), height: rem(28), marginRight: rem(4) }}
+            />
+            {!isCollapsed && (
+              <Title
+                style={{
+                  fontSize: rem(22),
+                  fontWeight: "medium",
+                }}
+              >
+                Agreement Agent
+              </Title>
+            )}
+          </AppShell.Section>
+        </Center>
         <Divider mb="sm" mx="sm" />
         <AppShell.Section grow component={ScrollArea}>
           <SidebarLink isCollapsed={isCollapsed} />
