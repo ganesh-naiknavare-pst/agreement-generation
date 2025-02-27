@@ -40,7 +40,3 @@ run: install
 run-g4f-server: install
 	@echo "Starting g4f server..."
 	$(POETRY_CMD) run $(PYTHON_CMD) -m g4f.api.run
-
-run-doc-agent: install
-	@echo "Starting doc-agent.py..."
-	$(POETRY_CMD) run $(PYTHON_CMD) doc-agent.py
