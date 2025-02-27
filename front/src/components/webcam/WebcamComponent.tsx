@@ -52,7 +52,7 @@ function WebcamComponent({
     setShowCamera(false);
   }, [setShowCamera]);
 
-  if (imageUrl !== "") {
+  if (imageUrl !== "" && !showCamera) {
     return (
       <Container>
         <Image src={imageUrl} alt="caputured Image" height="200rem" />
