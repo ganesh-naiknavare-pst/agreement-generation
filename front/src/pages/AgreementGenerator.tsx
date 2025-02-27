@@ -112,6 +112,10 @@ export function AgreementGenerator() {
     setActive((current) => (current < 4 ? current + 1 : current));
     setIsSubmitting(true);
     setShowMessage(false);
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setShowMessage(true);
+    }, 2000)
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
@@ -131,12 +135,7 @@ export function AgreementGenerator() {
       });
     } catch (error) {
       console.error("Error creating agreement:", error);
-    } finally {
-      setTimeout(() => {
-        setIsSubmitting(false);
-        setShowMessage(true);
-      }, 5000);
-    }
+    } 
   };
 
   return (
