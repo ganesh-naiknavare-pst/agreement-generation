@@ -1,7 +1,7 @@
 import base64
 import requests
 from constants import SMTP2GO_EMAIL_SEND_URL
-from config import SMTP2GO_API_KEY, SENDER_EMAIL, BASE_APPROVAL_URL
+from config import SMTP2GO_API_KEY, SENDER_EMAIL
 from helpers.state_manager import agreement_state, template_agreement_state
 from templates import generate_email_template
 
@@ -22,7 +22,7 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, i
         elif user_id is None:
             user_id = agreement_state.owner_id  # fallback, though this shouldn't happen
 
-    email_body = generate_email_template(role, user_id, BASE_APPROVAL_URL)
+    email_body = generate_email_template(role, user_id)
 
     payload = {
         "sender": SENDER_EMAIL,

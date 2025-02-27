@@ -29,8 +29,6 @@ class AgreementState:
 
     def set_owner(self, owner_name):
         self.owner_name = owner_name
-        self.pdf_file_path = ""
-        self.is_pdf_generated = False
 
     def is_fully_approved(self):
         return self.owner_approved and all(self.tenants.values())
