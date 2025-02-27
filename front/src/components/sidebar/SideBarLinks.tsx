@@ -79,7 +79,7 @@ export const SidebarLink = ({ isCollapsed }: { isCollapsed: boolean }) => {
               [classes.linkActive]: state === item.name,
             })}
           >
-            <Flex justify="flex-start" align="center">
+            <Flex justify={isCollapsed? "flex-end": "flex-start"} align="center">
               <item.icon size={20} />
               <Text pl={5}>{!isCollapsed && item.name}</Text>
             </Flex>

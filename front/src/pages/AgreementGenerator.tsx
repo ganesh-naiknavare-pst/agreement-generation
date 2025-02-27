@@ -14,11 +14,13 @@ import {
   useMantineColorScheme,
   Title,
   Divider,
+  Alert,
 } from "@mantine/core";
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconAlertTriangle } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { COLORS } from "../colors";
+import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 
 export function AgreementGenerator() {
@@ -26,17 +28,21 @@ export function AgreementGenerator() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const { colorScheme } = useMantineColorScheme();
-  const { fetchData } = useApi(
-    BackendEndpoints.CreateAgreement
-  );
+  const { fetchData } = useApi(BackendEndpoints.CreateAgreement);
+  const [showAlert, setShowAlert] = useState(false);
 
   const form = useForm({
     mode: "controlled",
     initialValues: {
       ownerFullName: "",
       ownerEmailAddress: "",
+      ownerImageUrl: "",
       tenantNumber: 2,
-      tenants: Array.from({ length: 2 }, () => ({ fullName: "", email: "" })),
+      tenants: Array.from({ length: 2 }, () => ({
+        fullName: "",
+        email: "",
+        tenantImageUrl: "",
+      })),
       address: "",
       city: "",
       date: new Date(),
@@ -52,6 +58,10 @@ export function AgreementGenerator() {
         if (!/^\S+@\S+$/.test(values.ownerEmailAddress)) {
           errors.ownerEmailAddress = "Invalid email";
         }
+        if (values.ownerImageUrl === "") {
+          setShowAlert(true);
+          errors.ownerImageUrl = "Please take a owner picture";
+        }
       }
 
       if (active === 1 && values.tenantNumber < 1) {
@@ -66,6 +76,10 @@ export function AgreementGenerator() {
           }
           if (!/^\S+@\S+$/.test(tenant.email)) {
             errors[`tenants.${index}.email`] = "Invalid email";
+          }
+          if (tenant.tenantImageUrl === "") {
+            setShowAlert(true);
+            errors.ownerImageUrl = "Please take a owner picture";
           }
         });
       }
@@ -91,7 +105,12 @@ export function AgreementGenerator() {
       "tenants",
       Array.from(
         { length: value },
-        (_, index) => form.values.tenants[index] || { fullName: "", email: "" }
+        (_, index) =>
+          form.values.tenants[index] || {
+            fullName: "",
+            email: "",
+            tenantImageUrl: "",
+          }
       )
     );
     form.setFieldValue("tenantNumber", value);
@@ -100,7 +119,7 @@ export function AgreementGenerator() {
   const nextStep = () => {
     const { hasErrors } = form.validate();
     if (hasErrors) return;
-    setActive((current) => (current < 4 ? current + 1 : current));
+    setActive((current) => (current < 3 ? current + 1 : current));
   };
 
   const prevStep = () =>
@@ -115,7 +134,7 @@ export function AgreementGenerator() {
     setTimeout(() => {
       setIsSubmitting(false);
       setShowMessage(true);
-    }, 2000)
+    }, 2000);
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
@@ -135,7 +154,7 @@ export function AgreementGenerator() {
       });
     } catch (error) {
       console.error("Error creating agreement:", error);
-    } 
+    }
   };
 
   return (
@@ -146,6 +165,17 @@ export function AgreementGenerator() {
       >
         Generate Rent Agreement
       </Title>
+      {showAlert && (
+        <Alert
+          m="1rem"
+          variant="light"
+          color="yellow"
+          title="Warning"
+          icon={<IconAlertTriangle />}
+        >
+          A photo upload is required. You cannot proceed without it.
+        </Alert>
+      )}
       <Divider my="2rem" />
       <Stepper active={active} pt="2rem">
         <Stepper.Step label="Step 1" description="Owner Details">
@@ -166,6 +196,15 @@ export function AgreementGenerator() {
             {...form.getInputProps("ownerEmailAddress")}
             withAsterisk
           />
+          <Group justify="flex-start" mt="xl">
+            <WebcamComponent
+              imageUrl={form.values.ownerImageUrl}
+              setFieldValue={(value: string) => {
+                form.setFieldValue("ownerImageUrl", value as string);
+                setShowAlert(false);
+              }}
+            />
+          </Group>
         </Stepper.Step>
 
         <Stepper.Step label="Step 2" description="No. of Tenants">
@@ -201,6 +240,18 @@ export function AgreementGenerator() {
                 {...form.getInputProps(`tenants.${index}.email`)}
                 withAsterisk
               />
+              <Group justify="flex-start" mt="xl">
+                <WebcamComponent
+                  imageUrl={form.values.tenants[index].tenantImageUrl}
+                  setFieldValue={(value: string) => {
+                    form.setFieldValue(
+                      `tenants.${index}.tenantImageUrl`,
+                      value as string
+                    );
+                    setShowAlert(false);
+                  }}
+                />
+              </Group>
             </Box>
           ))}
         </Stepper.Step>
@@ -226,6 +277,7 @@ export function AgreementGenerator() {
             label="Start date"
             placeholder="Start date"
             key={form.key("date")}
+            style={{ textAlign: "start" }}
             {...form.getInputProps("date")}
             withAsterisk
             hideOutsideDates
