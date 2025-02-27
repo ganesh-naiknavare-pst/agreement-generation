@@ -20,12 +20,16 @@ import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { COLORS } from "../colors";
 import WebcamComponent from "../components/webcam/WebcamComponent";
+import useApi, { BackendEndpoints } from "../hooks/useApi";
 
 export function AgreementGenerator() {
   const [active, setActive] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const { colorScheme } = useMantineColorScheme();
+  const { fetchData } = useApi(
+    BackendEndpoints.CreateAgreement
+  );
 
   const form = useForm({
     mode: "controlled",
@@ -116,16 +120,36 @@ export function AgreementGenerator() {
   const prevStep = () =>
     setActive((current) => (current > 0 ? current - 1 : current));
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const { hasErrors } = form.validate();
     if (hasErrors) return;
     setActive((current) => (current < 6 ? current + 1 : current));
     setIsSubmitting(true);
-
+    setShowMessage(false);
     setTimeout(() => {
       setIsSubmitting(false);
       setShowMessage(true);
-    }, 5000);
+    }, 2000)
+    const requestData = {
+      owner_name: form.values.ownerFullName,
+      owner_email: form.values.ownerEmailAddress,
+      tenant_details: form.values.tenants.map((tenant) => ({
+        name: tenant.fullName,
+        email: tenant.email,
+      })),
+      property_address: form.values.address,
+      city: form.values.city,
+      rent_amount: "1500",
+      start_date: form.values.date.toISOString().split("T")[0],
+    };
+    try {
+      await fetchData({
+        method: "POST",
+        data: requestData,
+      });
+    } catch (error) {
+      console.error("Error creating agreement:", error);
+    } 
   };
 
   return (
