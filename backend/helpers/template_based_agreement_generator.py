@@ -41,7 +41,6 @@ def generate_agreement(state: State):
         return {"messages": template_agreement_state.agreement_text}
     template_text = extract_text_from_pdf("/home/pst-thinkpad/Agreement-Agent/backend/sample_rental_agr.pdf")
     # template_text = extract_text_from_pdf("/home/pst-thinkpad/Agreement-Agent/backend/offer_letter.pdf")
-    print(f"Template Text------------------>{template_text}")
     system_msg = {
         "role": "system",
         "content": SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION.format(template_text=template_text),
