@@ -14,8 +14,9 @@ import {
   useMantineColorScheme,
   Title,
   Divider,
+  Alert,
 } from "@mantine/core";
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconAlertTriangle } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { COLORS } from "../colors";
@@ -27,9 +28,8 @@ export function AgreementGenerator() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
   const { colorScheme } = useMantineColorScheme();
-  const { fetchData } = useApi(
-    BackendEndpoints.CreateAgreement
-  );
+  const { fetchData } = useApi(BackendEndpoints.CreateAgreement);
+  const [showAlert, setShowAlert] = useState(false);
 
   const form = useForm({
     mode: "controlled",
@@ -59,6 +59,7 @@ export function AgreementGenerator() {
           errors.ownerEmailAddress = "Invalid email";
         }
         if (values.ownerImageUrl === "") {
+          setShowAlert(true);
           errors.ownerImageUrl = "Please take a owner picture";
         }
       }
@@ -75,6 +76,10 @@ export function AgreementGenerator() {
           }
           if (!/^\S+@\S+$/.test(tenant.email)) {
             errors[`tenants.${index}.email`] = "Invalid email";
+          }
+          if (tenant.tenantImageUrl === "") {
+            setShowAlert(true);
+            errors.ownerImageUrl = "Please take a owner picture";
           }
         });
       }
@@ -114,7 +119,7 @@ export function AgreementGenerator() {
   const nextStep = () => {
     const { hasErrors } = form.validate();
     if (hasErrors) return;
-    setActive((current) => (current < 5 ? current + 1 : current));
+    setActive((current) => (current < 3 ? current + 1 : current));
   };
 
   const prevStep = () =>
@@ -123,13 +128,13 @@ export function AgreementGenerator() {
   const handleSubmit = async () => {
     const { hasErrors } = form.validate();
     if (hasErrors) return;
-    setActive((current) => (current < 6 ? current + 1 : current));
+    setActive((current) => (current < 4 ? current + 1 : current));
     setIsSubmitting(true);
     setShowMessage(false);
     setTimeout(() => {
       setIsSubmitting(false);
       setShowMessage(true);
-    }, 2000)
+    }, 2000);
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
@@ -149,7 +154,7 @@ export function AgreementGenerator() {
       });
     } catch (error) {
       console.error("Error creating agreement:", error);
-    } 
+    }
   };
 
   return (
@@ -160,6 +165,17 @@ export function AgreementGenerator() {
       >
         Generate Rent Agreement
       </Title>
+      {showAlert && (
+        <Alert
+          m="1rem"
+          variant="light"
+          color="yellow"
+          title="Warning"
+          icon={<IconAlertTriangle />}
+        >
+          A photo upload is required. You cannot proceed without it.
+        </Alert>
+      )}
       <Divider my="2rem" />
       <Stepper active={active} pt="2rem">
         <Stepper.Step label="Step 1" description="Owner Details">
@@ -183,9 +199,10 @@ export function AgreementGenerator() {
           <Group justify="flex-start" mt="xl">
             <WebcamComponent
               imageUrl={form.values.ownerImageUrl}
-              setFieldValue={(value: string) =>
-                form.setFieldValue("ownerImageUrl", value as string)
-              }
+              setFieldValue={(value: string) => {
+                form.setFieldValue("ownerImageUrl", value as string);
+                setShowAlert(false);
+              }}
             />
           </Group>
         </Stepper.Step>
@@ -226,12 +243,13 @@ export function AgreementGenerator() {
               <Group justify="flex-start" mt="xl">
                 <WebcamComponent
                   imageUrl={form.values.tenants[index].tenantImageUrl}
-                  setFieldValue={(value: string) =>
+                  setFieldValue={(value: string) => {
                     form.setFieldValue(
                       `tenants.${index}.tenantImageUrl`,
                       value as string
-                    )
-                  }
+                    );
+                    setShowAlert(false);
+                  }}
                 />
               </Group>
             </Box>
@@ -324,14 +342,14 @@ export function AgreementGenerator() {
       </Stepper>
 
       <Group justify="flex-end" mt="xl">
-        {active > 0 && active < 6 && !isSubmitting && (
+        {active > 0 && active < 3 && !isSubmitting && (
           <Button variant="default" onClick={prevStep}>
             Back
           </Button>
         )}
-        {active < 6 && (
-          <Button onClick={active < 5 ? nextStep : handleSubmit}>
-            {active < 5 ? "Continue" : "Generate Agreement"}
+        {active < 4 && (
+          <Button onClick={active < 3 ? nextStep : handleSubmit}>
+            {active < 3 ? "Continue" : "Generate Agreement"}
           </Button>
         )}
       </Group>
