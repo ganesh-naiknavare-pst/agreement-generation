@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime
 import websockets
 import json
+import os
 from helpers.state_manager import agreement_state
 from config import WEBSOCKET_URL
 
@@ -36,8 +37,11 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
                         agreement_state.tenants[user_id] = data.get("approved", False)
                         if agreement_state.tenants[user_id]:
                             tenant_name = agreement_state.tenant_names[user_id]
-                            agreement_state.tenant_signatures[user_id] = "utils/tenant_signature.jpeg"
-                            print(f"Tenant {tenant_name} has approved!")
+                            tenant_image_path = os.path.abspath(f"utils/tenant_signature.jpeg")
+                            if os.path.isfile(tenant_image_path):
+                                agreement_state.tenant_signatures[user_id] = tenant_image_path
+                            else:
+                                agreement_state.tenant_signatures[user_id] = (f"APPROVED BY {tenant_name} - {datetime.now()}" )                            
                         else:
                             print(f"Tenant {user_id} has rejected!")
                             return False
