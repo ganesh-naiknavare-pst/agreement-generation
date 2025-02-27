@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  Image,
   Stepper,
   Button,
   Group,
@@ -20,7 +19,7 @@ import { IconCheck } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { COLORS } from "../colors";
-import WebcamComponent from '../components/webcam/WebcamComponent'
+import WebcamComponent from "../components/webcam/WebcamComponent";
 
 export function AgreementGenerator() {
   const [active, setActive] = useState(0);
@@ -28,28 +27,21 @@ export function AgreementGenerator() {
   const [showMessage, setShowMessage] = useState(false);
   const { colorScheme } = useMantineColorScheme();
 
-  // # For webcam - Owner profile props
-  const [ownerShowCamera, setOwnerShowCamera] = useState(true)
-  const [ownerImageUrl, setOwnerImageUrl] = useState<null | string>(null)
-  const [ownerImageUrlValid, setOwnerImageUrlValid] = useState(false);
-
-  // # For webcam - Tenant profile props
-  const [tenantShowCamera, setTenantShowCamera] = useState(true)
-  const [tenantImageUrl, setTenantImageUrl] = useState<null | string>(null)
-  const [tenantImageUrlValid, setTenantImageUrlValid] = useState(false);
-
   const form = useForm({
     mode: "controlled",
     initialValues: {
       ownerFullName: "",
       ownerEmailAddress: "",
+      ownerImageUrl: "",
       tenantNumber: 2,
-      tenants: Array.from({ length: 2 }, () => ({ fullName: "", email: "" })),
+      tenants: Array.from({ length: 2 }, () => ({
+        fullName: "",
+        email: "",
+        tenantImageUrl: "",
+      })),
       address: "",
       city: "",
       date: new Date(),
-      ownerImageUrl: ownerImageUrl,
-      tenantImageUrl: tenantImageUrl
     },
 
     validate: (values) => {
@@ -61,6 +53,9 @@ export function AgreementGenerator() {
         }
         if (!/^\S+@\S+$/.test(values.ownerEmailAddress)) {
           errors.ownerEmailAddress = "Invalid email";
+        }
+        if (values.ownerImageUrl === "") {
+          errors.ownerImageUrl = "Please take a owner picture";
         }
       }
 
@@ -92,25 +87,6 @@ export function AgreementGenerator() {
         }
       }
 
-      if (active === 4) {
-        console.log("In validation =====>")
-        console.log("ownerImageUrlValid : " + (ownerImageUrlValid))
-        if (ownerImageUrlValid === false) {
-          errors.ownerImageUrl = "Please take a owner picture";
-        }
-      }    
-
-      if (active === 5) {
-        console.log("In validation =====>")
-        console.log("tenantImageUrlValid : " + (tenantImageUrlValid))
-        if (tenantImageUrlValid === false) {
-          errors.tenantImageUrl = "Please take a tenant picture";
-        }
-      }
-
-      console.log(typeof errors, errors);
-      console.log(Object.values(errors))
-
       return errors;
     },
   });
@@ -120,7 +96,12 @@ export function AgreementGenerator() {
       "tenants",
       Array.from(
         { length: value },
-        (_, index) => form.values.tenants[index] || { fullName: "", email: "" }
+        (_, index) =>
+          form.values.tenants[index] || {
+            fullName: "",
+            email: "",
+            tenantImageUrl: "",
+          }
       )
     );
     form.setFieldValue("tenantNumber", value);
@@ -138,7 +119,6 @@ export function AgreementGenerator() {
   const handleSubmit = () => {
     const { hasErrors } = form.validate();
     if (hasErrors) return;
-    console.log("+++++++++++++++++++++++")
     setActive((current) => (current < 6 ? current + 1 : current));
     setIsSubmitting(true);
 
@@ -176,6 +156,14 @@ export function AgreementGenerator() {
             {...form.getInputProps("ownerEmailAddress")}
             withAsterisk
           />
+          <Group justify="flex-start" mt="xl">
+            <WebcamComponent
+              imageUrl={form.values.ownerImageUrl}
+              setFieldValue={(value: string) =>
+                form.setFieldValue("ownerImageUrl", value as string)
+              }
+            />
+          </Group>
         </Stepper.Step>
 
         <Stepper.Step label="Step 2" description="No. of Tenants">
@@ -211,6 +199,17 @@ export function AgreementGenerator() {
                 {...form.getInputProps(`tenants.${index}.email`)}
                 withAsterisk
               />
+              <Group justify="flex-start" mt="xl">
+                <WebcamComponent
+                  imageUrl={form.values.tenants[index].tenantImageUrl}
+                  setFieldValue={(value: string) =>
+                    form.setFieldValue(
+                      `tenants.${index}.tenantImageUrl`,
+                      value as string
+                    )
+                  }
+                />
+              </Group>
             </Box>
           ))}
         </Stepper.Step>
@@ -241,96 +240,6 @@ export function AgreementGenerator() {
             withAsterisk
             hideOutsideDates
           />
-        </Stepper.Step>
-
-        <Stepper.Step label="Step 5" description="Capture Owner Picture">
-          <div 
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2rem'
-            }}
-          >
-            {ownerShowCamera && 
-            <WebcamComponent 
-            setShowCamera={setOwnerShowCamera}
-            setImageUrl={setOwnerImageUrl}
-            setImageUrlValid={setOwnerImageUrlValid}
-            />
-            }
-            {ownerImageUrl && 
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                  alignItems: 'center'
-                }}>
-                <Image src={ownerImageUrl} 
-                alt="caputured Image" 
-                style={{
-                  borderRadius: "100%",
-                  height: '300px',
-                  width: '300px',
-                  objectFit: 'cover'
-                }}/>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '5px'
-                }}>
-                  <Button onClick={() => {
-                    setOwnerShowCamera(true)
-                    setOwnerImageUrl(null)
-                  }}>Retake</Button>
-                </div>
-              </div>}
-          </div>
-        </Stepper.Step>
-
-        <Stepper.Step label="Step 6" description="Capture Tenant Picture">
-          <div 
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '2rem'
-            }}
-          >
-            {tenantShowCamera && 
-            <WebcamComponent 
-            setShowCamera={setTenantShowCamera}
-            setImageUrl={setTenantImageUrl}
-            setImageUrlValid={setTenantImageUrlValid}
-            />
-            }
-            {tenantImageUrl && 
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                  alignItems: 'center'
-                }}>
-                <Image src={tenantImageUrl} 
-                alt="caputured Image" 
-                style={{
-                  borderRadius: "100%",
-                  height: '300px',
-                  width: '300px',
-                  objectFit: 'cover'
-                }}/>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '5px'
-                }}>
-                  <Button onClick={() => {
-                    setTenantShowCamera(true)
-                    setTenantImageUrl(null)
-                  }}>Retake</Button>
-                </div>
-              </div>}
-          </div>
         </Stepper.Step>
 
         <Stepper.Completed>

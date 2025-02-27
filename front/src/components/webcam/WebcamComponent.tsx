@@ -1,69 +1,152 @@
-import React, { useState } from 'react'
-import Webcam from 'react-webcam';
-import { Dispatch, SetStateAction } from 'react';
-import { Button } from "@mantine/core";
-  
+import { useState, useRef, useCallback, JSX } from "react";
+import Webcam from "react-webcam";
+import {
+  Button,
+  Paper,
+  Stack,
+  Group,
+  Image,
+  Text,
+  Container,
+  Loader,
+} from "@mantine/core";
+import { IconCamera, IconRefresh, IconCheck } from "@tabler/icons-react";
 
-// Function to validate base64 image URI
-const isValidBase64Image = (str) => {
-    // Regex to check if string starts with a valid image MIME type
-    const regex = /^data:image\/(png|jpeg|jpg|gif|webp|bmp|svg\+xml);base64,[A-Za-z0-9+/=]+$/;
-    return regex.test(str);
-};
-
-interface WebcamComponentType {
-  setShowCamera: Dispatch<SetStateAction<boolean>>
-  setImageUrl: Dispatch<SetStateAction<string | null>>
-  setImageUrlValid: Dispatch<SetStateAction<boolean>>
+interface WebcamComponentProps {
+  imageUrl: string;
+  setFieldValue: (value: string) => void;
 }
 
 const videoConstraints = {
-  facingMode: "user"
+  facingMode: "user",
 };
 
-function WebcamComponent({ setShowCamera, setImageUrl, setImageUrlValid } : WebcamComponentType) {
-  const webcamRef = React.useRef(null);
+function WebcamComponent({
+  imageUrl,
+  setFieldValue,
+}: WebcamComponentProps): JSX.Element {
+  const webcamRef = useRef<Webcam>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showCamera, setShowCamera] = useState<boolean>(true);
+  const [rederWebCamm, setRederWebCamm] = useState<boolean>(false);
 
-  const capture = React.useCallback(
-    () => {
+  const capture = useCallback(() => {
+    if (webcamRef.current) {
+      setIsLoading(true);
       const imageSrc = webcamRef.current.getScreenshot();
-      setImageUrl(imageSrc)
-      setShowCamera(false)
-
-      if (isValidBase64Image(imageSrc)) {
-        console.log(isValidBase64Image(imageSrc))
-        console.log(imageSrc)
-        setImageUrlValid(true)
+      setIsLoading(false);
+      if (imageSrc) {
+        setCapturedImage(imageSrc);
+        setFieldValue(imageSrc);
       }
-    },
-    [webcamRef]
-  );
+    }
+  }, [webcamRef]);
+
+  const retakePhoto = useCallback(() => {
+    setCapturedImage(null);
+    setFieldValue("");
+  }, [setFieldValue]);
+
+  const confirmPhoto = useCallback(() => {
+    setShowCamera(false);
+  }, [setShowCamera]);
+
+  if (imageUrl !== "") {
+    return (
+      <Container>
+        <Image src={imageUrl} alt="caputured Image" height="200rem" />
+      </Container>
+    );
+  }
+
+  if (!rederWebCamm) {
+    return <Button onClick={() => setRederWebCamm(true)}>Upload photo</Button>;
+  }
+
+  if (isLoading) {
+    return (
+      <Container size="md" p="xl">
+        <Paper p="xl" radius="md" withBorder shadow="md">
+          <Stack align="center" p="md">
+            <Loader size="xl" />
+            <Text>Loading camera...</Text>
+          </Stack>
+        </Paper>
+      </Container>
+    );
+  }
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      gap: '2rem'
-    }}>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '4px',
-      }}>
-      <Webcam
-        audio={false}
-        height={500}
-        ref={webcamRef}
-        screenshotFormat="image/jpeg"
-        width={500}
-        videoConstraints={videoConstraints}
-      />
-      <Button onClick={capture}>Capture photo</Button>
-      </div>
-    </div>
-  )
+    <>
+      {showCamera ? (
+        <Container size="md" p="xl">
+          {capturedImage ? (
+            <Stack p="md" align="center">
+              <Paper withBorder p="xs" radius="md" shadow="sm">
+                <Image
+                  src={capturedImage}
+                  alt="Captured photo"
+                  radius="md"
+                  height={500}
+                  width={500}
+                  fit="contain"
+                />
+              </Paper>
+
+              <Group align="center" p="md">
+                <Button
+                  leftSection={<IconRefresh size={18} />}
+                  color="red"
+                  variant="filled"
+                  onClick={retakePhoto}
+                >
+                  Retake Photo
+                </Button>
+                <Button
+                  leftSection={<IconCheck size={18} />}
+                  color="green"
+                  variant="filled"
+                  onClick={confirmPhoto}
+                >
+                  Use This Photo
+                </Button>
+              </Group>
+            </Stack>
+          ) : (
+            <Stack p="md" align="center">
+              <Paper withBorder p="xs" radius="md" shadow="sm">
+                <Webcam
+                  audio={false}
+                  height={500}
+                  width={500}
+                  ref={webcamRef}
+                  screenshotFormat="image/jpeg"
+                  videoConstraints={videoConstraints}
+                  onUserMediaError={() => {
+                    setFieldValue("");
+                  }}
+                />
+              </Paper>
+
+              <Button
+                leftSection={<IconCamera size={18} />}
+                color="blue"
+                variant="filled"
+                size="md"
+                onClick={capture}
+              >
+                Capture Photo
+              </Button>
+            </Stack>
+          )}
+        </Container>
+      ) : (
+        <Container>
+          <Image src={imageUrl} alt="caputured Image" height="200rem" />
+        </Container>
+      )}
+    </>
+  );
 }
 
-export default WebcamComponent
+export default WebcamComponent;
