@@ -74,6 +74,13 @@ def create_pdf(state: State):
         else:
             content = content.replace("[OWNER SIGNATURE]",  agreement_state.owner_signature)
 
+        # Replace owner photos with image
+        if os.path.isfile(agreement_state.owner_photo):
+            owner_photo_data, _ = resize_image(agreement_state.owner_photo, 60, 60)
+            content = content.replace("[OWNER PHOTO]", f"Owner: ![Owner PHOTO]({owner_photo_data})")
+        else:
+            content = content.replace("[OWNER PHOTO]", agreement_state.owner_photo)
+
         # Replace tenant signatures with numbered placeholders and images
         for i, (tenant_id, signature) in enumerate(agreement_state.tenant_signatures.items(), 1):
             placeholder = f"[TENANT {i} SIGNATURE]"
@@ -86,6 +93,17 @@ def create_pdf(state: State):
                 )
             else:
                 content = content.replace(placeholder, signature)
+
+        # Replace tenant photos with numbered placeholders and images
+        for i, (tenant_id, photo) in enumerate(agreement_state.tenant_photos.items(), 1):
+            placeholder = f"[TENANT {i} PHOTO]"
+            tenant_name = agreement_state.tenant_names.get(tenant_id, f"Tenant {i}")
+            if os.path.isfile(photo):
+                tenant_photos_data, _ = resize_image(photo, 60, 60)
+                content = content.replace(placeholder, f"{tenant_name}: ![Tenant PHOTO]({tenant_photos_data})")
+            else:
+                content = content.replace(placeholder, photo)
+            
 
     # Ensure no Rupee symbols make it through to the PDF
     content = content.replace("₹", "Rs.")
