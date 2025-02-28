@@ -39,18 +39,24 @@ def add_signature(agreement_text: str):
 def generate_agreement(state: State):
     if template_agreement_state.is_pdf_generated:
         return {"messages": template_agreement_state.agreement_text}
-    template_text = extract_text_from_pdf("/home/pst-thinkpad/Agreement-Agent/backend/sample_rental_agr.pdf")
-    # template_text = extract_text_from_pdf("/home/pst-thinkpad/Agreement-Agent/backend/offer_letter.pdf")
-    system_msg = {
-        "role": "system",
-        "content": SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION.format(template_text=template_text),
-    }  
-          
-    messages = [system_msg] + state["messages"]
-    response = llm.invoke(messages)
-    response_sign = add_signature(response.content)
+
+    template_chunks = extract_text_from_pdf("/home/pst-thinkpad/Agreement/Agreement-Agent/backend/Files/Identification.pdf")
+
+    generated_text = ""
+    for chunk in template_chunks:
+        system_msg = {
+            "role": "system",
+            "content": SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION.format(template_text=chunk),
+        }
+        messages = [system_msg] + state["messages"]
+        response = llm.invoke(messages)
+        generated_text += response.content + "\n"
+        
+    print(f"Generated text: {generated_text}")
+
+    response_sign = add_signature(generated_text)
     template_agreement_state.agreement_text = response_sign.content
-    
+
     return {"messages": response_sign}
 
 def create_pdf(state: State):

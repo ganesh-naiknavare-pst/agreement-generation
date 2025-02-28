@@ -7,8 +7,7 @@ from templates import generate_email_template
 
 
 def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, is_template: bool=False, user_id=None):
-    url = "https://api.smtp2go.com/v3/email/send"
-
+    
     with open(pdf_path, "rb") as attachment_file:
         file_content = attachment_file.read()
         encoded_file = base64.b64encode(file_content).decode("utf-8")

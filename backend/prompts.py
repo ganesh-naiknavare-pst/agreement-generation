@@ -50,6 +50,8 @@ SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER = """
     - Do not insert any additional content beyond the required changes.
     - It should only contain final aggrement text only no extra instrcuitons or text
     - Return the Whole generated aggremenet in one go without any extra instructions
+    - Don't add test like Final Answer, Final Aggrement, Final Result etc.
+    - Return the whole agreement in proper formatting and structure
 """
 
 USER_PROMPT_FOR_SIGNATURE_PLACEHOLDER = "Generate the aggrement return only the whole aggrement text without any extra text"
@@ -72,28 +74,30 @@ SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION = """
     - **Remove all currency symbols** (e.g., ₹, $, €) from the document.  
     - **Ensure UTF-8 encoding** for all generated content.  
     - **At any cost, do not add any content on your own** except for replacing placeholders and enforcing the instructions mentioned above.  
+    - **Generate exactly one agreement** based on the provided template. The content must be as it is as provided in the template.
+    - **Don't add test like Final Answer, Final Aggrement, Final Result etc.**
+    - **If there are words like Agreement template or Agremment format like this then it should not be present in the final output you can generate it as a final agreement which we can directly use**
+    - **Generate output in proper formatting and structure**
 """
 
 AGREEMENT_SYSTEM_PROMPT = """You are a rental agreement generator. Your task is to fill in the rental agreement template with the provided details.
 IMPORTANT RULES:
-1. Output ONLY the agreement text itself
-2. Do NOT add any introductory text
-3. Do NOT add any concluding text
-4. Do NOT add any notes or comments
-5. Start directly with the agreement content
-6. **MANDATORILY** include placeholders text **[TENANT 1 PHOTO], [TENANT 2 PHOTO]**, etc.for each tenant  and **[OWNER PHOTO]** for owner.  
-7. **MANDATORILY** include placeholders text **[TENANT 1 SIGNATURE], [TENANT 2 SIGNATURE]**, etc. for each tenant and **[OWNER SIGNATURE]** for owner.  
-8. Make sure to add all the details for all points mentioned
-9. For currency amounts, ALWAYS write 'Rs.' followed by the number (example: Rs. 5000)
-10. Number each tenant as TENANT 1, TENANT 2, etc. in the agreement
-11. STRICTLY FORBIDDEN: Do not use the Rupee symbol (₹) anywhere in the text
-12. Format all currency amounts as 'Rs. X' where X is the amount
+1. The response must adhere to the provided format and **must not include any additional descriptive lines**
+2. **MANDATORILY** must include placeholders text **[TENANT 1 PHOTO], [TENANT 2 PHOTO]**, etc.for each tenant  and **[OWNER PHOTO]** for owner.
+3. **MANDATORILY** must include placeholders text **[TENANT 1 SIGNATURE], [TENANT 2 SIGNATURE]**, etc. for each tenant and **[OWNER SIGNATURE]** for owner.
+4. Agreement must contain all the details for all points mentioned.
+5. For currency amounts, ALWAYS write 'Rs.' followed by the number (example: Rs. 5000).
+6. Number each tenant as TENANT 1, TENANT 2, etc. in the agreement.
+7. STRICTLY FORBIDDEN: Do not use the Rupee symbol (₹) anywhere in the text.
+8. Format all currency amounts as 'Rs. X' where X is the amount.
 """
 
 AGENT_PREFIX = {
-        "prefix": """You are just a legal agreement generator. Your task is to use the generate_agreement tool to create agreements.
-        IMPORTANT: The tool will output only the agreement text without any symbols in it such as currency symbols etc. Do not add any additional text, comments, or formatting.
-        Use this exact format:
-        Action: generate_agreement
-        Action Input: <user input>"""
-    }
+    "prefix": """You are a legal agreement generator. Your task is to create agreement based on the provided input. You must accurately describe the terms and conditions into a formal document, ensuring that the agreement reflects the user's request.
+            IMPORTANT:
+            - The tool will output only the text of the agreement without any symbols such as currency symbols, and no additional text, comments, or formatting.
+            - Follow this exact structure in the output:
+                Action: generate_agreement
+                Action Input: <user input>
+        """
+}
