@@ -10,7 +10,13 @@ import {
   Container,
   Loader,
 } from "@mantine/core";
-import { IconCamera, IconRefresh, IconCheck } from "@tabler/icons-react";
+import {
+  IconCamera,
+  IconRefresh,
+  IconCheck,
+  IconCircleCheck,
+} from "@tabler/icons-react";
+import { COLORS } from "../../colors";
 
 interface WebcamComponentProps {
   imageUrl: string;
@@ -54,14 +60,32 @@ function WebcamComponent({
 
   if (imageUrl !== "" && !showCamera) {
     return (
-      <Container>
-        <Image src={imageUrl} alt="caputured Image" height="200rem" />
-      </Container>
+      <Group>
+        <IconCircleCheck color={COLORS.green} />
+        <Paper
+          p="sm"
+          radius="md"
+          withBorder
+          shadow="md"
+          style={{ borderColor: COLORS.green }}
+        >
+          <Image src={imageUrl} alt="caputured Image" height="200rem" />
+        </Paper>
+      </Group>
     );
   }
 
   if (!rederWebCamm) {
-    return <Button onClick={() => setRederWebCamm(true)}>Upload photo</Button>;
+    return (
+      <Button
+        leftSection={<IconCamera />}
+        variant="outline"
+        size="sm"
+        onClick={() => setRederWebCamm(true)}
+      >
+        Start webcam
+      </Button>
+    );
   }
 
   if (isLoading) {
@@ -141,9 +165,18 @@ function WebcamComponent({
           )}
         </Container>
       ) : (
-        <Container>
-          <Image src={imageUrl} alt="caputured Image" height="200rem" />
-        </Container>
+        <Group>
+          <IconCircleCheck color={COLORS.green} />
+          <Paper
+            p="sm"
+            radius="md"
+            withBorder
+            shadow="md"
+            style={{ borderColor: COLORS.green }}
+          >
+            <Image src={imageUrl} alt="caputured Image" height="200rem" />
+          </Paper>
+        </Group>
       )}
     </>
   );
