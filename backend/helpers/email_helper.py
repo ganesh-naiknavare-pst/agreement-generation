@@ -13,9 +13,7 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, u
         encoded_file = base64.b64encode(file_content).decode("utf-8")
 
     # Use the provided user_id for tenants, or owner_id for owner
-    if role == "owner":
-        user_id = agreement_state.owner_id
-    elif user_id is None:
+    if role == "owner" or user_id is None:
         user_id = agreement_state.owner_id  # fallback, though this shouldn't happen
 
     email_body = generate_email_template(role, user_id)
