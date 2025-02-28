@@ -6,6 +6,8 @@ from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from helpers.state_manager import State, agreement_state
 import os
+from PIL import Image
+import io
 
 os.environ["OPENAI_API_KEY"] = "XXX"
 
@@ -33,21 +35,57 @@ def generate_agreement(state: State):
     agreement_state.agreement_text = response.content
     return {"messages": response}
 
+def resize_image(image_path, max_width, max_height):
+    try:
+        if not os.path.isfile(image_path):
+            raise FileNotFoundError(f"Image file not found: {image_path}")
+        
+        with Image.open(image_path) as img:
+            if image_path.lower().endswith('.jfif'):
+                img = img.convert("RGB")  
+
+            img.thumbnail((max_width, max_height), Image.LANCZOS)
+
+            temp_image = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            temp_image_path = temp_image.name
+            img.save(temp_image_path, format='JPEG')
+            temp_image.close()
+
+            return temp_image_path, 'jpeg'
+    except Exception as e:
+        print(f"Error resizing image: {e}")
+        return None, None
+
+
 
 def create_pdf(state: State):
     if agreement_state.is_pdf_generated:
-        content= agreement_state.agreement_text
+        content = agreement_state.agreement_text
     else:
         content = state["messages"][-1].content
 
     if agreement_state.is_fully_approved():
-        # Replace owner signature
-        content = content.replace("[OWNER SIGNATURE]", agreement_state.owner_signature)
+        # Replace owner signature with image
+        if os.path.isfile(agreement_state.owner_signature):
+            owner_signature_data, _ = resize_image(agreement_state.owner_signature, 60, 30)
+            content = content.replace(
+                "[OWNER SIGNATURE]", f"Owner: ![Owner Signature]({owner_signature_data})"
+            )
+        else:
+            content = content.replace("[OWNER SIGNATURE]",  agreement_state.owner_signature)
 
-        # Replace tenant signatures with numbered placeholders
+        # Replace tenant signatures with numbered placeholders and images
         for i, (tenant_id, signature) in enumerate(agreement_state.tenant_signatures.items(), 1):
             placeholder = f"[TENANT {i} SIGNATURE]"
-            content = content.replace(placeholder, signature)
+            tenant_name = agreement_state.tenant_names.get(tenant_id, f"Tenant {i}")
+
+            if os.path.isfile(signature):
+                tenant_signature_data, _ = resize_image(signature, 60, 30)
+                content = content.replace(
+                     placeholder, f"{tenant_name}: ![Tenant {i} Signature]({tenant_signature_data})"
+                )
+            else:
+                content = content.replace(placeholder, signature)
 
     # Ensure no Rupee symbols make it through to the PDF
     content = content.replace("₹", "Rs.")

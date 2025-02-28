@@ -2,6 +2,7 @@ import asyncio
 from datetime import datetime
 import websockets
 import json
+import os
 from helpers.state_manager import agreement_state, template_agreement_state
 from config import WEBSOCKET_URL
 
@@ -56,21 +57,26 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                             agreement_state.tenants[user_id] = data.get("approved", False)
                             if agreement_state.tenants[user_id]:
                                 tenant_name = agreement_state.tenant_names[user_id]
-                                agreement_state.tenant_signatures[user_id] = (
-                                    f"APPROVED BY {tenant_name} - {datetime.now()}"
-                                )
-                                print(f"Tenant {tenant_name} has approved!")
+                                tenant_image_path = ""
+                                if os.path.isfile(tenant_image_path):
+                                    agreement_state.tenant_signatures[user_id] = tenant_image_path
+                                else:
+                                    agreement_state.tenant_signatures[user_id] = (f"APPROVED BY {tenant_name} - {datetime.now()}" )                            
                             else:
                                 print(f"Tenant {user_id} has rejected!")
                                 return False
 
                         elif user_id == agreement_state.owner_id:
                             agreement_state.owner_approved = data.get("approved", False)
-                            if agreement_state.owner_approved:
-                                agreement_state.owner_signature = (
-                                    f"APPROVED BY {agreement_state.owner_name} - {datetime.now()}"
-                                )
-                                print(f"Owner {agreement_state.owner_name} has approved!")
+                            if agreement_state.owner_approved: 
+                                signature_path = ""
+                            
+                                if os.path.exists(signature_path):
+                                    agreement_state.owner_signature = signature_path
+                                else:
+                                    agreement_state.owner_signature = (
+                                        f"APPROVED BY {agreement_state.owner_name} - {datetime.now()}"
+                                    )
                             else:
                                 print("Owner has rejected!")
                                 return False
