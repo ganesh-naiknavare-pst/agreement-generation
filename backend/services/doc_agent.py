@@ -1,3 +1,4 @@
+import logging
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
 from langchain.agents import initialize_agent, Tool, AgentType
@@ -8,6 +9,10 @@ from helpers.state_manager import  agreement_state
 from fastapi import HTTPException
 from pydantic import BaseModel
 import os
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from constants import MAX_RETRIES, RETRY_DELAY
+
+logging.basicConfig(level=logging.INFO)
 
 class AgreementRequest(BaseModel):
     owner_name: str
@@ -40,11 +45,11 @@ def delete_temp_file():
     try:
         if agreement_state.pdf_file_path and os.path.exists(agreement_state.pdf_file_path):
             os.remove(agreement_state.pdf_file_path)
-            print(f"Temporary file deleted: {agreement_state.pdf_file_path}")
+            logging.info(f"Temporary file deleted: {agreement_state.pdf_file_path}")
         else:
-            print(f"Temp file not found: {agreement_state.pdf_file_path}")
+             logging.info(f"Temp file not found: {agreement_state.pdf_file_path}")
     except Exception as e:
-        print(f"Error deleting temp file: {str(e)}")
+         logging.info(f"Error deleting temp file: {str(e)}")
 
 # Initialize agent
 agent = initialize_agent(
@@ -59,6 +64,24 @@ agent = initialize_agent(
     agent_kwargs=AGENT_PREFIX,
 )
 
+def log_before_retry(retry_state):
+    attempt = retry_state.attempt_number
+    logging.info(f"Retry attempt {attempt}: Retrying agreement generation...")
+    delete_temp_file()
+
+def log_after_failure(retry_state):
+    exception = retry_state.outcome.exception()
+    logging.info(f"Agreement generation failed after {retry_state.attempt_number} attempts : {str(exception)}")
+    
+@retry(
+    stop=stop_after_attempt(MAX_RETRIES),
+    wait=wait_fixed(RETRY_DELAY),
+    retry=retry_if_exception_type(Exception),
+    before_sleep=log_before_retry,
+    after=log_after_failure
+)
+def generate_agreement_with_retry(agreement_details):
+    return agent.run(agreement_details)
 
 async def create_agreement_details(request: AgreementRequest):
     try:
@@ -68,7 +91,7 @@ async def create_agreement_details(request: AgreementRequest):
         # Store tenant details
         tenants = []
         for tenant in request.tenant_details:
-            tenant_id = agreement_state.add_tenant(tenant["email"], tenant["name"], tenant.get("signature"))
+            tenant_id = agreement_state.add_tenant(tenant["email"], tenant["name"], tenant.get("signature"), tenant.get("photo"))
             tenants.append((tenant_id, tenant["email"]))
 
         # Format agreement details
@@ -83,9 +106,9 @@ async def create_agreement_details(request: AgreementRequest):
 
         # Generate initial agreement
         try:
-            response = agent.run(agreement_details)
+            response = generate_agreement_with_retry(agreement_details)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error generating agreement: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error generating agreement after {MAX_RETRIES} attempts: {str(e)}")
 
         # Send initial agreement emails
         owner_success, _ = send_email_with_attachment(request.owner_email, agreement_state.pdf_file_path, "owner")
@@ -101,7 +124,10 @@ async def create_agreement_details(request: AgreementRequest):
                 # Wait for approvals
                 approved = await listen_for_approval(timeout_seconds=300, is_template=False)
                 if approved:
-                    final_response = agent.run(agreement_details)
+                    try:
+                        final_response = generate_agreement_with_retry(agreement_details)
+                    except Exception as e:
+                        raise HTTPException(status_code=500, detail=f"Error generating final agreement after {MAX_RETRIES} attempts: {str(e)}")
                     # Send final agreement emails
                     owner_success, _ = send_email_with_attachment(request.owner_email, agreement_state.pdf_file_path, "owner", False)
                     for tenant_id, tenant_email in tenants:
@@ -115,4 +141,4 @@ async def create_agreement_details(request: AgreementRequest):
         else:
             return {"message": "Error sending initial agreement emails."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")

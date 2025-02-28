@@ -81,12 +81,13 @@ IMPORTANT RULES:
 3. Do NOT add any concluding text
 4. Do NOT add any notes or comments
 5. Start directly with the agreement content
-6. Include placeholder text [TENANT 1 SIGNATURE], [TENANT 2 SIGNATURE] etc. for each tenant and [OWNER SIGNATURE] for owner
-7. Make sure to add all the details for all points mentioned
-8. For currency amounts, ALWAYS write 'Rs.' followed by the number (example: Rs. 5000)
-9. Number each tenant as TENANT 1, TENANT 2, etc. in the agreement
-10. STRICTLY FORBIDDEN: Do not use the Rupee symbol (₹) anywhere in the text
-11. Format all currency amounts as 'Rs. X' where X is the amount
+6. **MANDATORILY** include placeholders text **[TENANT 1 PHOTO], [TENANT 2 PHOTO]**, etc.for each tenant  and **[OWNER PHOTO]** for owner.  
+7. **MANDATORILY** include placeholders text **[TENANT 1 SIGNATURE], [TENANT 2 SIGNATURE]**, etc. for each tenant and **[OWNER SIGNATURE]** for owner.  
+8. Make sure to add all the details for all points mentioned
+9. For currency amounts, ALWAYS write 'Rs.' followed by the number (example: Rs. 5000)
+10. Number each tenant as TENANT 1, TENANT 2, etc. in the agreement
+11. STRICTLY FORBIDDEN: Do not use the Rupee symbol (₹) anywhere in the text
+12. Format all currency amounts as 'Rs. X' where X is the amount
 """
 
 AGENT_PREFIX = {

@@ -17,10 +17,8 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, i
     if is_template:
         user_id = (template_agreement_state.participent_id if role == "Participent" else template_agreement_state.authority_id)
     else :
-        if role == "owner":
+        if role == "owner" or user_id is None:
             user_id = agreement_state.owner_id
-        elif user_id is None:
-            user_id = agreement_state.owner_id  # fallback, though this shouldn't happen
 
     email_body = generate_email_template(role, user_id)
 

@@ -17,13 +17,16 @@ class AgreementState:
         self.agreement_text = ""
         self.owner_signature = ""
         self.tenant_signatures = {}
+        self.owner_photo = ""
+        self.tenant_photos = {}
         self.pdf_file_path = ""
         self.is_pdf_generated = False
 
-    def add_tenant(self, tenant_email, tenant_name, tenant_signature=None):
+    def add_tenant(self, tenant_email, tenant_name, tenant_signature=None, tenant_photo=None):
         tenant_id = str(uuid.uuid4())
         self.tenants[tenant_id] = False
         self.tenant_signatures[tenant_id] = tenant_signature
+        self.tenant_photos[tenant_id] = tenant_photo
         self.tenant_names[tenant_id] = tenant_name
         return tenant_id
 
