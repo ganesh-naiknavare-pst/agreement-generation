@@ -16,12 +16,13 @@ import {
   Divider,
   Alert,
 } from "@mantine/core";
-import { IconCheck, IconAlertTriangle } from "@tabler/icons-react";
+import { IconCheck, IconAlertTriangle, IconUpload } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { DateInput } from "@mantine/dates";
 import { COLORS } from "../colors";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
+import { Dropzone } from "@mantine/dropzone";
 
 export function AgreementGenerator() {
   const [active, setActive] = useState(0);
@@ -188,7 +189,7 @@ export function AgreementGenerator() {
             withAsterisk
           />
           <TextInput
-            mt="md"
+            my="md"
             label="Email"
             placeholder="Type owner's email address here"
             key={form.key("ownerEmailAddress")}
@@ -196,7 +197,27 @@ export function AgreementGenerator() {
             {...form.getInputProps("ownerEmailAddress")}
             withAsterisk
           />
+          <Group justify="flex-start" mt="xl" mb={5}>
+            <Text display="inline" size="sm" fw={500}>
+              Upload Your Signature{" "}
+              <Text display="inline" c={COLORS.asteric}>
+                *
+              </Text>
+            </Text>
+          </Group>
+          <Dropzone onDrop={() => {}} accept={[".png", ".jpeg"]}>
+            <Group align="center" gap="md">
+              <IconUpload size={20} />
+              <Text>Drag a file here or click to upload</Text>
+            </Group>
+          </Dropzone>
           <Group justify="flex-start" mt="xl">
+            <Text display="inline" size="sm" fw={500}>
+              Take a Picture to Upload{" "}
+              <Text display="inline" c={COLORS.asteric}>
+                *
+              </Text>
+            </Text>
             <WebcamComponent
               imageUrl={form.values.ownerImageUrl}
               setFieldValue={(value: string) => {
@@ -223,8 +244,9 @@ export function AgreementGenerator() {
         <Stepper.Step label="Step 3" description="Tenant Details">
           {form.values.tenants.map((_, index) => (
             <Box key={index} mt="md">
+              <Title order={4} ml={0}>{`Tenant ${index + 1}`}</Title>
               <TextInput
-                label={`Tenant ${index + 1} Full Name`}
+                label={`Full Name`}
                 placeholder="Type tenant's full name here"
                 key={form.key(`tenants.${index}.fullName`)}
                 style={{ textAlign: "start" }}
@@ -232,15 +254,36 @@ export function AgreementGenerator() {
                 withAsterisk
               />
               <TextInput
-                mt="md"
-                label={`Tenant ${index + 1} Email`}
+                my="md"
+                label={`Email`}
                 placeholder="Type tenant's email address here"
                 key={form.key(`tenants.${index}.email`)}
                 style={{ textAlign: "start" }}
                 {...form.getInputProps(`tenants.${index}.email`)}
                 withAsterisk
               />
+
+              <Group justify="flex-start" mt="xl" mb={5}>
+                <Text display="inline" size="sm" fw={500}>
+                  Upload Your Signature{" "}
+                  <Text display="inline" c={COLORS.asteric}>
+                    *
+                  </Text>
+                </Text>
+              </Group>
+              <Dropzone onDrop={() => {}} accept={[".png", ".jpeg"]}>
+                <Group align="center" gap="md">
+                  <IconUpload size={20} />
+                  <Text>Drag a file here or click to upload</Text>
+                </Group>
+              </Dropzone>
               <Group justify="flex-start" mt="xl">
+                <Text display="inline" size="sm" fw={500}>
+                  Take a Picture to Upload{" "}
+                  <Text display="inline" c={COLORS.asteric}>
+                    *
+                  </Text>
+                </Text>
                 <WebcamComponent
                   imageUrl={form.values.tenants[index].tenantImageUrl}
                   setFieldValue={(value: string) => {
