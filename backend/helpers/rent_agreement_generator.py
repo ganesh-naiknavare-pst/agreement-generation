@@ -66,17 +66,13 @@ def create_pdf(state: State):
 
     if agreement_state.is_fully_approved():
         # Replace owner signature with image
-        owner_signature_path = os.path.abspath(agreement_state.owner_signature)
-        owner_signature_exists = os.path.isfile(owner_signature_path)
-
-        if owner_signature_exists:
-            owner_signature_data, owner_signature_format = resize_image(owner_signature_path, 60, 30)
-            if owner_signature_data:
-                content = content.replace(
-                    "[OWNER SIGNATURE]", f"Owner: ![Owner Signature]({owner_signature_data})"
-                )
+        if os.path.isfile(agreement_state.owner_signature):
+            owner_signature_data, _ = resize_image(agreement_state.owner_signature, 60, 30)
+            content = content.replace(
+                "[OWNER SIGNATURE]", f"Owner: ![Owner Signature]({owner_signature_data})"
+            )
         else:
-            content = content.replace("[OWNER SIGNATURE]", "Owner Name")
+            content = content.replace("[OWNER SIGNATURE]",  agreement_state.owner_signature)
 
         # Replace tenant signatures with numbered placeholders and images
         for i, (tenant_id, signature) in enumerate(agreement_state.tenant_signatures.items(), 1):
