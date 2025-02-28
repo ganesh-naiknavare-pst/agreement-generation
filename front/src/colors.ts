@@ -1,6 +1,6 @@
 export const COLORS = {
   green: "#2f9e44",
-  approval:'#56b756',
+  approval: "#56b756",
   blue: "#228be6",
   grayDark: "#ced4d9",
   grayLight: "#485056",
@@ -8,5 +8,6 @@ export const COLORS = {
   themeIconLight: "#0b090a",
   titleColor: "#FFFFFF",
   loadingColor: "#228be6",
-  yellow:"#de9351"
+  yellow: "#de9351",
+  asteric: "#e03130",
 };
