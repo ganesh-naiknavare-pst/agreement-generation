@@ -65,14 +65,13 @@ agent = initialize_agent(
 )
 
 def log_before_retry(retry_state):
-    """Log before retrying, showing current attempt number and deleting temp file."""
     attempt = retry_state.attempt_number
     logging.info(f"Retry attempt {attempt}: Retrying agreement generation...")
     delete_temp_file()
 
 def log_after_failure(retry_state):
-    exception = retry_state.outcome.exception()  # Get the actual exception
-    logging.info(f"Agreement generation failed after {retry_state.attempt_number} attemptsand error is: {str(exception)}")
+    exception = retry_state.outcome.exception()
+    logging.info(f"Agreement generation failed after {retry_state.attempt_number} attempts : {str(exception)}")
     
 @retry(
     stop=stop_after_attempt(MAX_RETRIES),
@@ -105,7 +104,7 @@ async def create_agreement_details(request: AgreementRequest):
             start_date=request.start_date
         )
 
-        # Generate initial agreement (with retries)
+        # Generate initial agreement
         try:
             response = generate_agreement_with_retry(agreement_details)
         except Exception as e:
