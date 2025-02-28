@@ -67,7 +67,7 @@ async def create_agreement_details(request: AgreementRequest):
         # Store tenant details
         tenants = []
         for tenant in request.tenant_details:
-            tenant_id = agreement_state.add_tenant(tenant["email"], tenant["name"])
+            tenant_id = agreement_state.add_tenant(tenant["email"], tenant["name"], tenant.get("signature"))
             tenants.append((tenant_id, tenant["email"]))
 
         # Format agreement details
