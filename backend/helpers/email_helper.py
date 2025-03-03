@@ -7,7 +7,7 @@ from templates import generate_email_template
 
 
 def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, is_template: bool=False, user_id=None):
-    
+
     with open(pdf_path, "rb") as attachment_file:
         file_content = attachment_file.read()
         encoded_file = base64.b64encode(file_content).decode("utf-8")
@@ -19,7 +19,7 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, i
         if role == "owner" or user_id is None:
             user_id = agreement_state.owner_id
 
-    email_body = generate_email_template(role, user_id)
+    email_body = generate_email_template(role, user_id, is_template)
 
     payload = {
         "sender": SENDER_EMAIL,

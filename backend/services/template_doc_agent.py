@@ -12,7 +12,6 @@ import shutil
 import os
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from constants import MAX_RETRIES, RETRY_DELAY
-import tempfile
 
 logging.basicConfig(level=logging.INFO)
 
@@ -72,7 +71,7 @@ def log_before_retry(retry_state):
 def log_after_failure(retry_state):
     exception = retry_state.outcome.exception()
     logging.info(f"Agreement generation failed after {retry_state.attempt_number} attempts : {str(exception)}")
-    
+
 @retry(
     stop=stop_after_attempt(MAX_RETRIES),
     wait=wait_fixed(RETRY_DELAY),
@@ -85,7 +84,7 @@ def generate_agreement_with_retry(agreement_details):
 
 async def template_based_agreement(req: TemplateAgreementRequest, file):
     try:
-        
+
         secure_filename = os.path.basename(file.filename)
         base_dir = os.path.join(os.path.dirname(__file__), "temp")
         os.makedirs(base_dir, exist_ok=True)

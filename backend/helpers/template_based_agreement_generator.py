@@ -33,7 +33,7 @@ def add_signature(agreement_text: str):
             "content": USER_PROMPT_FOR_SIGNATURE_PLACEHOLDER,
         },
     ]
-    
+
     return llm.invoke(messages)
 
 def generate_agreement(state: State):
@@ -51,7 +51,7 @@ def generate_agreement(state: State):
         messages = [system_msg] + state["messages"]
         response = llm.invoke(messages)
         generated_text += response.content + "\n"
-        
+
     print(f"Generated text: {generated_text}")
 
     response_sign = add_signature(generated_text)
@@ -71,7 +71,7 @@ def create_pdf(state: State):
     content = content.replace("₹", "Rs.")
 
     content = content.encode('ascii', 'ignore').decode()
-    
+
     base_dir = os.path.dirname(os.path.abspath(__file__))
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
     temp_pdf_path = temp_pdf.name
