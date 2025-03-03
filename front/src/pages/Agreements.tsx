@@ -2,7 +2,7 @@ import { ActionIcon, Table, Text, Center, Badge, Tooltip } from '@mantine/core';
 import { agreements } from './Data';
 import { IconEye } from '@tabler/icons-react';
 import * as ReactPDF from '@react-pdf/renderer';
-import { MyDocument } from './useModal';
+import { MyDocument } from '../hooks/useModal';
 import { COLORS } from '../colors';
 
 export function Agreements() {
