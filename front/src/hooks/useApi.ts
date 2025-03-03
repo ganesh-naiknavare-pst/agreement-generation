@@ -50,8 +50,6 @@ const useApi = <T>(endpoint: BackendEndpoints): ApiResponse<T> => {
         ...rest,
       };
 
-      console.log("Config------------->", config);
-
       const response: AxiosResponse<T> = await axios(config);
       setData(response.data);
     } catch (err) {
