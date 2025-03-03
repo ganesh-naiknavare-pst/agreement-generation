@@ -1,4 +1,5 @@
 import logging
+import shutil
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
 from langchain.agents import initialize_agent, Tool, AgentType
@@ -11,12 +12,14 @@ from pydantic import BaseModel
 import os
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from constants import MAX_RETRIES, RETRY_DELAY
+import base64
 
 logging.basicConfig(level=logging.INFO)
 
 class AgreementRequest(BaseModel):
     owner_name: str
     owner_email: str
+    owner_photo: str
     tenant_details: list[dict]
     property_address: str
     city: str
@@ -83,15 +86,32 @@ def log_after_failure(retry_state):
 def generate_agreement_with_retry(agreement_details):
     return agent.invoke(agreement_details)
 
+def save_base64_image(photo_data: str, user_id: str) -> str:
+    if photo_data.startswith("data:image/jpeg;base64,"):
+        photo_data = photo_data.replace("data:image/jpeg;base64,", "")
+        photo_bytes = base64.b64decode(photo_data)
+
+        # Ensure the directory exists
+        save_dir = "./utils"
+        os.makedirs(save_dir, exist_ok=True)
+
+        photo_path = f"{save_dir}/{user_id}_photo.jpg"
+        with open(photo_path, "wb") as photo_file:
+            photo_file.write(photo_bytes)
+        return photo_path
+    return ""
+
 async def create_agreement_details(request: AgreementRequest):
     try:
         # Store owner information
+        agreement_state.owner_photo = save_base64_image(request.owner_photo, request.owner_name)
         agreement_state.set_owner(request.owner_name)
 
         # Store tenant details
         tenants = []
         for tenant in request.tenant_details:
-            tenant_id = agreement_state.add_tenant(tenant["email"], tenant["name"], tenant.get("signature"), tenant.get("photo"))
+            tenant_photo_path = save_base64_image(tenant.get("photo", ""), tenant["name"])
+            tenant_id = agreement_state.add_tenant(tenant["email"], tenant["name"], tenant.get("signature"), tenant_photo_path)
             tenants.append((tenant_id, tenant["email"]))
 
         # Format agreement details
@@ -133,6 +153,7 @@ async def create_agreement_details(request: AgreementRequest):
                     for tenant_id, tenant_email in tenants:
                         send_email_with_attachment(tenant_email, agreement_state.pdf_file_path, "tenant", tenant_id)
                     delete_temp_file()
+                    shutil.rmtree('./utils')
                     return {"message": "Final signed agreement sent to all parties!"}
                 else:
                     return {"message": "Agreement was rejected or approval process failed."}
