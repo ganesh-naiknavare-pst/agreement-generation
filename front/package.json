@@ -21,7 +21,6 @@
     "@tabler/icons-react": "^3.30.0",
     "axios": "^1.8.1",
     "dayjs": "^1.11.13",
-    "mantine-datatable": "^7.15.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.2.0",
