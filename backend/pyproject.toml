@@ -11,7 +11,6 @@ python = "^3.10"
 fastapi = "^0.115.8"
 g4f = "^0.4.7.4"
 langchain = "^0.3.19"
-langchain-community = "^0.3.18"
 langgraph = "^0.2.74"
 pypandoc = "^1.15"
 uvicorn = "^0.34.0"
@@ -21,6 +20,7 @@ openai = "^1.64.0"
 prisma = "^0.15.0"
 email-validator = "^2.2.0"
 pillow = "^11.1.0"
+langchain-openai = "^0.3.7"
 
 
 [build-system]
