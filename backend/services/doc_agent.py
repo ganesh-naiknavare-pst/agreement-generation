@@ -81,7 +81,7 @@ def log_after_failure(retry_state):
     after=log_after_failure
 )
 def generate_agreement_with_retry(agreement_details):
-    return agent.run(agreement_details)
+    return agent.invoke(agreement_details)
 
 async def create_agreement_details(request: AgreementRequest):
     try:

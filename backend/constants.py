@@ -2,7 +2,7 @@ from enum import Enum
 
 # Enum for AI models
 class Model(Enum):
-    GPT_4 = "gpt-4"
+    GPT_MODEL = "gpt-4o"
 
 # Local OpenAI-compatible API URL
 CHAT_OPENAI_BASE_URL = "http://0.0.0.0:1337/v1"
