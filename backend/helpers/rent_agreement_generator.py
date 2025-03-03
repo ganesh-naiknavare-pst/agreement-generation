@@ -2,7 +2,7 @@ import tempfile
 from constants import Model, CHAT_OPENAI_BASE_URL
 import pypandoc
 from langgraph.graph import StateGraph, START, END
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from helpers.state_manager import State, agreement_state
 import os
@@ -13,7 +13,7 @@ os.environ["OPENAI_API_KEY"] = "XXX"
 
 memory = ConversationBufferMemory(memory_key="chat_history")
 llm = ChatOpenAI(
-    model= Model.GPT_4.value,
+    model= Model.GPT_MODEL.value,
     temperature=0,
     max_tokens=None,
     timeout=None,
