@@ -124,7 +124,7 @@ async def create_agreement_details(request: AgreementRequest):
             tenant_id = agreement_state.add_tenant(
                 tenant["email"],
                 tenant["name"],
-                tenant.get("signature"),
+                tenant_signature_path,
                 tenant.get("photo"),
             )
             tenants.append((tenant_id, tenant["email"]))

@@ -15,6 +15,7 @@ import {
   Title,
   Divider,
   Alert,
+  Image,
 } from "@mantine/core";
 import { IconCheck, IconAlertTriangle, IconUpload } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
@@ -229,9 +230,12 @@ export function AgreementGenerator() {
               <Text size="sm" fw={500}>
                 Uploaded Signature:
               </Text>
-              <img
+              <Image
                 src={form.values.owner_signature}
-                style={{ maxWidth: "100%", maxHeight: "200px" }}
+                alt="Owner Signature"
+                w="auto"
+                h={100}
+                fit="contain"
               />
             </Box>
           )}
@@ -306,9 +310,12 @@ export function AgreementGenerator() {
                   <Text size="sm" fw={500}>
                     Uploaded Signature:
                   </Text>
-                  <img
+                  <Image
                     src={form.values.tenants[index].tenant_signature}
-                    style={{ maxWidth: "100%", maxHeight: "200px" }}
+                    alt={`Tenant ${index + 1} Signature`}
+                    w="auto"
+                    h={100}
+                    fit="contain"
                   />
                 </Box>
               )}
