@@ -15,6 +15,7 @@ import {
   Title,
   Divider,
   Alert,
+  Container,
 } from "@mantine/core";
 import { IconCheck, IconAlertTriangle, IconUpload } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
@@ -160,12 +161,7 @@ export function AgreementGenerator() {
 
   return (
     <>
-      <Title
-        c={colorScheme === "dark" ? COLORS.grayDark : COLORS.grayLight}
-        order={3}
-      >
-        Generate Rent Agreement
-      </Title>
+      <Title order={3}>Generate Rent Agreement</Title>
       {showAlert && (
         <Alert
           m="1rem"
@@ -178,224 +174,228 @@ export function AgreementGenerator() {
         </Alert>
       )}
       <Divider my="2rem" />
-      <Stepper active={active} pt="2rem">
-        <Stepper.Step label="Step 1" description="Owner Details">
-          <TextInput
-            label="Full name"
-            placeholder="Type owner's full name here"
-            key={form.key("ownerFullName")}
-            style={{ textAlign: "start" }}
-            {...form.getInputProps("ownerFullName")}
-            withAsterisk
-          />
-          <TextInput
-            my="md"
-            label="Email"
-            placeholder="Type owner's email address here"
-            key={form.key("ownerEmailAddress")}
-            style={{ textAlign: "start" }}
-            {...form.getInputProps("ownerEmailAddress")}
-            withAsterisk
-          />
-          <Group justify="flex-start" mt="xl" mb={5}>
-            <Text display="inline" size="sm" fw={500}>
-              Upload Your Signature{" "}
-              <Text display="inline" c={COLORS.asteric}>
-                *
-              </Text>
-            </Text>
-          </Group>
-          <Dropzone onDrop={() => {}} accept={[".png", ".jpeg"]}>
-            <Group align="center" gap="md">
-              <IconUpload size={20} />
-              <Text>Drag a file here or click to upload</Text>
-            </Group>
-          </Dropzone>
-          <Group justify="flex-start" mt="xl">
-            <Text display="inline" size="sm" fw={500}>
-              Take a Picture to Upload{" "}
-              <Text display="inline" c={COLORS.asteric}>
-                *
-              </Text>
-            </Text>
-            <WebcamComponent
-              imageUrl={form.values.ownerImageUrl}
-              setFieldValue={(value: string) => {
-                form.setFieldValue("ownerImageUrl", value as string);
-                setShowAlert(false);
-              }}
+      <Container>
+        <Stepper active={active} pt="2rem">
+          <Stepper.Step label="Step 1" description="Owner Details">
+            <TextInput
+              label="Full name"
+              placeholder="Type owner's full name here"
+              key={form.key("ownerFullName")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("ownerFullName")}
+              withAsterisk
             />
-          </Group>
-        </Stepper.Step>
-
-        <Stepper.Step label="Step 2" description="No. of Tenants">
-          <NumberInput
-            label="Number of Tenants"
-            placeholder="Enter number of tenants"
-            min={1}
-            key={form.key("tenantNumber")}
-            style={{ textAlign: "start" }}
-            {...form.getInputProps("tenantNumber")}
-            onChange={(value) => updateTenants(Number(value) || 1)}
-            withAsterisk
-          />
-        </Stepper.Step>
-
-        <Stepper.Step label="Step 3" description="Tenant Details">
-          {form.values.tenants.map((_, index) => (
-            <Box key={index} mt="md">
-              <Title order={4} ml={0}>{`Tenant ${index + 1}`}</Title>
-              <TextInput
-                label={`Full Name`}
-                placeholder="Type tenant's full name here"
-                key={form.key(`tenants.${index}.fullName`)}
-                style={{ textAlign: "start" }}
-                {...form.getInputProps(`tenants.${index}.fullName`)}
-                withAsterisk
-              />
-              <TextInput
-                my="md"
-                label={`Email`}
-                placeholder="Type tenant's email address here"
-                key={form.key(`tenants.${index}.email`)}
-                style={{ textAlign: "start" }}
-                {...form.getInputProps(`tenants.${index}.email`)}
-                withAsterisk
-              />
-
-              <Group justify="flex-start" mt="xl" mb={5}>
-                <Text display="inline" size="sm" fw={500}>
-                  Upload Your Signature{" "}
-                  <Text display="inline" c={COLORS.asteric}>
-                    *
-                  </Text>
+            <TextInput
+              my="md"
+              label="Email"
+              placeholder="Type owner's email address here"
+              key={form.key("ownerEmailAddress")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("ownerEmailAddress")}
+              withAsterisk
+            />
+            <Group justify="flex-start" mt="xl" mb={5}>
+              <Text display="inline" size="sm" fw={500}>
+                Upload Your Signature{" "}
+                <Text display="inline" c={COLORS.asteric}>
+                  *
                 </Text>
+              </Text>
+            </Group>
+            <Dropzone onDrop={() => {}} accept={[".png", ".jpeg"]}>
+              <Group align="center" gap="md">
+                <IconUpload size={20} />
+                <Text>Drag a file here or click to upload</Text>
               </Group>
-              <Dropzone onDrop={() => {}} accept={[".png", ".jpeg"]}>
-                <Group align="center" gap="md">
-                  <IconUpload size={20} />
-                  <Text>Drag a file here or click to upload</Text>
-                </Group>
-              </Dropzone>
-              <Group justify="flex-start" mt="xl">
-                <Text display="inline" size="sm" fw={500}>
-                  Take a Picture to Upload{" "}
-                  <Text display="inline" c={COLORS.asteric}>
-                    *
-                  </Text>
+            </Dropzone>
+            <Group justify="flex-start" mt="xl">
+              <Text display="inline" size="sm" fw={500}>
+                Take a Picture to Upload{" "}
+                <Text display="inline" c={COLORS.asteric}>
+                  *
                 </Text>
-                <WebcamComponent
-                  imageUrl={form.values.tenants[index].tenantImageUrl}
-                  setFieldValue={(value: string) => {
-                    form.setFieldValue(
-                      `tenants.${index}.tenantImageUrl`,
-                      value as string
-                    );
-                    setShowAlert(false);
-                  }}
-                />
-              </Group>
-            </Box>
-          ))}
-        </Stepper.Step>
-
-        <Stepper.Step label="Step 4" description="Agreement Details">
-          <TextInput
-            label="Address"
-            placeholder="Address"
-            key={form.key("address")}
-            style={{ textAlign: "start" }}
-            {...form.getInputProps("address")}
-            withAsterisk
-          />
-          <TextInput
-            label="City"
-            placeholder="City"
-            key={form.key("city")}
-            style={{ textAlign: "start" }}
-            {...form.getInputProps("city")}
-            withAsterisk
-          />
-          <DateInput
-            label="Start date"
-            placeholder="Start date"
-            key={form.key("date")}
-            style={{ textAlign: "start" }}
-            {...form.getInputProps("date")}
-            withAsterisk
-            hideOutsideDates
-          />
-        </Stepper.Step>
-
-        <Stepper.Completed>
-          {isSubmitting ? (
-            <Center>
-              <Loader size="lg" mt={40} />
-            </Center>
-          ) : (
-            showMessage && (
-              <Card
-                shadow="sm"
-                mt={40}
-                padding="lg"
-                withBorder
-                style={{
-                  textAlign: "center",
+              </Text>
+              <WebcamComponent
+                imageUrl={form.values.ownerImageUrl}
+                setFieldValue={(value: string) => {
+                  form.setFieldValue("ownerImageUrl", value as string);
+                  setShowAlert(false);
                 }}
-              >
-                <Text>
-                  <ThemeIcon radius="xl" size="xl" color={COLORS.green}>
-                    <IconCheck size="1.5rem" />
-                  </ThemeIcon>
-                </Text>
+              />
+            </Group>
+          </Stepper.Step>
 
-                <Text size="lg" fw={700} c={COLORS.green} mt="md">
-                  Your agreement generation has started successfully!
-                </Text>
+          <Stepper.Step label="Step 2" description="No. of Tenants">
+            <NumberInput
+              label="Number of Tenants"
+              placeholder="Enter number of tenants"
+              min={1}
+              key={form.key("tenantNumber")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("tenantNumber")}
+              onChange={(value) => updateTenants(Number(value) || 1)}
+              withAsterisk
+            />
+          </Stepper.Step>
 
-                <Text size="sm" mt="sm">
-                  📨 You will receive an email within a minute with a link to
-                  approve the agreement.
-                </Text>
+          <Stepper.Step label="Step 3" description="Tenant Details">
+            {form.values.tenants.map((_, index) => (
+              <Box key={index} mt="md">
+                <Title order={4} ml={0}>{`Tenant ${index + 1}`}</Title>
+                <TextInput
+                  label={`Full Name`}
+                  placeholder="Type tenant's full name here"
+                  key={form.key(`tenants.${index}.fullName`)}
+                  style={{ textAlign: "start" }}
+                  {...form.getInputProps(`tenants.${index}.fullName`)}
+                  withAsterisk
+                />
+                <TextInput
+                  my="md"
+                  label={`Email`}
+                  placeholder="Type tenant's email address here"
+                  key={form.key(`tenants.${index}.email`)}
+                  style={{ textAlign: "start" }}
+                  {...form.getInputProps(`tenants.${index}.email`)}
+                  withAsterisk
+                />
 
-                <Text size="lg" fw={700} c={COLORS.blue} mt="md">
-                  The email link will be valid for <strong>5 minutes</strong>.
-                  Please approve it within this time.
-                </Text>
+                <Group justify="flex-start" mt="xl" mb={5}>
+                  <Text display="inline" size="sm" fw={500}>
+                    Upload Your Signature{" "}
+                    <Text display="inline" c={COLORS.asteric}>
+                      *
+                    </Text>
+                  </Text>
+                </Group>
+                <Dropzone onDrop={() => {}} accept={[".png", ".jpeg"]}>
+                  <Group align="center" gap="md">
+                    <IconUpload size={20} />
+                    <Text>Drag a file here or click to upload</Text>
+                  </Group>
+                </Dropzone>
+                <Group justify="flex-start" mt="xl">
+                  <Text display="inline" size="sm" fw={500}>
+                    Take a Picture to Upload{" "}
+                    <Text display="inline" c={COLORS.asteric}>
+                      *
+                    </Text>
+                  </Text>
+                  <WebcamComponent
+                    imageUrl={form.values.tenants[index].tenantImageUrl}
+                    setFieldValue={(value: string) => {
+                      form.setFieldValue(
+                        `tenants.${index}.tenantImageUrl`,
+                        value as string
+                      );
+                      setShowAlert(false);
+                    }}
+                  />
+                </Group>
+              </Box>
+            ))}
+          </Stepper.Step>
 
-                <Text size="lg" fw={600} c={COLORS.blue} mt="md">
-                  ✅ Next Steps:
-                </Text>
+          <Stepper.Step label="Step 4" description="Agreement Details">
+            <TextInput
+              label="Address"
+              placeholder="Address"
+              key={form.key("address")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("address")}
+              withAsterisk
+            />
+            <TextInput
+              label="City"
+              placeholder="City"
+              key={form.key("city")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("city")}
+              withAsterisk
+            />
+            <DateInput
+              label="Start date"
+              placeholder="Start date"
+              key={form.key("date")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("date")}
+              withAsterisk
+              hideOutsideDates
+            />
+          </Stepper.Step>
 
-                <Text
-                  size="md"
-                  c={
-                    colorScheme === "dark" ? COLORS.grayDark : COLORS.grayLight
-                  }
+          <Stepper.Completed>
+            {isSubmitting ? (
+              <Center>
+                <Loader size="lg" mt={40} />
+              </Center>
+            ) : (
+              showMessage && (
+                <Card
+                  shadow="sm"
+                  mt={40}
+                  padding="lg"
+                  withBorder
+                  style={{
+                    textAlign: "center",
+                  }}
                 >
-                  Open the email from us 📧 <br />
-                  Click the approval link 🔗 <br />
-                  Confirm the agreement to move forward ✅ <br />
-                  Receive the digitally signed document 📄
-                </Text>
-              </Card>
-            )
-          )}
-        </Stepper.Completed>
-      </Stepper>
+                  <Text>
+                    <ThemeIcon radius="xl" size="xl" color={COLORS.green}>
+                      <IconCheck size="1.5rem" />
+                    </ThemeIcon>
+                  </Text>
 
-      <Group justify="flex-end" mt="xl">
-        {active > 0 && active < 4 && !isSubmitting && (
-          <Button variant="default" onClick={prevStep}>
-            Back
-          </Button>
-        )}
-        {active < 4 && (
-          <Button onClick={active < 3 ? nextStep : handleSubmit}>
-            {active < 3 ? "Continue" : "Generate Agreement"}
-          </Button>
-        )}
-      </Group>
+                  <Text size="lg" fw={700} c={COLORS.green} mt="md">
+                    Your agreement generation has started successfully!
+                  </Text>
+
+                  <Text size="sm" mt="sm">
+                    📨 You will receive an email within a minute with a link to
+                    approve the agreement.
+                  </Text>
+
+                  <Text size="lg" fw={700} c={COLORS.blue} mt="md">
+                    The email link will be valid for <strong>5 minutes</strong>.
+                    Please approve it within this time.
+                  </Text>
+
+                  <Text size="lg" fw={600} c={COLORS.blue} mt="md">
+                    ✅ Next Steps:
+                  </Text>
+
+                  <Text
+                    size="md"
+                    c={
+                      colorScheme === "dark"
+                        ? COLORS.grayDark
+                        : COLORS.grayLight
+                    }
+                  >
+                    Open the email from us 📧 <br />
+                    Click the approval link 🔗 <br />
+                    Confirm the agreement to move forward ✅ <br />
+                    Receive the digitally signed document 📄
+                  </Text>
+                </Card>
+              )
+            )}
+          </Stepper.Completed>
+        </Stepper>
+
+        <Group justify="flex-end" mt="xl">
+          {active > 0 && active < 4 && !isSubmitting && (
+            <Button variant="default" onClick={prevStep}>
+              Back
+            </Button>
+          )}
+          {active < 4 && (
+            <Button onClick={active < 3 ? nextStep : handleSubmit}>
+              {active < 3 ? "Continue" : "Generate Agreement"}
+            </Button>
+          )}
+        </Group>
+      </Container>
     </>
   );
 }

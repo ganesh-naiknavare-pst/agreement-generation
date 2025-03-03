@@ -1,6 +1,5 @@
 export enum PageTitle {
-  Home      = "Home",
-  Agreements = "Agreements",
+  Home = "Home",
   Templates = "Templates",
-  AgreementGenerator = "Agreement Generator"
+  AgreementGenerator = "Agreement Generator",
 }
