@@ -3,14 +3,19 @@ from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
 from langchain.agents import initialize_agent, Tool, AgentType
 from helpers.rent_agreement_generator import llm, memory, graph
-from prompts import  AGENT_PREFIX
-from templates import  format_agreement_details
-from helpers.state_manager import  agreement_state
+from prompts import AGENT_PREFIX
+from templates import format_agreement_details
+from helpers.state_manager import agreement_state
 from fastapi import HTTPException
 from pydantic import BaseModel
 import os
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from constants import MAX_RETRIES, RETRY_DELAY
+from datetime import datetime, timezone
+
+import prisma as Prisma
+
+prisma = Prisma.Prisma()
 
 logging.basicConfig(level=logging.INFO)
 
@@ -85,38 +90,27 @@ def generate_agreement_with_retry(agreement_details):
 
 async def create_agreement_details(request: AgreementRequest):
     try:
-        # Store owner information
-        agreement_state.set_owner(request.owner_name)
+        print(f"Received AgreementRequest: {request.model_dump_json()}")
 
-        # Store tenant details
-        tenants = []
-        for tenant in request.tenant_details:
-            tenant_id = agreement_state.add_tenant(tenant["email"], tenant["name"], tenant.get("signature"), tenant.get("photo"))
-            tenants.append((tenant_id, tenant["email"]))
-
-        # Format agreement details
         agreement_details = format_agreement_details(
             owner_name=request.owner_name,
             tenant_details=request.tenant_details,
             property_address=request.property_address,
             city=request.city,
             rent_amount=request.rent_amount,
-            start_date=request.start_date
+            start_date=request.start_date,
         )
 
-        # Generate initial agreement
         try:
             response = generate_agreement_with_retry(agreement_details)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error generating agreement after {MAX_RETRIES} attempts: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error generating agreement: {str(e)}")
 
-        # Send initial agreement emails
         owner_success, _ = send_email_with_attachment(request.owner_email, agreement_state.pdf_file_path, "owner")
         tenant_successes = []
-        for tenant_id, tenant_email in tenants:
-            success, _ = send_email_with_attachment(tenant_email, agreement_state.pdf_file_path, "tenant", tenant_id)
+        for tenant in request.tenant_details:
+            success, _ = send_email_with_attachment(tenant["email"], agreement_state.pdf_file_path, "tenant", tenant["id"])
             tenant_successes.append(success)
-        agreement_state.is_pdf_generated = True
 
         if owner_success and all(tenant_successes):
             delete_temp_file()
@@ -130,8 +124,9 @@ async def create_agreement_details(request: AgreementRequest):
                         raise HTTPException(status_code=500, detail=f"Error generating final agreement after {MAX_RETRIES} attempts: {str(e)}")
                     # Send final agreement emails
                     owner_success, _ = send_email_with_attachment(request.owner_email, agreement_state.pdf_file_path, "owner")
-                    for tenant_id, tenant_email in tenants:
-                        send_email_with_attachment(tenant_email, agreement_state.pdf_file_path, "tenant", tenant_id)
+                    for tenant in request.tenant_details:
+                        send_email_with_attachment(tenant["email"], agreement_state.pdf_file_path, "tenant", tenant["id"])
+
                     delete_temp_file()
                     return {"message": "Final signed agreement sent to all parties!"}
                 else:
@@ -142,3 +137,5 @@ async def create_agreement_details(request: AgreementRequest):
             return {"message": "Error sending initial agreement emails."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")
+    finally:
+        await prisma.disconnect()
