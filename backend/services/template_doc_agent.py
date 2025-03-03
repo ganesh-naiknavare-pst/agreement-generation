@@ -87,9 +87,9 @@ async def template_based_agreement(req: TemplateAgreementRequest, file):
     try:
         
         secure_filename = os.path.basename(file.filename)
-        temp_dir = "/home/pst-thinkpad/Agreement/Agreement-Agent/backend/tmp"
-        os.makedirs(temp_dir, exist_ok=True)
-        temp_file_path = os.path.join(temp_dir, secure_filename)
+        base_dir = os.path.join(os.path.dirname(__file__), "temp")
+        os.makedirs(base_dir, exist_ok=True)
+        temp_file_path = os.path.join(base_dir, secure_filename)
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         template_agreement_state.template_file_path = temp_file_path
