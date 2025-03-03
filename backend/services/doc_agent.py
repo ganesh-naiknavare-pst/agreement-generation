@@ -123,10 +123,11 @@ async def create_agreement_details(request: AgreementRequest):
         # Store tenant details
         tenants = []
         for tenant in request.tenant_details:
+            tenant_photo_path = save_base64_image(tenant.get("photo", ""), tenant["name"])
             tenant_id = agreement_state.add_tenant(
                 tenant["email"],
                 tenant["name"],
-                tenant.get("signature"),
+                tenant_photo_path,
                 tenant.get("photo"),
             )
             tenants.append((tenant_id, tenant["email"]))
