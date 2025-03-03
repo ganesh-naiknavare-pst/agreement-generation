@@ -1,7 +1,7 @@
 generator db {
 provider = "prisma-client-py"
 interface = "asyncio"
-  recursive_type_depth = 5
+recursive_type_depth = 5
 }
 
 datasource db {
@@ -12,7 +12,7 @@ datasource db {
 model Agreement {
   id        Int             @id @default(autoincrement())
   createdAt DateTime        @default(now())
-  status    AgreementStatus @default(WAITING_FOR_OWNER_AND_TENANT_TO_APPROVE_AGREEMENT)
+  status    AgreementStatus @default(PROCESSING)
   pdf       Bytes?
   address   String
   city      String
@@ -41,7 +41,5 @@ model Tenant {
 
 enum AgreementStatus {
   APPROVED
-  WAITING_FOR_OWNER_TO_APPROVE_AGREEMENT
-  WAITING_FOR_TENANT_TO_APPROVE_AGREEMENT
-  WAITING_FOR_OWNER_AND_TENANT_TO_APPROVE_AGREEMENT
+  PROCESSING
 }

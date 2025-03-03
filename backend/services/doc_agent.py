@@ -100,11 +100,16 @@ async def create_agreement_details(request: AgreementRequest):
             rent_amount=request.rent_amount,
             start_date=request.start_date,
         )
+        
+        tenants = []
+        for tenant in request.tenant_details:
+            tenant_id = agreement_state.add_tenant(tenant["email"], tenant["name"], tenant.get("signature"), tenant.get("photo"))
+            tenants.append((tenant_id, tenant["email"]))
 
         try:
             response = generate_agreement_with_retry(agreement_details)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error generating agreement: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error generating agreement after {MAX_RETRIES} attempts: {str(e)}")
 
         owner_success, _ = send_email_with_attachment(request.owner_email, agreement_state.pdf_file_path, "owner")
         tenant_successes = []
