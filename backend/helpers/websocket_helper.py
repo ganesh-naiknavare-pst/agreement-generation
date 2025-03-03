@@ -37,7 +37,7 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
                         agreement_state.tenants[user_id] = data.get("approved", False)
                         if agreement_state.tenants[user_id]:
                             tenant_name = agreement_state.tenant_names[user_id]
-                            tenant_signature_path = ""
+                            tenant_signature_path = agreement_state.tenant_signatures[user_id]
                             if os.path.isfile(tenant_signature_path):
                                 agreement_state.tenant_signatures[user_id] = tenant_signature_path
                             else:
@@ -55,7 +55,7 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
                     elif user_id == agreement_state.owner_id:
                         agreement_state.owner_approved = data.get("approved", False)
                         if agreement_state.owner_approved:
-                            owner_signature_path = ""
+                            owner_signature_path = agreement_state.owner_signature
                             if os.path.exists(owner_signature_path):
                                 agreement_state.owner_signature = owner_signature_path
                             else:

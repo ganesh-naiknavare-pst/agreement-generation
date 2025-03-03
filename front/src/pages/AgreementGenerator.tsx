@@ -22,7 +22,7 @@ import { DateInput } from "@mantine/dates";
 import { COLORS } from "../colors";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
-import { Dropzone } from "@mantine/dropzone";
+import { Dropzone, FileWithPath } from "@mantine/dropzone";
 
 export function AgreementGenerator() {
   const [active, setActive] = useState(0);
@@ -38,11 +38,13 @@ export function AgreementGenerator() {
       ownerFullName: "",
       ownerEmailAddress: "",
       ownerImageUrl: "",
+      owner_signature: "",
       tenantNumber: 2,
       tenants: Array.from({ length: 2 }, () => ({
         fullName: "",
         email: "",
         tenantImageUrl: "",
+        tenant_signature: "",
       })),
       address: "",
       city: "",
@@ -111,6 +113,7 @@ export function AgreementGenerator() {
             fullName: "",
             email: "",
             tenantImageUrl: "",
+            tenant_signature: "",
           }
       )
     );
@@ -139,9 +142,11 @@ export function AgreementGenerator() {
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
+      owner_signature: form.values.owner_signature,
       tenant_details: form.values.tenants.map((tenant) => ({
         name: tenant.fullName,
         email: tenant.email,
+        signature: tenant.tenant_signature,
       })),
       property_address: form.values.address,
       city: form.values.city,
@@ -158,6 +163,14 @@ export function AgreementGenerator() {
     }
   };
 
+  const handleSignatureUpload = (field: string, files: FileWithPath[]) => {
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      form.setFieldValue(field, reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
   return (
     <>
       <Title
@@ -205,12 +218,23 @@ export function AgreementGenerator() {
               </Text>
             </Text>
           </Group>
-          <Dropzone onDrop={() => {}} accept={[".png", ".jpeg"]}>
+          <Dropzone onDrop={(files) => handleSignatureUpload("owner_signature", files)} accept={[".png", ".jpeg"]}>
             <Group align="center" gap="md">
               <IconUpload size={20} />
               <Text>Drag a file here or click to upload</Text>
             </Group>
           </Dropzone>
+          {form.values.owner_signature && (
+            <Box mt="md">
+              <Text size="sm" fw={500}>
+                Uploaded Signature:
+              </Text>
+              <img
+                src={form.values.owner_signature}
+                style={{ maxWidth: "100%", maxHeight: "200px" }}
+              />
+            </Box>
+          )}
           <Group justify="flex-start" mt="xl">
             <Text display="inline" size="sm" fw={500}>
               Take a Picture to Upload{" "}
@@ -271,12 +295,23 @@ export function AgreementGenerator() {
                   </Text>
                 </Text>
               </Group>
-              <Dropzone onDrop={() => {}} accept={[".png", ".jpeg"]}>
+              <Dropzone onDrop={(files) => handleSignatureUpload(`tenants.${index}.tenant_signature`, files)} accept={[".png", ".jpeg"]}>
                 <Group align="center" gap="md">
                   <IconUpload size={20} />
                   <Text>Drag a file here or click to upload</Text>
                 </Group>
               </Dropzone>
+              {form.values.tenants[index].tenant_signature && (
+                <Box mt="md">
+                  <Text size="sm" fw={500}>
+                    Uploaded Signature:
+                  </Text>
+                  <img
+                    src={form.values.tenants[index].tenant_signature}
+                    style={{ maxWidth: "100%", maxHeight: "200px" }}
+                  />
+                </Box>
+              )}
               <Group justify="flex-start" mt="xl">
                 <Text display="inline" size="sm" fw={500}>
                   Take a Picture to Upload{" "}
