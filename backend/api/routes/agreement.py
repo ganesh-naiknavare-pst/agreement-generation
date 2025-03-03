@@ -6,11 +6,14 @@ from prisma import Prisma
 
 router = APIRouter()
 
+
 @router.post("/create-agreement")
 @requires_auth
-async def create_agreement(agreement: AgreementRequest,request:Request, db: Prisma = Depends(get_db)):
+async def create_agreement(
+    agreement: AgreementRequest, request: Request, db: Prisma = Depends(get_db)
+):
     agreements = await db.agreement.create(
-       data={
+        data={
             "address": agreement.property_address,
             "city": agreement.city,
             "startDate": agreement.start_date,

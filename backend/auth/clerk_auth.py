@@ -24,9 +24,10 @@ adapter = HTTPAdapter(max_retries=retry_strategy)
 session.mount("http://", adapter)
 session.mount("https://", adapter)
 
+
 def get_jwks():
     """Fetch the JWKS from Clerk"""
-    clerk_issuer = os.getenv('CLERK_ISSUER')
+    clerk_issuer = os.getenv("CLERK_ISSUER")
     if not clerk_issuer:
         logger.error("CLERK_ISSUER environment variable not set")
         raise JWTError("Clerk configuration missing")
@@ -36,7 +37,7 @@ def get_jwks():
         response = session.get(
             f"{clerk_issuer}/.well-known/jwks.json",
             timeout=10,
-            headers={'Accept': 'application/json'}
+            headers={"Accept": "application/json"},
         )
         response.raise_for_status()
         return response.json()
@@ -44,12 +45,15 @@ def get_jwks():
         logger.error(f"Failed to fetch JWKS: {str(e)}")
         raise JWTError(f"Failed to fetch JWKS: {str(e)}")
 
+
 def verify_token(token):
     """Verify the JWT token from Clerk"""
     try:
         # First decode without verification to check expiry
-        unverified_payload = jwt.decode(token, None, options={"verify_signature": False})
-        exp_timestamp = unverified_payload.get('exp')
+        unverified_payload = jwt.decode(
+            token, None, options={"verify_signature": False}
+        )
+        exp_timestamp = unverified_payload.get("exp")
         if exp_timestamp:
             exp_time = datetime.fromtimestamp(exp_timestamp)
             now = datetime.now()
@@ -70,7 +74,7 @@ def verify_token(token):
                     "kty": key["kty"],
                     "kid": key["kid"],
                     "n": key["n"],
-                    "e": key["e"]
+                    "e": key["e"],
                 }
                 break
 
@@ -85,8 +89,8 @@ def verify_token(token):
             token,
             rsa_key,
             algorithms=["RS256"],
-            issuer=os.getenv('CLERK_ISSUER'),
-            options=options
+            issuer=os.getenv("CLERK_ISSUER"),
+            options=options,
         )
 
         logger.info("Token verified successfully")
@@ -101,22 +105,24 @@ def verify_token(token):
         logger.error(f"Unexpected error: {str(e)}")
         raise
 
+
 def requires_auth(func):
     @wraps(func)
     async def decorated(*args, **kwargs):
-        request = kwargs.get('request')
+        request = kwargs.get("request")
         if not request or not isinstance(request, Request):
-            raise HTTPException(status_code=401, detail={"error": "No valid request object"})
-        auth_header = request.headers.get('Authorization')
+            raise HTTPException(
+                status_code=401, detail={"error": "No valid request object"}
+            )
+        auth_header = request.headers.get("Authorization")
 
         if not auth_header:
             raise HTTPException(
-                status_code=401,
-                detail={"error": "No authorization header"}
+                status_code=401, detail={"error": "No authorization header"}
             )
 
         try:
-            token = auth_header.split(' ')[1]
+            token = auth_header.split(" ")[1]
             try:
                 payload = verify_token(token)
                 request.state.user = payload
@@ -127,8 +133,8 @@ def requires_auth(func):
                     detail={
                         "error": "Token has expired",
                         "code": "token_expired",
-                        "message": "Please refresh your token"
-                    }
+                        "message": "Please refresh your token",
+                    },
                 )
             except JWTError as e:
                 raise HTTPException(
@@ -136,8 +142,8 @@ def requires_auth(func):
                     detail={
                         "error": str(e),
                         "code": "invalid_token",
-                        "message": "Invalid or malformed token"
-                    }
+                        "message": "Invalid or malformed token",
+                    },
                 )
 
         except Exception as e:
@@ -147,8 +153,8 @@ def requires_auth(func):
                 detail={
                     "error": "Invalid token format",
                     "code": "invalid_format",
-                    "message": "Authorization header format should be 'Bearer <token>'"
-                }
+                    "message": "Authorization header format should be 'Bearer <token>'",
+                },
             )
 
     return decorated
