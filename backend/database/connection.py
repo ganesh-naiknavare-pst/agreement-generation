@@ -19,3 +19,4 @@ async def get_db():
         yield db
     finally:
         await conn_manager.disconnect()
+        
