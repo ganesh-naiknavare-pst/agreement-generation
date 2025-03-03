@@ -10,30 +10,36 @@ datasource db {
 }
 
 model Agreement {
-  id        Int      @id @default(autoincrement())
-  tenantId  Int
-  ownerId   Int
+  id        Int             @id @default(autoincrement())
+  createdAt DateTime        @default(now())
+  status    AgreementStatus @default(PROCESSING)
+  pdf       Bytes?
+  address   String
+  city      String
   startDate DateTime
-  endDate   DateTime
-  createdAt DateTime @default(now())
-  Owner     Owner    @relation(fields: [ownerId], references: [id])
-  Tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  owner     Owner[]
+  tenants   Tenant[]
 }
 
 model Owner {
-  id        Int         @id @default(autoincrement())
-  name      String
-  email     String      @unique
-  phone     String
-  createdAt DateTime    @default(now())
-  Agreement Agreement[]
+  id            Int         @id @default(autoincrement())
+  agreementId   Int
+  name          String
+  email         String      @unique
+  createdAt     DateTime    @default(now())
+  agreement     Agreement   @relation(fields: [agreementId], references: [id])
 }
 
 model Tenant {
-  id        Int         @id @default(autoincrement())
-  name      String
-  email     String      @unique
-  phone     String
-  createdAt DateTime    @default(now())
-  Agreement Agreement[]
+  id            Int         @id @default(autoincrement())
+  agreementId   Int
+  name          String
+  email         String      @unique
+  createdAt     DateTime    @default(now())
+  agreement     Agreement   @relation(fields: [agreementId], references: [id])
+}
+
+enum AgreementStatus {
+  APPROVED
+  PROCESSING
 }
