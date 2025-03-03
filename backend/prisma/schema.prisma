@@ -12,7 +12,7 @@ datasource db {
 model Agreement {
   id        Int             @id @default(autoincrement())
   createdAt DateTime        @default(now())
-  status    AgreementStatus @default(PROCESSING)
+  status    AgreementStatus @default(WAITING_FOR_OWNER_AND_TENANT_TO_APPROVE_AGREEMENT)
   pdf       Bytes?
   address   String
   city      String
@@ -40,6 +40,8 @@ model Tenant {
 }
 
 enum AgreementStatus {
-  PROCESSING
-  GENERATED
+  APPROVED
+  WAITING_FOR_OWNER_TO_APPROVE_AGREEMENT
+  WAITING_FOR_TENANT_TO_APPROVE_AGREEMENT
+  WAITING_FOR_OWNER_AND_TENANT_TO_APPROVE_AGREEMENT
 }
