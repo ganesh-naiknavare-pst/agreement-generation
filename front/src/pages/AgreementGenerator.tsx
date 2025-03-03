@@ -148,7 +148,7 @@ export function AgreementGenerator() {
       property_address: form.values.address,
       city: form.values.city,
       rent_amount: "1500",
-      start_date: form.values.date.toISOString().split("T")[0],
+      start_date: form.values.date.toISOString(),
     };
     try {
       await fetchData({
