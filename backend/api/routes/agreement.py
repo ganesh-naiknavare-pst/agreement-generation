@@ -9,7 +9,11 @@ router = APIRouter()
 @router.post("/create-agreement")
 async def create_agreement(request: AgreementRequest, db: Prisma = Depends(get_db)):
     agreements = await db.agreement.create(
-        data={"address": request.property_address}
+       data={
+            "address": request.property_address,
+            "city": request.city,
+            "startDate": request.start_date,
+        }
     )
 
     await db.owner.create(

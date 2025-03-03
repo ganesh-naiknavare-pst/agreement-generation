@@ -15,7 +15,8 @@ model Agreement {
   status    AgreementStatus @default(PROCESSING)
   pdf       Bytes?
   address   String
-  startDate DateTime?
+  city      String
+  startDate DateTime
   owner     Owner[]
   tenants   Tenant[]
 }

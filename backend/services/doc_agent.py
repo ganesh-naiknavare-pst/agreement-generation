@@ -26,7 +26,7 @@ class AgreementRequest(BaseModel):
     property_address: str
     city: str
     rent_amount: str
-    start_date: str
+    start_date: datetime
 
 def run_agreement_tool(user_input: str) -> str:
     output = None
