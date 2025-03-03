@@ -1,5 +1,5 @@
 import { Box, Text, Flex } from "@mantine/core";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import cx from "clsx";
 import classes from "./TableOfContents.module.css";
 import { PageTitle } from "../../types";
@@ -58,28 +58,34 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
 ];
 
 export const SidebarLink = ({ isCollapsed }: { isCollapsed: boolean }) => {
-  const [state, setState] = useState<PageTitle>(PageTitle.Home);
-  const [hover, setHover] = useState<PageTitle>(PageTitle.Home);
+  const location = useLocation();
+  const currentPath =
+    location.pathname.slice(1) === "" ? "home" : location.pathname.slice(1);
+  const [state, setState] = useState<string>(currentPath);
+  const [hover, setHover] = useState<string>(currentPath);
 
   return (
     <>
       {SIDEBAR_ITEMS.map((item) => (
         <NavLink
           to={item.path ?? "/"}
-          key={item.name}
+          key={item.path}
           className={classes.link}
           style={{ textDecoration: "none" }}
         >
           <Box
-            onMouseOver={() => setHover(item.name)}
-            onClick={() => setState(item.name)}
+            onMouseOver={() => setHover(item.path ?? "home")}
+            onClick={() => setState(item.path ?? "home")}
             className={cx(classes.link, {
               [classes.collapsed]: isCollapsed,
-              [classes.linkHover]: hover === item.name,
-              [classes.linkActive]: state === item.name,
+              [classes.linkHover]: hover === item.path,
+              [classes.linkActive]: state === item.path,
             })}
           >
-            <Flex justify={isCollapsed? "flex-end": "flex-start"} align="center">
+            <Flex
+              justify={isCollapsed ? "flex-end" : "flex-start"}
+              align="center"
+            >
               <item.icon size={20} />
               <Text pl={5}>{!isCollapsed && item.name}</Text>
             </Flex>

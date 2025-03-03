@@ -13,7 +13,7 @@ os.environ["OPENAI_API_KEY"] = "XXX"
 
 memory = ConversationBufferMemory(memory_key="chat_history")
 llm = ChatOpenAI(
-    model= Model.GPT_4.value,
+    model= Model.GPT_MODEL.value,
     temperature=0,
     max_tokens=None,
     timeout=None,
@@ -40,7 +40,7 @@ def generate_agreement(state: State):
     if template_agreement_state.is_pdf_generated:
         return {"messages": template_agreement_state.agreement_text}
 
-    template_chunks = extract_text_from_pdf("/home/pst-thinkpad/Agreement/Agreement-Agent/backend/Files/Identification.pdf")
+    template_chunks = extract_text_from_pdf(template_agreement_state.template_file_path)
 
     generated_text = ""
     for chunk in template_chunks:

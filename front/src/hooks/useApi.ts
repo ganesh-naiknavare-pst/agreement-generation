@@ -3,6 +3,7 @@ import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 
 export enum BackendEndpoints {
   CreateAgreement = "create-agreement",
+  CreateTemplateBasedAgreement = "create-template-based-agreement"
 }
 
 interface ApiResponse<T> {
@@ -48,6 +49,8 @@ const useApi = <T>(endpoint: BackendEndpoints): ApiResponse<T> => {
         params: params,
         ...rest,
       };
+
+      console.log("Config------------->", config);
 
       const response: AxiosResponse<T> = await axios(config);
       setData(response.data);

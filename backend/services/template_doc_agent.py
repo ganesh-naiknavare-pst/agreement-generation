@@ -1,3 +1,4 @@
+import logging
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
 from langchain.agents import initialize_agent, Tool, AgentType
@@ -7,6 +8,13 @@ from helpers.state_manager import template_agreement_state
 from fastapi import HTTPException
 import os
 from pydantic import BaseModel
+import shutil
+import os
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from constants import MAX_RETRIES, RETRY_DELAY
+import tempfile
+
+logging.basicConfig(level=logging.INFO)
 
 class TemplateAgreementRequest(BaseModel):
     user_prompt: str
@@ -27,18 +35,19 @@ tools = [
     Tool(
         name="generate_agreement",
         func=run_agreement_tool,
-        description="Generate a rental agreement PDF from the provided details. Output only the agreement text.",
+        description="Generate a agreement PDF from the provided details. Output only the agreement text.",
     )
 ]
 
 def delete_temp_file():
     """Deletes the temporary agreement file if it exists."""
     try:
-        if template_agreement_state.pdf_file_path and os.path.exists(template_agreement_state.pdf_file_path):
-            os.remove(template_agreement_state.pdf_file_path)
-            print(f"Temporary file deleted: {template_agreement_state.pdf_file_path}")
-        else:
-            print(f"Temp file not found: {template_agreement_state.pdf_file_path}")
+        for file_path in [template_agreement_state.pdf_file_path, template_agreement_state.template_file_path]:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"Temporary file deleted: {file_path}")
+            else:
+                print(f"Temp file not found: {file_path}")
     except Exception as e:
         print(f"Error deleting temp file: {str(e)}")
 
@@ -55,11 +64,38 @@ agent = initialize_agent(
     agent_kwargs=AGENT_PREFIX,
 )
 
-async def template_based_agreement(req: TemplateAgreementRequest):
+def log_before_retry(retry_state):
+    attempt = retry_state.attempt_number
+    logging.info(f"Retry attempt {attempt}: Retrying agreement generation...")
+    delete_temp_file()
+
+def log_after_failure(retry_state):
+    exception = retry_state.outcome.exception()
+    logging.info(f"Agreement generation failed after {retry_state.attempt_number} attempts : {str(exception)}")
+    
+@retry(
+    stop=stop_after_attempt(MAX_RETRIES),
+    wait=wait_fixed(RETRY_DELAY),
+    retry=retry_if_exception_type(Exception),
+    before_sleep=log_before_retry,
+    after=log_after_failure
+)
+def generate_agreement_with_retry(agreement_details):
+    return agent.run(agreement_details)
+
+async def template_based_agreement(req: TemplateAgreementRequest, file):
     try:
         
+        secure_filename = os.path.basename(file.filename)
+        temp_dir = "/home/pst-thinkpad/Agreement/Agreement-Agent/backend/tmp"
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_file_path = os.path.join(temp_dir, secure_filename)
+        with open(temp_file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        template_agreement_state.template_file_path = temp_file_path
+        print(f"Template file path: {template_agreement_state.template_file_path}")
         try:
-            response = agent.run(req.user_prompt)
+            response = generate_agreement_with_retry(req.user_prompt)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error generating agreement: {str(e)}")
 
@@ -73,7 +109,10 @@ async def template_based_agreement(req: TemplateAgreementRequest):
                 # Wait for approvals
                 approved = await listen_for_approval(timeout_seconds=300, is_template=True)
                 if approved:
-                    final_response = agent.run(req.user_prompt)
+                    try:
+                        final_response = generate_agreement_with_retry(req.user_prompt)
+                    except Exception as e:
+                        raise HTTPException(status_code=500, detail=f"Error generating final agreement after {MAX_RETRIES} attempts: {str(e)}")
                     # Send final agreement emails
                     authority_success, _ = send_email_with_attachment(req.authority_email, template_agreement_state.pdf_file_path, "Authority", True)
                     participent_success, _ = send_email_with_attachment(req.participent_email, template_agreement_state.pdf_file_path, "Participent", True)

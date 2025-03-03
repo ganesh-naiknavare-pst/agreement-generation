@@ -49,6 +49,7 @@ class TemplateAgreementState:
         self.participent_signature = ""
         self.authority_signature = ""
         self.pdf_file_path = ""
+        self.template_file_path = ""
         self.is_pdf_generated = False
 
     def is_fully_approved(self):
