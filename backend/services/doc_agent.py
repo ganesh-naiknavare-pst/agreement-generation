@@ -123,15 +123,6 @@ async def create_agreement_details(request: AgreementRequest):
             start_date=request.start_date,
         )
 
-        tenants = []
-        for tenant in request.tenant_details:
-            tenant_id = agreement_state.add_tenant(
-                tenant["email"],
-                tenant["name"],
-                tenant.get("signature"),
-                tenant.get("photo"),
-            )
-            tenants.append((tenant_id, tenant["email"]))
 
         try:
             response = generate_agreement_with_retry(agreement_details)
