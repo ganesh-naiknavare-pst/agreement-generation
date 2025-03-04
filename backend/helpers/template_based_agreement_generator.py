@@ -52,8 +52,6 @@ def generate_agreement(state: State):
         response = llm.invoke(messages)
         generated_text += response.content + "\n"
 
-    print(f"Generated text: {generated_text}")
-
     response_sign = add_signature(generated_text)
     template_agreement_state.agreement_text = response_sign.content
 
@@ -64,10 +62,6 @@ def create_pdf(state: State):
         content= template_agreement_state.agreement_text
     else:
         content = state["messages"][-1].content
-
-    if template_agreement_state.is_fully_approved():
-        content = content.replace("[AUTHORITY_SIGNATURE]", template_agreement_state.authority_signature)
-        content = content.replace("[PARTICIPANT_SIGNATURE]", template_agreement_state.participent_signature)
     content = content.replace("₹", "Rs.")
 
     content = content.encode('ascii', 'ignore').decode()
@@ -81,6 +75,19 @@ def create_pdf(state: State):
     )
     template_agreement_state.pdf_file_path = temp_pdf_path
     return {"messages": content}
+
+def update_pdf_with_signatures():
+    """Updates the existing agreement PDF by replacing placeholders with actual signatures."""
+    content = template_agreement_state.agreement_text
+
+    if template_agreement_state.is_fully_approved():
+        content = content.replace("[AUTHORITY_SIGNATURE]", template_agreement_state.authority_signature)
+        content = content.replace("[PARTICIPANT_SIGNATURE]", template_agreement_state.participent_signature)
+
+    # Convert updated content to PDF
+    temp_pdf_path = template_agreement_state.pdf_file_path
+    pypandoc.convert_text(content, "pdf", format="md", outputfile=temp_pdf_path)
+
 # Build graph
 graph_builder = StateGraph(State)
 graph_builder.add_node("generate", generate_agreement)

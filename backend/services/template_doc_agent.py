@@ -2,7 +2,7 @@ import logging
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
 from langchain.agents import initialize_agent, Tool, AgentType
-from helpers.template_based_agreement_generator import llm, memory, template_graph
+from helpers.template_based_agreement_generator import llm, memory, template_graph, update_pdf_with_signatures
 from prompts import  AGENT_PREFIX
 from helpers.state_manager import template_agreement_state
 from fastapi import HTTPException
@@ -117,16 +117,13 @@ async def template_based_agreement(req: TemplateAgreementRequest, file):
         template_agreement_state.is_pdf_generated = True
 
         if authority_success and participent_success:
-            delete_temp_file()
+            # delete_temp_file()
             delete_template_file()
             try:
                 # Wait for approvals
                 approved = await listen_for_approval(timeout_seconds=300, is_template=True)
                 if approved:
-                    try:
-                        final_response = generate_agreement_with_retry(req.user_prompt)
-                    except Exception as e:
-                        raise HTTPException(status_code=500, detail=f"Error generating final agreement after {MAX_RETRIES} attempts: {str(e)}")
+                    update_pdf_with_signatures()
                     # Send final agreement emails
                     authority_success, _ = send_email_with_attachment(req.authority_email, template_agreement_state.pdf_file_path, "Authority", True)
                     participent_success, _ = send_email_with_attachment(req.participent_email, template_agreement_state.pdf_file_path, "Participent", True)
