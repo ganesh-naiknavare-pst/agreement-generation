@@ -24,6 +24,9 @@ llm = ChatOpenAI(
 from prompts import AGREEMENT_SYSTEM_PROMPT
 
 def generate_agreement(state: State):
+    # Reset memory for fresh conversation
+    memory.clear()
+    
     if agreement_state.is_pdf_generated:
         return {"messages": agreement_state.agreement_text}
     system_msg = {
@@ -59,10 +62,12 @@ def resize_image(image_path, max_width, max_height):
 
 
 def create_pdf(state: State):
+    # Use stored agreement text if available, otherwise get from messages
     if agreement_state.is_pdf_generated:
         content = agreement_state.agreement_text
     else:
         content = state["messages"][-1].content
+        agreement_state.agreement_text = content  # Store for later use
 
     if agreement_state.is_fully_approved():
         # Replace owner signature with image

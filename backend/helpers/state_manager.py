@@ -9,6 +9,9 @@ class State(TypedDict):
 
 class AgreementState:
     def __init__(self):
+        self.reset()
+        
+    def reset(self):
         self.owner_id = str(uuid.uuid4())
         self.owner_name = ""
         self.tenants = {}
