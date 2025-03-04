@@ -36,4 +36,4 @@ async def create_agreement(
             }
         )
 
-    return await create_agreement_details(agreement)
+    return await create_agreement_details(agreement, agreements.id, db)

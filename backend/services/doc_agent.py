@@ -14,6 +14,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_t
 from constants import MAX_RETRIES, RETRY_DELAY
 from datetime import datetime
 import base64
+from prisma import Base64
 
 logging.basicConfig(level=logging.INFO)
 
@@ -99,6 +100,7 @@ def log_after_failure(retry_state):
 def generate_agreement_with_retry(agreement_details):
     return agent.invoke(agreement_details)
 
+
 def save_base64_image(photo_data: str, user_id: str) -> str:
     if photo_data.startswith("data:image/jpeg;base64,"):
         photo_data = photo_data.replace("data:image/jpeg;base64,", "")
@@ -114,16 +116,23 @@ def save_base64_image(photo_data: str, user_id: str) -> str:
         return photo_path
     return ""
 
-async def create_agreement_details(request: AgreementRequest):
+
+async def create_agreement_details(
+    request: AgreementRequest, agreement_id: int, db: object
+):
     try:
         # Store owner information
-        agreement_state.owner_photo = save_base64_image(request.owner_photo, request.owner_name)
+        agreement_state.owner_photo = save_base64_image(
+            request.owner_photo, request.owner_name
+        )
         agreement_state.set_owner(request.owner_name)
 
         # Store tenant details
         tenants = []
         for tenant in request.tenant_details:
-            tenant_photo_path = save_base64_image(tenant.get("photo", ""), tenant["name"])
+            tenant_photo_path = save_base64_image(
+                tenant.get("photo", ""), tenant["name"]
+            )
             tenant_id = agreement_state.add_tenant(
                 tenant["email"],
                 tenant["name"],
@@ -141,7 +150,6 @@ async def create_agreement_details(request: AgreementRequest):
             rent_amount=request.rent_amount,
             start_date=request.start_date,
         )
-
 
         try:
             response = generate_agreement_with_retry(agreement_details)
@@ -188,10 +196,20 @@ async def create_agreement_details(request: AgreementRequest):
                             "tenant",
                             tenant_id,
                         )
+                    with open(agreement_state.pdf_file_path, "rb") as pdf_file:
+                        pdf_base64 = Base64.encode(pdf_file.read())
+                    await db.agreement.update(
+                        where={"id": agreement_id},
+                        data={"pdf": pdf_base64, "status": "APPROVED"},
+                    )
                     delete_temp_file()
-                    shutil.rmtree('./utils')
+                    shutil.rmtree("./utils")
                     return {"message": "Final signed agreement sent to all parties!"}
                 else:
+                    await db.agreement.update(
+                        where={"id": agreement_id},
+                        data={"status": "REJECTED"},
+                    )
                     return {
                         "message": "Agreement was rejected or approval process failed."
                     }
