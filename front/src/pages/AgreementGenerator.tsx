@@ -32,7 +32,8 @@ export function AgreementGenerator() {
   const [showMessage, setShowMessage] = useState(false);
   const { colorScheme } = useMantineColorScheme();
   const { fetchData } = useApi(BackendEndpoints.CreateAgreement);
-  const [showAlert, setShowAlert] = useState(false);
+  const [showAlertForSign, setShowAlertForSign] = useState(false);
+  const [showAlertForPhoto, setShowAlertForPhoto] = useState(false);
 
   const form = useForm({
     mode: "controlled",
@@ -40,13 +41,13 @@ export function AgreementGenerator() {
       ownerFullName: "",
       ownerEmailAddress: "",
       ownerImageUrl: "",
-      owner_signature: "",
+      ownerSignature: "",
       tenantNumber: 2,
       tenants: Array.from({ length: 2 }, () => ({
         fullName: "",
         email: "",
         tenantImageUrl: "",
-        tenant_signature: "",
+        tenantSignature: "",
       })),
       address: "",
       city: "",
@@ -64,8 +65,13 @@ export function AgreementGenerator() {
           errors.ownerEmailAddress = "Invalid email";
         }
         if (values.ownerImageUrl === "") {
-          setShowAlert(true);
+          setShowAlertForPhoto(true);
           errors.ownerImageUrl = "Please take a owner picture";
+        }
+
+        if (values.ownerSignature === "") {
+          setShowAlertForSign(true);
+          errors.ownerSignature = "Please upload signature";
         }
       }
 
@@ -83,8 +89,14 @@ export function AgreementGenerator() {
             errors[`tenants.${index}.email`] = "Invalid email";
           }
           if (tenant.tenantImageUrl === "") {
-            setShowAlert(true);
-            errors.ownerImageUrl = "Please take a owner picture";
+            setShowAlertForPhoto(true);
+            errors[`tenants.${index}.tenantImageUrl`] =
+              "Please take a tenant picture";
+          }
+          if (tenant.tenantSignature === "") {
+            setShowAlertForSign(true);
+            errors[`tenants.${index}.tenantSignature`] =
+              "Please upload signature";
           }
         });
       }
@@ -115,7 +127,7 @@ export function AgreementGenerator() {
             fullName: "",
             email: "",
             tenantImageUrl: "",
-            tenant_signature: "",
+            tenantSignature: "",
           }
       )
     );
@@ -144,12 +156,12 @@ export function AgreementGenerator() {
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
-      owner_signature: form.values.owner_signature,
+      owner_signature: form.values.ownerSignature,
       owner_photo: form.values.ownerImageUrl,
       tenant_details: form.values.tenants.map((tenant) => ({
         name: tenant.fullName,
         email: tenant.email,
-        signature: tenant.tenant_signature,
+        signature: tenant.tenantSignature,
         photo: tenant.tenantImageUrl,
       })),
       property_address: form.values.address,
@@ -172,13 +184,14 @@ export function AgreementGenerator() {
     const reader = new FileReader();
     reader.onload = () => {
       form.setFieldValue(field, reader.result as string);
+      setShowAlertForSign(false);
     };
     reader.readAsDataURL(file);
   };
   return (
     <>
       <Title order={3}>Generate Rent Agreement</Title>
-      {showAlert && (
+      {(showAlertForSign || showAlertForPhoto) && (
         <Alert
           m="1rem"
           variant="light"
@@ -186,7 +199,8 @@ export function AgreementGenerator() {
           title="Warning"
           icon={<IconAlertTriangle />}
         >
-          A photo upload is required. You cannot proceed without it.
+          Please fill in all required fields before proceeding. All fields are
+          mandatory.
         </Alert>
       )}
       <Divider my="2rem" />
@@ -219,9 +233,7 @@ export function AgreementGenerator() {
               </Text>
             </Group>
             <Dropzone
-              onDrop={(files) =>
-                handleSignatureUpload("owner_signature", files)
-              }
+              onDrop={(files) => handleSignatureUpload("ownerSignature", files)}
               accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
             >
               <Group align="center" gap="md">
@@ -229,13 +241,13 @@ export function AgreementGenerator() {
                 <Text>Drag a file here or click to upload</Text>
               </Group>
             </Dropzone>
-            {form.values.owner_signature && (
+            {form.values.ownerSignature && (
               <Box mt="md">
                 <Text size="sm" fw={500}>
                   Uploaded Signature:
                 </Text>
                 <Image
-                  src={form.values.owner_signature}
+                  src={form.values.ownerSignature}
                   alt="Owner Signature"
                   w="auto"
                   h={100}
@@ -254,7 +266,7 @@ export function AgreementGenerator() {
                 imageUrl={form.values.ownerImageUrl}
                 setFieldValue={(value: string) => {
                   form.setFieldValue("ownerImageUrl", value as string);
-                  setShowAlert(false);
+                  setShowAlertForPhoto(false);
                 }}
               />
             </Group>
@@ -306,7 +318,7 @@ export function AgreementGenerator() {
                 <Dropzone
                   onDrop={(files) =>
                     handleSignatureUpload(
-                      `tenants.${index}.tenant_signature`,
+                      `tenants.${index}.tenantSignature`,
                       files
                     )
                   }
@@ -317,13 +329,13 @@ export function AgreementGenerator() {
                     <Text>Drag a file here or click to upload</Text>
                   </Group>
                 </Dropzone>
-                {form.values.tenants[index].tenant_signature && (
+                {form.values.tenants[index].tenantSignature && (
                   <Box mt="md">
                     <Text size="sm" fw={500}>
                       Uploaded Signature:
                     </Text>
                     <Image
-                      src={form.values.tenants[index].tenant_signature}
+                      src={form.values.tenants[index].tenantSignature}
                       alt={`Tenant ${index + 1} Signature`}
                       w="auto"
                       h={100}
@@ -345,7 +357,7 @@ export function AgreementGenerator() {
                         `tenants.${index}.tenantImageUrl`,
                         value as string
                       );
-                      setShowAlert(false);
+                      setShowAlertForPhoto(false);
                     }}
                   />
                 </Group>
