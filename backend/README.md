@@ -1,11 +1,13 @@
 # **Backend - Agreement Agent**
 
 ## **Project Overview**
+
 This backend powers the **Agreement Agent**, handling user authentication, tenant management, agreement generation, and real-time updates. It is built with **FastAPI**, **Prisma ORM**, and integrates AI-powered document generation using **Langchain**.
 
 ---
 
 ## **Tech Stack**
+
 - **FastAPI** - Backend framework
 - **Prisma + PostgreSQL** - ORM & Database
 - **Poetry** - Dependency management
@@ -28,22 +30,28 @@ This backend powers the **Agreement Agent**, handling user authentication, tenan
 ## **Setup & Installation**
 
 ### **1. Clone the Repository**
+
 ```bash
 git clone git@github.com:positsource/Agreement-Agent.git
 cd Agreement-Agent/backend
 ```
 
 ### **2. Install Dependencies**
+
 ```bash
 make install
 ```
 
 ### **3. Database Setup (Prisma + PostgreSQL)**
+
 Generate the Prisma client:
+
 ```bash
 make prisma-generate
 ```
+
 Push the Prisma schema to the database:
+
 ```bash
 make prisma-db-push
 ```
@@ -52,20 +60,26 @@ make prisma-db-push
 
 ## **Running the Backend Services**
 
+### **Setup Backend**
+
+Setups the backend.
+
+```bash
+make setup
+```
+
 ### **1. Backend Service **
+
 Starts the main backend server for the Agreement Agent.
+
 ```bash
 make run
 ```
 
 ### **2. g4f Server**
+
 Starts g4f server.
+
 ```bash
 make run-g4f-server
-```
-
-### **3. Document Generation Agent**
-Runs the AI-powered document generation service.
-```bash
-make run-doc-agent
 ```
