@@ -1,0 +1,12 @@
+{
+  "name": "Agreement-Agent",
+  "version": "1.0.0",
+  "repository": "git@github.com:positsource/Agreement-Agent.git",
+  "scripts": {
+    "start": "concurrently \"cd front && yarn dev\" \"cd backend && make run-g4f-server\" \"cd backend && make run\"",
+    "setup": "cd backend && make setup && cd ../front && yarn install"
+  },
+  "dependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
