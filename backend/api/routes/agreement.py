@@ -45,12 +45,12 @@ async def create_agreement(
 async def create_template_based_agreement(
     user_prompt: str = Form(...),
     authority_email: str = Form(...),
-    participent_email: str = Form(...),
+    participant_email: str = Form(...),
     file: UploadFile = File(...)
 ):
     req = TemplateAgreementRequest(
         user_prompt=user_prompt,
         authority_email=authority_email,
-        participent_email=participent_email
+        participant_email=participant_email
     )
     return await template_based_agreement(req, file)

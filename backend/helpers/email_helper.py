@@ -14,7 +14,7 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, i
 
     # Use the provided user_id for tenants, or owner_id for owner
     if is_template:
-        user_id = (template_agreement_state.participent_id if role == "Participent" else template_agreement_state.authority_id)
+        user_id = (template_agreement_state.participant_id if role == "Participant" else template_agreement_state.authority_id)
     else :
         if role == "owner" or user_id is None:
             user_id = agreement_state.owner_id

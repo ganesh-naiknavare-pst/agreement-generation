@@ -39,10 +39,10 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                     user_id = data.get("user_id")
 
                     if is_template:
-                        if user_id == template_agreement_state.participent_id:
-                            template_agreement_state.participent_approved = data.get("approved", False)
-                            if template_agreement_state.participent_approved:
-                                template_agreement_state.participent_signature = (f"APPROVED BY PARTICIPANT - {datetime.now()}")
+                        if user_id == template_agreement_state.participant_id:
+                            template_agreement_state.participant_approved = data.get("approved", False)
+                            if template_agreement_state.participant_approved:
+                                template_agreement_state.participant_signature = (f"APPROVED BY PARTICIPANT - {datetime.now()}")
                                 print("Participant has approved!")
                             else:
                                 print("Participant has rejected!")
@@ -113,9 +113,12 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
 
                     # Check if both parties have responded
                     if agreement_state.is_fully_approved() or template_agreement_state.is_fully_approved():
-                        logging.info(
-                            "Agreement successfully approved by Owner and Tenants."
+                        message = (
+                            "Agreement successfully approved by Authority and Participant."
+                            if template_agreement_state.is_fully_approved()
+                            else "Agreement successfully approved by Owner and Tenants."
                         )
+                        logging.info(message)
                         return True
 
                 except asyncio.TimeoutError:

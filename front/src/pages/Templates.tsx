@@ -53,7 +53,7 @@ export function Templates() {
       const formData = new FormData();
       formData.append("user_prompt", prompt);
       formData.append("authority_email", authorityEmail);
-      formData.append("participent_email", participantsEmail);
+      formData.append("participant_email", participantsEmail);
       formData.append("file", file);
 
       console.log("Submitting FormData:", Object.fromEntries(formData));

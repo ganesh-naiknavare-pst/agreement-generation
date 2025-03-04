@@ -82,7 +82,7 @@ def update_pdf_with_signatures():
 
     if template_agreement_state.is_fully_approved():
         content = content.replace("[AUTHORITY_SIGNATURE]", template_agreement_state.authority_signature)
-        content = content.replace("[PARTICIPANT_SIGNATURE]", template_agreement_state.participent_signature)
+        content = content.replace("[PARTICIPANT_SIGNATURE]", template_agreement_state.participant_signature)
 
     # Convert updated content to PDF
     temp_pdf_path = template_agreement_state.pdf_file_path
