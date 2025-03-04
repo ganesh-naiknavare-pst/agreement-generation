@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
+import { useAuth } from "@clerk/clerk-react";
 
 export enum BackendEndpoints {
   CreateAgreement = "create-agreement",
@@ -34,17 +35,23 @@ const useApi = <T>(endpoint: BackendEndpoints): ApiResponse<T> => {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const { getToken } = useAuth();
 
   const fetchData = async (options?: FetchOptions) => {
     setLoading(true);
     setError(null);
-    const { method = "POST", params,  ...rest } = options || {};
+    const token = await getToken();
+    const { method = "POST", params, headers = {}, ...rest } = options || {};
 
     try {
       const URL = generateUrl(endpoint);
       const config: AxiosRequestConfig = {
         url: URL,
         method: method,
+        headers: {
+          ...headers,
+          Authorization: `Bearer ${token}`,
+        },
         params: params,
         ...rest,
       };
