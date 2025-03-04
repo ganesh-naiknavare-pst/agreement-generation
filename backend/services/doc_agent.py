@@ -156,12 +156,12 @@ async def create_agreement_details(request: AgreementRequest):
             )
 
         owner_success, _ = send_email_with_attachment(
-            request.owner_email, agreement_state.pdf_file_path, "owner"
+            request.owner_email, agreement_state.pdf_file_path, "owner", False
         )
         tenant_successes = []
         for tenant_id, tenant_email in tenants:
             success, _ = send_email_with_attachment(
-                tenant_email, agreement_state.pdf_file_path, "tenant", tenant_id
+                tenant_email, agreement_state.pdf_file_path, "tenant", False, tenant_id
             )
             tenant_successes.append(success)
         agreement_state.is_pdf_generated = True
@@ -183,13 +183,14 @@ async def create_agreement_details(request: AgreementRequest):
                         )
                     # Send final agreement emails
                     owner_success, _ = send_email_with_attachment(
-                        request.owner_email, agreement_state.pdf_file_path, "owner"
+                        request.owner_email, agreement_state.pdf_file_path, "owner", False
                     )
                     for tenant_id, tenant_email in tenants:
                         send_email_with_attachment(
                             tenant_email,
                             agreement_state.pdf_file_path,
                             "tenant",
+                            False,
                             tenant_id,
                         )
                     delete_temp_file()

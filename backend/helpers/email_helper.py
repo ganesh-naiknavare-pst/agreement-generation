@@ -29,7 +29,7 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, i
         "attachments": [
             {
                 "fileblob": encoded_file,
-                "filename": "rental-agreement.pdf" if is_template else "agreement.pdf",
+                "filename": "agreement.pdf" if is_template else "rental-agreement.pdf",
                 "content_type": "application/pdf",
             }
         ],

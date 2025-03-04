@@ -112,7 +112,7 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                                 return False
 
                     # Check if both parties have responded
-                    if agreement_state.is_fully_approved():
+                    if agreement_state.is_fully_approved() or template_agreement_state.is_fully_approved():
                         logging.info(
                             "Agreement successfully approved by Owner and Tenants."
                         )

@@ -41,14 +41,28 @@ tools = [
 def delete_temp_file():
     """Deletes the temporary agreement file if it exists."""
     try:
-        for file_path in [template_agreement_state.pdf_file_path, template_agreement_state.template_file_path]:
-            if file_path and os.path.exists(file_path):
-                os.remove(file_path)
-                print(f"Temporary file deleted: {file_path}")
-            else:
-                print(f"Temp file not found: {file_path}")
+        if template_agreement_state.pdf_file_path and os.path.exists(
+            template_agreement_state.pdf_file_path
+        ):
+            os.remove(template_agreement_state.pdf_file_path)
+            logging.info(f"Temporary file deleted: {template_agreement_state.pdf_file_path}")
+        else:
+            logging.info(f"Temp file not found: {template_agreement_state.pdf_file_path}")
     except Exception as e:
-        print(f"Error deleting temp file: {str(e)}")
+        logging.info(f"Error deleting temp file: {str(e)}")
+        
+def delete_template_file():
+    """Deletes the template agreement file if it exists."""
+    try:
+        if template_agreement_state.template_file_path and os.path.exists(
+            template_agreement_state.template_file_path
+        ):
+            os.remove(template_agreement_state.template_file_path)
+            logging.info(f"Template file deleted: {template_agreement_state.template_file_path}")
+        else:
+            logging.info(f"Template file not found: {template_agreement_state.template_file_path}")
+    except Exception as e:
+        logging.info(f"Error deleting template file: {str(e)}")
 
 # Initialize agent
 agent = initialize_agent(
@@ -104,6 +118,7 @@ async def template_based_agreement(req: TemplateAgreementRequest, file):
 
         if authority_success and participent_success:
             delete_temp_file()
+            delete_template_file()
             try:
                 # Wait for approvals
                 approved = await listen_for_approval(timeout_seconds=300, is_template=True)
