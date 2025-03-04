@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
 from services.doc_agent import create_agreement_details, AgreementRequest
 from auth.clerk_auth import requires_auth
-from auth.clerk_auth import requires_auth
 from database.connection import get_db
 from prisma import Prisma
 from datetime import datetime, timezone

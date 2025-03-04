@@ -24,12 +24,12 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, i
     payload = {
         "sender": SENDER_EMAIL,
         "to": [recipient_email],
-        "subject": f"Rental Agreement for {role.capitalize()}",
+        "subject": f"Agreement for {role.capitalize()}" if is_template else f"Rental Agreement for {role.capitalize()}",
         "html_body": email_body,
         "attachments": [
             {
                 "fileblob": encoded_file,
-                "filename": "rental-agreement.pdf",
+                "filename": "rental-agreement.pdf" if is_template else "agreement.pdf",
                 "content_type": "application/pdf",
             }
         ],
