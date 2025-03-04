@@ -56,7 +56,7 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
                                     f"APPROVED BY {tenant_name} - {datetime.now()}"
                                 )
 
-                            tenant_photo_path = ""
+                            tenant_photo_path = agreement_state.tenant_photos[user_id]
                             if os.path.isfile(tenant_photo_path):
                                 agreement_state.tenant_photos[user_id] = (
                                     tenant_photo_path
@@ -81,7 +81,7 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
                             else:
                                 agreement_state.owner_signature = f"APPROVED BY {agreement_state.owner_name} - {datetime.now()}"
 
-                            owner_photo_path = ""
+                            owner_photo_path = agreement_state.owner_photo
                             if os.path.exists(owner_photo_path):
                                 agreement_state.owner_photo = owner_photo_path
                             else:

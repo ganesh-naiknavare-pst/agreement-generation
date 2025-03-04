@@ -139,9 +139,11 @@ export function AgreementGenerator() {
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
+      owner_photo: form.values.ownerImageUrl,
       tenant_details: form.values.tenants.map((tenant) => ({
         name: tenant.fullName,
         email: tenant.email,
+        photo: tenant.tenantImageUrl,
       })),
       property_address: form.values.address,
       city: form.values.city,
