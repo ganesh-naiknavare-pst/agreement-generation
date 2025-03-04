@@ -92,7 +92,6 @@ PENDING_APPROVAL_TEMPLATE = """
 """
 
 def generate_email_template(role: str, user_id: str, is_template: bool=False) -> str:
-    print(f"Role: {role}, User ID: {user_id}, Is Template: {is_template}")
     
     approve_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/approve"
     reject_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/reject"
