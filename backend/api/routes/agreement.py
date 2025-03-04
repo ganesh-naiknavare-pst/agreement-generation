@@ -37,3 +37,14 @@ async def create_agreement(
         )
 
     return await create_agreement_details(agreement, agreements.id, db)
+
+
+@router.get("/agreements")
+async def get_agreements(db: Prisma = Depends(get_db)):
+    agreements = await db.agreement.find_many(
+        include={
+            "owner": True,
+            "tenants": True,
+        }
+    )
+    return agreements

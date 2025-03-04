@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/clerk-react";
 
 export enum BackendEndpoints {
   CreateAgreement = "create-agreement",
+  GetAgreements = "agreements",
 }
 
 interface ApiResponse<T> {
