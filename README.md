@@ -82,6 +82,6 @@ Ensure you have the following installed:
 
    This executes:
 
-   - **Frontend**: `yarn start`
+   - **Frontend**: `yarn dev`
    - **Backend server**: `make run`
    - **G4f server**: `make run-g4f-server`
