@@ -33,10 +33,13 @@ prisma-db-push: prisma-generate
 	@echo "Pushing Prisma schema to the database..."
 	$(POETRY_CMD) run prisma db push
 
+setup: prisma-db-push
+	@echo "Setting up the backend..."
+
+run-g4f-server:
+	@echo "Starting g4f server..."
+	$(POETRY_CMD) run $(PYTHON_CMD) -m g4f.api.run
+
 run: install
 	@echo "Running the backend project..."
 	$(POETRY_CMD) run $(PYTHON_CMD) main.py
-
-run-g4f-server: install
-	@echo "Starting g4f server..."
-	$(POETRY_CMD) run $(PYTHON_CMD) -m g4f.api.run
