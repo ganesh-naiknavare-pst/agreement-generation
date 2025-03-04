@@ -23,7 +23,7 @@ import { DateInput } from "@mantine/dates";
 import { COLORS } from "../colors";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
-import { Dropzone, FileWithPath } from "@mantine/dropzone";
+import { Dropzone, FileWithPath , MIME_TYPES} from "@mantine/dropzone";
 
 export function AgreementGenerator() {
   const [active, setActive] = useState(0);
@@ -216,12 +216,12 @@ export function AgreementGenerator() {
           <Group justify="flex-start" mt="xl" mb={5}>
             <Text display="inline" size="sm" fw={500}>
               Upload Your Signature{" "}
-              <Text display="inline" c={COLORS.asteric}>
+              <Text component="span" c={COLORS.asteric}>
                 *
               </Text>
             </Text>
           </Group>
-          <Dropzone onDrop={(files) => handleSignatureUpload("owner_signature", files)} accept={[".png", ".jpeg"]}>
+          <Dropzone onDrop={(files) => handleSignatureUpload("owner_signature", files)} accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}>
             <Group align="center" gap="md">
               <IconUpload size={20} />
               <Text>Drag a file here or click to upload</Text>
@@ -244,7 +244,7 @@ export function AgreementGenerator() {
           <Group justify="flex-start" mt="xl">
             <Text display="inline" size="sm" fw={500}>
               Take a Picture to Upload{" "}
-              <Text display="inline" c={COLORS.asteric}>
+              <Text component="span" c={COLORS.asteric}>
                 *
               </Text>
             </Text>
@@ -296,12 +296,12 @@ export function AgreementGenerator() {
               <Group justify="flex-start" mt="xl" mb={5}>
                 <Text display="inline" size="sm" fw={500}>
                   Upload Your Signature{" "}
-                  <Text display="inline" c={COLORS.asteric}>
+                  <Text component="span" c={COLORS.asteric}>
                     *
                   </Text>
                 </Text>
               </Group>
-              <Dropzone onDrop={(files) => handleSignatureUpload(`tenants.${index}.tenant_signature`, files)} accept={[".png", ".jpeg"]}>
+              <Dropzone onDrop={(files) => handleSignatureUpload(`tenants.${index}.tenant_signature`, files)} accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}>
                 <Group align="center" gap="md">
                   <IconUpload size={20} />
                   <Text>Drag a file here or click to upload</Text>
@@ -324,7 +324,7 @@ export function AgreementGenerator() {
               <Group justify="flex-start" mt="xl">
                 <Text display="inline" size="sm" fw={500}>
                   Take a Picture to Upload{" "}
-                  <Text display="inline" c={COLORS.asteric}>
+                  <Text component="span" c={COLORS.asteric}>
                     *
                   </Text>
                 </Text>
