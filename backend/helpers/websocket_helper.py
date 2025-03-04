@@ -5,8 +5,6 @@ import json
 import os
 import logging
 from helpers.state_manager import agreement_state, template_agreement_state
-import logging
-from helpers.state_manager import agreement_state
 from config import WEBSOCKET_URL
 
 
@@ -17,8 +15,7 @@ class ApprovalTimeoutError(Exception):
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
-
-async def listen_for_approval(timeout_seconds: int = 300) -> bool:
+async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=False) -> bool:
     """
     Listen for approval messages with a timeout.
     Args:
@@ -41,58 +38,78 @@ async def listen_for_approval(timeout_seconds: int = 300) -> bool:
 
                     user_id = data.get("user_id")
 
-                    if user_id in agreement_state.tenants:
-                        agreement_state.tenants[user_id] = data.get("approved", False)
-                        if agreement_state.tenants[user_id]:
-                            tenant_name = agreement_state.tenant_names[user_id]
-                            logging.info(
-                                f"Tenant {tenant_name} ({user_id}) has approved the agreement."
-                            )
-                            tenant_signature_path = ""
-                            if os.path.isfile(tenant_signature_path):
-                                agreement_state.tenant_signatures[user_id] = (
-                                    tenant_signature_path
-                                )
+                    if is_template:
+                        if user_id == template_agreement_state.participent_id:
+                            template_agreement_state.participent_approved = data.get("approved", False)
+                            if template_agreement_state.participent_approved:
+                                template_agreement_state.participent_signature = (f"APPROVED BY PARTICIPANT - {datetime.now()}")
+                                print("Participant has approved!")
                             else:
-                                agreement_state.tenant_signatures[user_id] = (
-                                    f"APPROVED BY {tenant_name} - {datetime.now()}"
-                                )
+                                print("Participant has rejected!")
+                                return False
 
-                            tenant_photo_path = agreement_state.tenant_photos[user_id]
-                            if os.path.isfile(tenant_photo_path):
-                                agreement_state.tenant_photos[user_id] = (
-                                    tenant_photo_path
-                                )
+                        elif user_id == template_agreement_state.authority_id:
+                            template_agreement_state.authority_approved = data.get("approved", False)
+                            if template_agreement_state.authority_approved:
+                                template_agreement_state.authority_signature = (f"APPROVED BY AUTHORITY - {datetime.now()}")
+                                print("Authority has approved!")
                             else:
-                                agreement_state.tenant_photos[user_id] = (
-                                    f"{tenant_name}"
+                                print("Authority has rejected!")
+                                return False
+                        
+                    else:
+                        if user_id in agreement_state.tenants:
+                            agreement_state.tenants[user_id] = data.get("approved", False)
+                            if agreement_state.tenants[user_id]:
+                                tenant_name = agreement_state.tenant_names[user_id]
+                                logging.info(
+                                    f"Tenant {tenant_name} ({user_id}) has approved the agreement."
                                 )
-                        else:
-                            logging.warning(f"Tenant {user_id} has rejected!")
-                            return False
+                                tenant_signature_path = ""
+                                if os.path.isfile(tenant_signature_path):
+                                    agreement_state.tenant_signatures[user_id] = (
+                                        tenant_signature_path
+                                    )
+                                else:
+                                    agreement_state.tenant_signatures[user_id] = (
+                                        f"APPROVED BY {tenant_name} - {datetime.now()}"
+                                    )
 
-                    elif user_id == agreement_state.owner_id:
-                        agreement_state.owner_approved = data.get("approved", False)
-                        if agreement_state.owner_approved:
-                            logging.info(
-                                f"Owner {agreement_state.owner_name} ({user_id}) has approved the agreement."
-                            )
-                            owner_signature_path = ""
-                            if os.path.exists(owner_signature_path):
-                                agreement_state.owner_signature = owner_signature_path
+                                tenant_photo_path = agreement_state.tenant_photos[user_id]
+                                if os.path.isfile(tenant_photo_path):
+                                    agreement_state.tenant_photos[user_id] = (
+                                        tenant_photo_path
+                                    )
+                                else:
+                                    agreement_state.tenant_photos[user_id] = (
+                                        f"{tenant_name}"
+                                    )
                             else:
-                                agreement_state.owner_signature = f"APPROVED BY {agreement_state.owner_name} - {datetime.now()}"
+                                logging.warning(f"Tenant {user_id} has rejected!")
+                                return False
 
-                            owner_photo_path = agreement_state.owner_photo
-                            if os.path.exists(owner_photo_path):
-                                agreement_state.owner_photo = owner_photo_path
-                            else:
-                                agreement_state.owner_photo = (
-                                    f"{agreement_state.owner_name}"
+                        elif user_id == agreement_state.owner_id:
+                            agreement_state.owner_approved = data.get("approved", False)
+                            if agreement_state.owner_approved:
+                                logging.info(
+                                    f"Owner {agreement_state.owner_name} ({user_id}) has approved the agreement."
                                 )
-                        else:
-                            logging.warning("Owner has rejected!")
-                            return False
+                                owner_signature_path = ""
+                                if os.path.exists(owner_signature_path):
+                                    agreement_state.owner_signature = owner_signature_path
+                                else:
+                                    agreement_state.owner_signature = f"APPROVED BY {agreement_state.owner_name} - {datetime.now()}"
+
+                                owner_photo_path = agreement_state.owner_photo
+                                if os.path.exists(owner_photo_path):
+                                    agreement_state.owner_photo = owner_photo_path
+                                else:
+                                    agreement_state.owner_photo = (
+                                        f"{agreement_state.owner_name}"
+                                    )
+                            else:
+                                logging.warning("Owner has rejected!")
+                                return False
 
                     # Check if both parties have responded
                     if agreement_state.is_fully_approved():
