@@ -65,6 +65,7 @@ def delete_temp_file():
     except Exception as e:
         logging.info(f"Error deleting temp file: {str(e)}")
 
+
 def save_base64_image(photo_data: str, user_id: str, is_signature: bool = False) -> str:
     if photo_data.startswith("data:image/jpeg;base64,"):
         photo_data = photo_data.replace("data:image/jpeg;base64,", "")
@@ -82,6 +83,7 @@ def save_base64_image(photo_data: str, user_id: str, is_signature: bool = False)
         return photo_path
     return ""
 
+
 # Initialize agent
 agent = initialize_agent(
     tools=tools,
@@ -92,7 +94,7 @@ agent = initialize_agent(
     handle_parsing_errors=True,
     max_iterations=1,
     early_stopping_method="generate",
-    prompt = PromptTemplate.from_template(template),
+    prompt=PromptTemplate.from_template(template),
 )
 
 
@@ -119,20 +121,29 @@ def log_after_failure(retry_state):
 def generate_agreement_with_retry(agreement_details):
     return agent.invoke(agreement_details)
 
+
 async def create_agreement_details(request: AgreementRequest):
     try:
         # Reset agreement state for fresh request
         agreement_state.reset()
         # Store owner information
-        agreement_state.owner_photo = save_base64_image(request.owner_photo, request.owner_name)
+        agreement_state.owner_photo = save_base64_image(
+            request.owner_photo, request.owner_name
+        )
         agreement_state.set_owner(request.owner_name)
 
-        agreement_state.owner_signature = save_base64_image(request.owner_signature, request.owner_name, is_signature=True)
+        agreement_state.owner_signature = save_base64_image(
+            request.owner_signature, request.owner_name, is_signature=True
+        )
         # Store tenant details
         tenants = []
         for tenant in request.tenant_details:
-            tenant_photo_path = save_base64_image(tenant.get("photo", ""), tenant["name"])
-            tenant_signature_path = save_base64_image(tenant.get("signature", ""), tenant["name"], is_signature=True)
+            tenant_photo_path = save_base64_image(
+                tenant.get("photo", ""), tenant["name"]
+            )
+            tenant_signature_path = save_base64_image(
+                tenant.get("signature", ""), tenant["name"], is_signature=True
+            )
             tenant_id = agreement_state.add_tenant(
                 tenant["email"],
                 tenant["name"],
@@ -150,7 +161,6 @@ async def create_agreement_details(request: AgreementRequest):
             rent_amount=request.rent_amount,
             start_date=request.start_date,
         )
-
 
         try:
             response = generate_agreement_with_retry(agreement_details)
@@ -184,22 +194,21 @@ async def create_agreement_details(request: AgreementRequest):
                     # Generate final PDF with signatures and get the path
                     create_pdf(agreement_state)
                     final_pdf_path = agreement_state.pdf_file_path
-                    
+
                     # Send final agreement with replaced signatures/photos
                     owner_success, _ = send_email_with_attachment(
                         request.owner_email, final_pdf_path, "owner"
                     )
                     for tenant_id, tenant_email in tenants:
                         send_email_with_attachment(
-                            tenant_email,
-                            final_pdf_path,
-                            "tenant",
-                            tenant_id
+                            tenant_email, final_pdf_path, "tenant", tenant_id
                         )
                     delete_temp_file()
-                    if os.path.exists('./utils'):
-                        shutil.rmtree('./utils')
-                    return {"message": "Final signed agreement with signatures sent to all parties!"}
+                    if os.path.exists("./utils"):
+                        shutil.rmtree("./utils")
+                    return {
+                        "message": "Final signed agreement with signatures sent to all parties!"
+                    }
                 else:
                     return {
                         "message": "Agreement was rejected or approval process failed."
