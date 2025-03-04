@@ -69,7 +69,7 @@ def create_pdf(state: State):
         if os.path.isfile(agreement_state.owner_signature):
             owner_signature_data, _ = resize_image(agreement_state.owner_signature, 60, 30)
             content = content.replace(
-                "[OWNER SIGNATURE]", f"Owner: ![Owner Signature]({owner_signature_data})"
+                "[OWNER SIGNATURE]", f" ![Owner Signature]({owner_signature_data})"
             )
         else:
             content = content.replace("[OWNER SIGNATURE]",  agreement_state.owner_signature)
@@ -89,7 +89,7 @@ def create_pdf(state: State):
             if os.path.isfile(signature):
                 tenant_signature_data, _ = resize_image(signature, 60, 30)
                 content = content.replace(
-                     placeholder, f"{tenant_name}: ![Tenant {i} Signature]({tenant_signature_data})"
+                     placeholder, f" ![Tenant {i} Signature]({tenant_signature_data})"
                 )
             else:
                 content = content.replace(placeholder, signature)
