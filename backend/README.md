@@ -68,7 +68,7 @@ Setups the backend.
 make setup
 ```
 
-### **1. Backend Service **
+### **1. Backend Service**
 
 Starts the main backend server for the Agreement Agent.
 
