@@ -22,6 +22,7 @@ logging.basicConfig(level=logging.INFO)
 class AgreementRequest(BaseModel):
     owner_name: str
     owner_email: str
+    owner_signature: str
     owner_photo: str
     tenant_details: list[dict]
     property_address: str
@@ -62,6 +63,22 @@ def delete_temp_file():
     except Exception as e:
         logging.info(f"Error deleting temp file: {str(e)}")
 
+def save_base64_image(photo_data: str, user_id: str, is_signature: bool = False) -> str:
+    if photo_data.startswith("data:image/jpeg;base64,"):
+        photo_data = photo_data.replace("data:image/jpeg;base64,", "")
+        photo_bytes = base64.b64decode(photo_data)
+        save_dir = "./utils"
+        os.makedirs(save_dir, exist_ok=True)
+
+        if is_signature:
+            photo_path = f"{save_dir}/{user_id}_signature.jpg"
+        else:
+            photo_path = f"{save_dir}/{user_id}_photo.jpg"
+
+        with open(photo_path, "wb") as photo_file:
+            photo_file.write(photo_bytes)
+        return photo_path
+    return ""
 
 # Initialize agent
 agent = initialize_agent(
@@ -127,16 +144,16 @@ async def create_agreement_details(
         )
         agreement_state.set_owner(request.owner_name)
 
+        agreement_state.owner_signature = save_base64_image(request.owner_signature, request.owner_name, is_signature=True)
         # Store tenant details
         tenants = []
         for tenant in request.tenant_details:
-            tenant_photo_path = save_base64_image(
-                tenant.get("photo", ""), tenant["name"]
-            )
+            tenant_photo_path = save_base64_image(tenant.get("photo", ""), tenant["name"])
+            tenant_signature_path = save_base64_image(tenant.get("signature", ""), tenant["name"], is_signature=True)
             tenant_id = agreement_state.add_tenant(
                 tenant["email"],
                 tenant["name"],
-                tenant.get("signature"),
+                tenant_signature_path,
                 tenant_photo_path,
             )
             tenants.append((tenant_id, tenant["email"]))
