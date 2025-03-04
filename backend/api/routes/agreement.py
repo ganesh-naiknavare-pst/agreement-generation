@@ -1,29 +1,33 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Request, Depends
 from services.doc_agent import create_agreement_details, AgreementRequest
+from auth.clerk_auth import requires_auth
 from database.connection import get_db
 from prisma import Prisma
-from datetime import datetime, timezone
 
 router = APIRouter()
 
+
 @router.post("/create-agreement")
-async def create_agreement(request: AgreementRequest, db: Prisma = Depends(get_db)):
+@requires_auth
+async def create_agreement(
+    agreement: AgreementRequest, request: Request, db: Prisma = Depends(get_db)
+):
     agreements = await db.agreement.create(
-       data={
-            "address": request.property_address,
-            "city": request.city,
-            "startDate": request.start_date,
+        data={
+            "address": agreement.property_address,
+            "city": agreement.city,
+            "startDate": agreement.start_date,
         }
     )
 
     await db.owner.create(
         data={
             "agreementId": agreements.id,
-            "name": request.owner_name,
-            "email": request.owner_email,
+            "name": agreement.owner_name,
+            "email": agreement.owner_email,
         }
     )
-    for tenant in request.tenant_details:
+    for tenant in agreement.tenant_details:
         await db.tenant.create(
             data={
                 "agreementId": agreements.id,
@@ -32,4 +36,4 @@ async def create_agreement(request: AgreementRequest, db: Prisma = Depends(get_d
             }
         )
 
-    return await create_agreement_details(request)
+    return await create_agreement_details(agreement)
