@@ -8,12 +8,11 @@ import {
   Textarea,
   TextInput,
   Notification,
-  Center,
   Card,
   ThemeIcon,
   useMantineColorScheme,
 } from "@mantine/core";
-import { Dropzone } from "@mantine/dropzone";
+import { Dropzone, MIME_TYPES } from "@mantine/dropzone";
 import {
   IconUpload,
   IconFile,
@@ -97,7 +96,7 @@ export function Templates() {
             </Notification>
           )}
 
-          <Dropzone onDrop={handleDrop} accept={[".pdf", ".doc", ".docx"]}>
+          <Dropzone onDrop={handleDrop} accept={[MIME_TYPES.pdf, MIME_TYPES.doc, MIME_TYPES.docx]}>
             <Group align="center" gap="xl">
               <IconUpload size={50} />
               <Text>Drag a file here or click to upload</Text>
