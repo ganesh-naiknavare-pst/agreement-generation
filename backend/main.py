@@ -5,7 +5,19 @@ from api.routes.approval import router as approval_router
 from api.routes.agreement import router as agreement_router
 import uvicorn
 import os
-app = FastAPI()
+from contextlib import asynccontextmanager
+from database.connection import conn_manager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await conn_manager.connect()
+    try:
+        yield
+    finally:
+        await conn_manager.disconnect()
+
+app = FastAPI(lifespan=lifespan)
+
 
 CORS_ALLOWED_ORIGIN = os.getenv('CORS_ALLOWED_ORIGIN', 'http://localhost:5173')
 

@@ -34,18 +34,14 @@ export function Agreements() {
     window.open(url, "_blank");
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Waiting approval from Owner and Tenant":
-        return COLORS.yellow;
-      case "Waiting approval from Owner":
-        return COLORS.yellow;
-      case "Waiting approval from Tenant":
-        return COLORS.yellow;
-      case "APPROVED":
-        return COLORS.approval;
-    }
-  };
+ const getStatusColor = (status: string) => {
+  switch (status) {
+    case "APPROVED":
+      return COLORS.approval;
+    case "REJECTED":
+      return COLORS.red;
+  }
+};
 
   if (loading) {
     return (

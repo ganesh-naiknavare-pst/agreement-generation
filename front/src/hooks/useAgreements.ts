@@ -1,6 +1,5 @@
 import { useEffect } from "react";
-import { BackendEndpoints } from "./useApi";
-import  useApi  from "./useApi";
+import useApi, { BackendEndpoints } from "./useApi";
 
 export interface Agreement {
   id: number;
@@ -26,5 +25,5 @@ export const useAgreements = () => {
     fetchData({ method: "GET" });
   }, []);
 
-  return { agreements: data, loading, error, fetchData };
+  return { agreements: data, loading, error, fetchAgreements:fetchData };
 };

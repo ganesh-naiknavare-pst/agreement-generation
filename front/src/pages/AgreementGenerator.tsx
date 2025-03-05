@@ -25,6 +25,7 @@ import { COLORS } from "../colors";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
+import { useAgreements } from "../hooks/useAgreements";
 
 export function AgreementGenerator() {
   const [active, setActive] = useState(0);
@@ -34,7 +35,7 @@ export function AgreementGenerator() {
   const { fetchData } = useApi(BackendEndpoints.CreateAgreement);
   const [showAlertForSign, setShowAlertForSign] = useState(false);
   const [showAlertForPhoto, setShowAlertForPhoto] = useState(false);
-
+  const {fetchAgreements} = useAgreements();
   const form = useForm({
     mode: "controlled",
     initialValues: {
@@ -153,6 +154,9 @@ export function AgreementGenerator() {
       setIsSubmitting(false);
       setShowMessage(true);
     }, 2000);
+    setTimeout(() => {
+      fetchAgreements({ method: "GET" });
+    }, 300000);
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
