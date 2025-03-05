@@ -54,3 +54,13 @@ async def create_template_based_agreement(
         participant_email=participant_email
     )
     return await template_based_agreement(req, file)
+
+@router.get("/agreements")
+async def get_agreements(db: Prisma = Depends(get_db)):
+    agreements = await db.agreement.find_many(
+        include={
+            "owner": True,
+            "tenants": True,
+        }
+    )
+    return agreements
