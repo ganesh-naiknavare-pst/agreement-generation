@@ -3,7 +3,7 @@ from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
 from langchain.agents import initialize_agent, Tool, AgentType
 from helpers.template_based_agreement_generator import llm, memory, template_graph, update_pdf_with_signatures
-from prompts import  AGENT_PREFIX
+from prompts import  template
 from helpers.state_manager import template_agreement_state
 from fastapi import HTTPException
 import os
@@ -12,6 +12,8 @@ import shutil
 import os
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from constants import MAX_RETRIES, RETRY_DELAY
+from langchain_core.prompts.prompt import PromptTemplate
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -74,7 +76,7 @@ agent = initialize_agent(
     handle_parsing_errors=True,
     max_iterations=1,
     early_stopping_method="generate",
-    agent_kwargs=AGENT_PREFIX,
+    prompt=PromptTemplate.from_template(template),
 )
 
 def log_before_retry(retry_state):
