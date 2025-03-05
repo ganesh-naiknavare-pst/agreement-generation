@@ -65,7 +65,7 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                                 logging.info(
                                     f"Tenant {tenant_name} ({user_id}) has approved the agreement."
                                 )
-                                tenant_signature_path = ""
+                                tenant_signature_path = agreement_state.tenant_signatures[user_id]
                                 if os.path.isfile(tenant_signature_path):
                                     agreement_state.tenant_signatures[user_id] = (
                                         tenant_signature_path
@@ -94,7 +94,7 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                                 logging.info(
                                     f"Owner {agreement_state.owner_name} ({user_id}) has approved the agreement."
                                 )
-                                owner_signature_path = ""
+                                owner_signature_path = agreement_state.owner_signature
                                 if os.path.exists(owner_signature_path):
                                     agreement_state.owner_signature = owner_signature_path
                                 else:
