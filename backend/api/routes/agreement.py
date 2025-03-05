@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
 from services.doc_agent import create_agreement_details, AgreementRequest
 from auth.clerk_auth import requires_auth
 from database.connection import get_db
@@ -49,13 +49,32 @@ async def create_template_based_agreement(
     authority_email: str = Form(...),
     participant_email: str = Form(...),
     file: UploadFile = File(...),
+    db: Prisma = Depends(get_db),
 ):
     req = TemplateAgreementRequest(
         user_prompt=user_prompt,
         authority_email=authority_email,
         participant_email=participant_email,
     )
-    return await template_based_agreement(req, file)
+    agreements = await db.templateagreement.create(
+        data={
+            "status": "PROCESSING",
+        }
+    )
+
+    await db.authority.create(
+        data={
+            "agreementId": agreements.id,
+            "email": authority_email,
+        }
+    )
+    await db.participant.create(
+        data={
+            "agreementId": agreements.id,
+            "email": participant_email,
+        }
+    )
+    return await template_based_agreement(req, file, db)
 
 
 @router.get("/agreements")
@@ -64,6 +83,17 @@ async def get_agreements(db: Prisma = Depends(get_db)):
         include={
             "owner": True,
             "tenants": True,
+        }
+    )
+    return agreements
+
+
+@router.get("/template-agreements")
+async def get_agreements(db: Prisma = Depends(get_db)):
+    agreements = await db.templateagreement.find_many(
+        include={
+            "authority": True,
+            "participant": True,
         }
     )
     return agreements

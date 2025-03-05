@@ -18,14 +18,48 @@ export interface Agreement {
   status: string;
 }
 
+export interface TemplateAgreement {
+  id: number;
+  address: string;
+  city: string;
+  startDate: string;
+  pdf: string;
+  authority: {
+    email: string;
+  }[];
+  participant: {
+    email: string;
+  }[];
+  status: string;
+}
+
 export const useAgreements = () => {
-  const { data, loading, error, fetchData } = useApi<Agreement[]>(
-    BackendEndpoints.GetAgreements
-  );
+  const {
+    data: rentAgreement,
+    loading: loadRentAgreemnts,
+    error: rentAgreementError,
+    fetchData: fetchAgreements,
+  } = useApi<Agreement[]>(BackendEndpoints.GetAgreements);
+  const {
+    data: templateAgreement,
+    loading: loadTemplatetAgreemnts,
+    error: templateAgreementError,
+    fetchData: fetchTemplateAgreements,
+  } = useApi<TemplateAgreement[]>(BackendEndpoints.GetTemplateAgreements);
 
   useEffect(() => {
-    fetchData({ method: "GET" });
+    fetchAgreements({ method: "GET" });
+    fetchTemplateAgreements({ method: "GET" });
   }, []);
 
-  return { agreements: data, loading, error, fetchAgreements: fetchData };
+  return {
+    agreements: rentAgreement,
+    loadRentAgreemnts,
+    rentAgreementError,
+    fetchAgreements,
+    templateAgreement,
+    loadTemplatetAgreemnts,
+    templateAgreementError,
+    fetchTemplateAgreements,
+  };
 };

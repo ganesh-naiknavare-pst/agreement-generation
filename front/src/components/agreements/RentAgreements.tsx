@@ -8,13 +8,14 @@ import {
   Box,
   Loader,
   Alert,
+  Title,
 } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
 import { useAgreements } from "../../hooks/useAgreements";
 
-export function Agreements() {
-  const { agreements, loading, error } = useAgreements();
+export function RentAgreements() {
+  const { agreements, loadRentAgreemnts, rentAgreementError } = useAgreements();
   const handleViewPDF = (pdfBase64: string) => {
     if (!pdfBase64) {
       alert("No PDF available for this agreement.");
@@ -43,7 +44,7 @@ export function Agreements() {
     }
   };
 
-  if (loading) {
+  if (loadRentAgreemnts) {
     return (
       <Center h="60vh">
         <Loader />
@@ -51,16 +52,19 @@ export function Agreements() {
     );
   }
 
-  if (error) {
+  if (rentAgreementError) {
     return (
       <Center h="60vh">
-        <Alert color="red">{error}</Alert>
+        <Alert color="red">{rentAgreementError}</Alert>
       </Center>
     );
   }
 
   return (
     <Box>
+      <Title order={3} mb={20}>
+        My Rent Agreements
+      </Title>
       <Table highlightOnHover verticalSpacing="md" horizontalSpacing={20}>
         <Table.Thead>
           <Table.Tr>
@@ -101,7 +105,7 @@ export function Agreements() {
           ) : (
             <Table.Tr>
               <Table.Td colSpan={6}>
-                <Center h="60vh">
+                <Center>
                   <Text c="dimmed">No agreements available</Text>
                 </Center>
               </Table.Td>

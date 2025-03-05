@@ -44,3 +44,27 @@ enum AgreementStatus {
   PROCESSING
   REJECTED
 }
+
+model TemplateAgreement {
+  id            Int             @id @default(autoincrement())
+  createdAt     DateTime        @default(now())
+  status        AgreementStatus @default(PROCESSING)
+  authority     Authority[]
+  participant   Participant[]
+}
+
+model Authority {
+  id            Int                 @id @default(autoincrement())
+  agreementId   Int
+  email         String
+  createdAt     DateTime            @default(now())
+  agreement     TemplateAgreement   @relation(fields: [agreementId], references: [id])
+}
+
+model Participant {
+  id            Int                 @id @default(autoincrement())
+  agreementId   Int
+  email         String
+  createdAt     DateTime            @default(now())
+  agreement     TemplateAgreement   @relation(fields: [agreementId], references: [id])
+}
