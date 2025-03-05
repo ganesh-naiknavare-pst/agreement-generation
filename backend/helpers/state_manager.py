@@ -15,8 +15,10 @@ class AgreementState:
     def reset(self):
         self.owner_id = str(uuid.uuid4())
         self.owner_name = ""
+        self.owner_email = ""
         self.tenants = {}
         self.tenant_names = {}
+        self.tenant_emails = {}
         self.owner_approved = False
         self.agreement_text = ""
         self.owner_signature = ""
@@ -34,10 +36,13 @@ class AgreementState:
         self.tenant_signatures[tenant_id] = tenant_signature
         self.tenant_photos[tenant_id] = tenant_photo
         self.tenant_names[tenant_id] = tenant_name
+        self.tenant_emails[tenant_id] = tenant_email
         return tenant_id
 
-    def set_owner(self, owner_name):
+    def set_owner(self, owner_name, owner_email=None):
         self.owner_name = owner_name
+        if owner_email:
+            self.owner_email = owner_email
 
     def is_fully_approved(self):
         return self.owner_approved and all(self.tenants.values())

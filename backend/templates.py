@@ -1,6 +1,116 @@
 from config import  BASE_APPROVAL_URL
 from helpers.state_manager import agreement_state, template_agreement_state
 
+REJECTION_NOTIFICATION_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agreement Rejected</title>
+    <style>
+        body {{
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            padding: 20px;
+            text-align: center;
+        }}
+        .container {{
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }}
+        .header {{
+            background-color: #dc3545;
+            color: #fff;
+            padding: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px 8px 0 0;
+        }}
+        .content {{
+            padding: 20px;
+            font-size: 16px;
+            color: #333;
+            line-height: 1.6;
+            text-align: left;
+        }}
+        .footer {{
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Agreement Rejected</div>
+        <div class="content">
+            <p>Hello,</p>
+            <p>{message}</p>
+            <p>If you have any questions or need to generate a new agreement, please contact the property owner.</p>
+            <p>Best regards,<br><strong>Agreement Agent Team</strong><br><br></p>
+        </div>
+    </div>
+    <div style="margin-top: 20px; text-align: center; font-size: 14px; color: #777;">
+        This email was generated automatically as part of the agreement process. Please do not respond to this email.
+    </div>
+
+</body>
+</html>
+
+"""
+
+FULLY_APPROVED_TEMPLATE="""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agreement Rejected</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #dc3545;
+            border-radius: 4px;
+            color: #dc3545;
+            background-color: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="alert">
+            <p>Agreement Rejected</p>
+        </div>
+        <p>Hello,</p>
+        <p>{message}</p>
+        <p>For any questions or to generate a new agreement, please contact the property owner.</p>
+        <p>Best regards,<br>Agreement Agent Team</p>
+    </div>
+</body>
+</html>
+"""
+
 FULLY_APPROVED_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -91,12 +201,15 @@ PENDING_APPROVAL_TEMPLATE = """
 </html>
 """
 
-def generate_email_template(role: str, user_id: str, is_template: bool=False) -> str:
+def generate_email_template(role: str, user_id: str, is_template: bool=False, is_rejection: bool=False, rejected_by: str=None) -> str:
     
     approve_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/approve"
     reject_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/reject"
 
-    if agreement_state.is_fully_approved() or template_agreement_state.is_fully_approved():
+    if is_rejection:
+        message = f"The agreement has been rejected by {rejected_by}."
+        return REJECTION_NOTIFICATION_TEMPLATE.format(message=message)
+    elif agreement_state.is_fully_approved() or template_agreement_state.is_fully_approved():
         message = "The agreement has been approved" if is_template else "The rental agreement has been approved"
         return FULLY_APPROVED_TEMPLATE.format(message=message)
     

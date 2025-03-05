@@ -6,6 +6,56 @@ from helpers.state_manager import agreement_state, template_agreement_state
 from templates import generate_email_template
 
 
+def send_rejection_email(rejected_by_name: str, rejected_by_role: str):
+    """Send rejection notification emails to all parties involved in the agreement."""
+    # Get all email addresses
+    emails_to_notify = []
+    
+    # Add owner's email
+    if hasattr(agreement_state, 'owner_email') and agreement_state.owner_email:
+        emails_to_notify.append((agreement_state.owner_email, "owner", agreement_state.owner_id))
+    
+    # Add all tenants' emails
+    for tenant_id in agreement_state.tenants.keys():
+        tenant_email = getattr(agreement_state, 'tenant_emails', {}).get(tenant_id)
+        if tenant_email:
+            emails_to_notify.append((tenant_email, "tenant", tenant_id))
+
+    success_list = []
+    failed_list = {}
+
+    for email, role, user_id in emails_to_notify:
+        email_body = generate_email_template(
+            role=role,
+            user_id=user_id,
+            is_rejection=True,
+            rejected_by=f"{rejected_by_name} ({rejected_by_role})"
+        )
+        
+        payload = {
+            "sender": SENDER_EMAIL,
+            "to": [email],
+            "subject": "Rental Agreement Rejected",
+            "html_body": email_body
+        }
+        
+        headers = {
+            "X-Smtp2go-Api-Key": SMTP2GO_API_KEY,
+            "Content-Type": "application/json",
+        }
+        
+        response = requests.post(SMTP2GO_EMAIL_SEND_URL, headers=headers, json=payload)
+        
+        if response.status_code == 200:
+            print(f"Email sent successfully to {email}")
+            success_list.append(email)
+        else:
+            print(f"Failed to send email to {email}: {response.text}")
+            failed_list[email] = response.text
+
+    return {"success": success_list, "failed": failed_list}
+
+
 def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, is_template: bool=False, user_id=None):
 
     with open(pdf_path, "rb") as attachment_file:
