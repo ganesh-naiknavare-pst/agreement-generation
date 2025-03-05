@@ -100,7 +100,6 @@ agent = initialize_agent(
     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
     verbose=True,
     memory=memory,
-    handle_parsing_errors=True,
     max_iterations=1,
     early_stopping_method="generate",
     prompt=PromptTemplate.from_template(template),
