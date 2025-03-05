@@ -1,5 +1,6 @@
 export const COLORS = {
   green: "#2f9e44",
+  red: "#c1341a",
   approval: "#56b756",
   blue: "#228be6",
   grayDark: "#ced4d9",

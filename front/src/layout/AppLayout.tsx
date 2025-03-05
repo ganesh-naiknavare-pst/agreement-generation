@@ -1,5 +1,5 @@
 import {
-  Container,
+  Box,
   AppShell,
   ScrollArea,
   Title,
@@ -12,15 +12,15 @@ import { useState } from "react";
 import { Header } from "../components/header/Header";
 import { IconChevronLeftPipe, IconFileAi } from "@tabler/icons-react";
 import { SidebarLink } from "../components/sidebar/SideBarLinks";
+import { COLORS } from "../colors";
 
 export const AppLayout = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   return (
     <AppShell
-      header={{ height: "8%" }}
+      header={{ height: "8vh" }}
       navbar={{ width: isCollapsed ? 70 : 280, breakpoint: "xs" }}
       layout="alt"
-      h="70vh"
     >
       <AppShell.Header
         style={{
@@ -28,7 +28,6 @@ export const AppLayout = () => {
           justifyContent: "end",
           alignItems: "center",
           border: "None",
-          background: "transparent",
         }}
         px={10}
       >
@@ -46,6 +45,7 @@ export const AppLayout = () => {
           >
             <IconFileAi
               style={{ width: rem(28), height: rem(28), marginRight: rem(4) }}
+              color={COLORS.blue}
             />
             {!isCollapsed && (
               <Title
@@ -53,6 +53,7 @@ export const AppLayout = () => {
                   fontSize: rem(22),
                   fontWeight: "medium",
                 }}
+                c={COLORS.blue}
               >
                 Agreement Agent
               </Title>
@@ -77,9 +78,9 @@ export const AppLayout = () => {
         </AppShell.Section>
       </AppShell.Navbar>
       <AppShell.Main>
-        <Container p="sm">
+        <Box px={20} pb={20}>
           <Outlet />
-        </Container>
+        </Box>
       </AppShell.Main>
     </AppShell>
   );

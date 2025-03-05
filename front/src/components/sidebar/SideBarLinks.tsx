@@ -3,12 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import cx from "clsx";
 import classes from "./TableOfContents.module.css";
 import { PageTitle } from "../../types";
-import {
-  IconHome,
-  IconContract,
-  IconTemplate,
-  IconFileSettings,
-} from "@tabler/icons-react";
+import { IconHome, IconTemplate, IconFileSettings } from "@tabler/icons-react";
 import { useState } from "react";
 
 export type SidebarItem = {
@@ -35,25 +30,18 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     order: 1,
   },
   {
-    path: "agreement",
-    name: PageTitle.Agreements,
-    position: "top",
-    icon: IconContract,
-    order: 2,
-  },
-  {
     path: "templates",
     name: PageTitle.Templates,
     position: "top",
     icon: IconTemplate,
-    order: 3,
+    order: 2,
   },
   {
     path: "agreement-generator",
     name: PageTitle.AgreementGenerator,
     position: "top",
     icon: IconFileSettings,
-    order: 4,
+    order: 3,
   },
 ];
 

@@ -15,6 +15,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_t
 from constants import MAX_RETRIES, RETRY_DELAY
 from datetime import datetime
 import base64
+from prisma import Base64
 from langchain_core.prompts.prompt import PromptTemplate
 from prompts import template
 
@@ -122,7 +123,9 @@ def generate_agreement_with_retry(agreement_details):
     return agent.invoke(agreement_details)
 
 
-async def create_agreement_details(request: AgreementRequest):
+async def create_agreement_details(
+    request: AgreementRequest, agreement_id: int, db: object
+):
     try:
         # Reset agreement state for fresh request
         agreement_state.reset()
@@ -185,7 +188,9 @@ async def create_agreement_details(request: AgreementRequest):
             delete_temp_file()
             try:
                 # Wait for approvals
-                approved = await listen_for_approval(timeout_seconds=300, is_template=False)
+                approved = await listen_for_approval(
+                    timeout_seconds=300, is_template=False
+                )
                 if approved:
                     # Mark as approved and generate final PDF with signatures
                     agreement_state.owner_approved = True
@@ -203,6 +208,12 @@ async def create_agreement_details(request: AgreementRequest):
                         send_email_with_attachment(
                             tenant_email, final_pdf_path, "tenant", False, tenant_id
                         )
+                    with open(agreement_state.pdf_file_path, "rb") as pdf_file:
+                        pdf_base64 = Base64.encode(pdf_file.read())
+                    await db.agreement.update(
+                        where={"id": agreement_id},
+                        data={"pdf": pdf_base64, "status": "APPROVED"},
+                    )
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")
@@ -210,6 +221,10 @@ async def create_agreement_details(request: AgreementRequest):
                         "message": "Final signed agreement with signatures sent to all parties!"
                     }
                 else:
+                    await db.agreement.update(
+                        where={"id": agreement_id},
+                        data={"status": "REJECTED"},
+                    )
                     return {
                         "message": "Agreement was rejected or approval process failed."
                     }

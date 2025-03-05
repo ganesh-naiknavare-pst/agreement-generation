@@ -25,7 +25,7 @@ model Owner {
   id            Int         @id @default(autoincrement())
   agreementId   Int
   name          String
-  email         String      @unique
+  email         String
   createdAt     DateTime    @default(now())
   agreement     Agreement   @relation(fields: [agreementId], references: [id])
 }
@@ -34,7 +34,7 @@ model Tenant {
   id            Int         @id @default(autoincrement())
   agreementId   Int
   name          String
-  email         String      @unique
+  email         String
   createdAt     DateTime    @default(now())
   agreement     Agreement   @relation(fields: [agreementId], references: [id])
 }
@@ -42,4 +42,5 @@ model Tenant {
 enum AgreementStatus {
   APPROVED
   PROCESSING
+  REJECTED
 }
