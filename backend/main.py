@@ -8,6 +8,7 @@ import os
 from contextlib import asynccontextmanager
 from database.connection import conn_manager
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await conn_manager.connect()
@@ -16,10 +17,11 @@ async def lifespan(app: FastAPI):
     finally:
         await conn_manager.disconnect()
 
+
 app = FastAPI(lifespan=lifespan)
 
 
-CORS_ALLOWED_ORIGIN = os.getenv('CORS_ALLOWED_ORIGIN', 'http://localhost:5173')
+CORS_ALLOWED_ORIGIN = os.getenv("CORS_ALLOWED_ORIGIN", "http://localhost:5173")
 
 # Enable CORS
 app.add_middleware(

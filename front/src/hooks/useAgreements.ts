@@ -6,7 +6,7 @@ export interface Agreement {
   address: string;
   city: string;
   startDate: string;
-  pdf: string; 
+  pdf: string;
   owner: {
     name: string;
     email: string;
@@ -19,11 +19,13 @@ export interface Agreement {
 }
 
 export const useAgreements = () => {
-  const { data, loading, error, fetchData } = useApi<Agreement[]>(BackendEndpoints.GetAgreements);
+  const { data, loading, error, fetchData } = useApi<Agreement[]>(
+    BackendEndpoints.GetAgreements
+  );
 
   useEffect(() => {
     fetchData({ method: "GET" });
   }, []);
 
-  return { agreements: data, loading, error, fetchAgreements:fetchData };
+  return { agreements: data, loading, error, fetchAgreements: fetchData };
 };

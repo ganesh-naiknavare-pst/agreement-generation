@@ -188,7 +188,9 @@ async def create_agreement_details(
             delete_temp_file()
             try:
                 # Wait for approvals
-                approved = await listen_for_approval(timeout_seconds=300, is_template=False)
+                approved = await listen_for_approval(
+                    timeout_seconds=300, is_template=False
+                )
                 if approved:
                     # Mark as approved and generate final PDF with signatures
                     agreement_state.owner_approved = True

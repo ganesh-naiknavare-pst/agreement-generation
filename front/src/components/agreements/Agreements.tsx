@@ -34,14 +34,14 @@ export function Agreements() {
     window.open(url, "_blank");
   };
 
- const getStatusColor = (status: string) => {
-  switch (status) {
-    case "APPROVED":
-      return COLORS.approval;
-    case "REJECTED":
-      return COLORS.red;
-  }
-};
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "APPROVED":
+        return COLORS.approval;
+      case "REJECTED":
+        return COLORS.red;
+    }
+  };
 
   if (loading) {
     return (

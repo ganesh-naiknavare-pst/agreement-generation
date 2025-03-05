@@ -35,7 +35,7 @@ export function AgreementGenerator() {
   const { fetchData } = useApi(BackendEndpoints.CreateAgreement);
   const [showAlertForSign, setShowAlertForSign] = useState(false);
   const [showAlertForPhoto, setShowAlertForPhoto] = useState(false);
-  const {fetchAgreements} = useAgreements();
+  const { fetchAgreements } = useAgreements();
   const form = useForm({
     mode: "controlled",
     initialValues: {
