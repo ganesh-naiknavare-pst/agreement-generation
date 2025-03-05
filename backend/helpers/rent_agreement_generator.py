@@ -51,12 +51,15 @@ def resize_image(image_path, max_width, max_height):
 
             img.thumbnail((max_width, max_height), Image.LANCZOS)
 
-            temp_image = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            original_format = "jpeg" if img.format == "JPEG" else "png"
+            file_extension = ".jpg" if original_format == "jpeg" else ".png"
+
+            temp_image = tempfile.NamedTemporaryFile(delete=False, suffix=file_extension)
             temp_image_path = temp_image.name
-            img.save(temp_image_path, format="JPEG")
+            img.save(temp_image_path, format=img.format)
             temp_image.close()
 
-            return temp_image_path, "jpeg"
+            return temp_image_path, original_format
     except Exception as e:
         print(f"Error resizing image: {e}")
         return None, None
