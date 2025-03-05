@@ -6,39 +6,64 @@ import {
   Badge,
   Tooltip,
   Box,
+  Loader,
+  Alert,
 } from "@mantine/core";
-import { agreements } from "./Data";
 import { IconEye } from "@tabler/icons-react";
-import * as ReactPDF from "@react-pdf/renderer";
-import { MyDocument } from "../../hooks/useModal";
 import { COLORS } from "../../colors";
+import { useAgreements } from "../../hooks/useAgreements";
 
 export function Agreements() {
-  const handleViewPDF = async () => {
-    const blob = await ReactPDF.pdf(<MyDocument />).toBlob();
+  const { agreements, loading, error } = useAgreements();
+  const handleViewPDF = (pdfBase64: string) => {
+    if (!pdfBase64) {
+      alert("No PDF available for this agreement.");
+      return;
+    }
+
+    // Convert Base64 to Blob
+    const byteCharacters = atob(pdfBase64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: "application/pdf" });
+
     const url = URL.createObjectURL(blob);
     window.open(url, "_blank");
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Waiting approval from Owner and Tenant":
-        return COLORS.yellow;
-      case "Waiting approval from Owner":
-        return COLORS.yellow;
-      case "Waiting approval from Tenant":
-        return COLORS.yellow;
-      case "APPROVED":
-        return COLORS.approval;
-    }
-  };
+ const getStatusColor = (status: string) => {
+  switch (status) {
+    case "APPROVED":
+      return COLORS.approval;
+    case "REJECTED":
+      return COLORS.red;
+  }
+};
+
+  if (loading) {
+    return (
+      <Center h="60vh">
+        <Loader />
+      </Center>
+    );
+  }
+
+  if (error) {
+    return (
+      <Center h="60vh">
+        <Alert color="red">{error}</Alert>
+      </Center>
+    );
+  }
 
   return (
     <Box>
       <Table highlightOnHover verticalSpacing="md" horizontalSpacing={20}>
         <Table.Thead>
           <Table.Tr>
-            <Table.Th>Agreement Title</Table.Th>
             <Table.Th>Owner Name</Table.Th>
             <Table.Th>Tenant Name</Table.Th>
             <Table.Th>Created Time</Table.Th>
@@ -47,20 +72,17 @@ export function Agreements() {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {agreements.length > 0 ? (
+          {Array.isArray(agreements) && agreements.length > 0 ? (
             agreements.map((agreement) => (
               <Table.Tr key={agreement.id}>
                 <Table.Td style={{ textAlign: "left" }}>
-                  {agreement.title}
+                  {agreement.owner.map((owner) => owner.name).join(", ")}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  {agreement.ownerName}
+                  {agreement.tenants.map((tenant) => tenant.name).join(", ")}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  {agreement.tenantName}
-                </Table.Td>
-                <Table.Td style={{ textAlign: "left" }}>
-                  {agreement.createdTime}
+                  {new Date(agreement.startDate).toLocaleString()}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
                   <Tooltip label={agreement.status} withArrow>
@@ -70,7 +92,7 @@ export function Agreements() {
                   </Tooltip>
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  <ActionIcon onClick={handleViewPDF}>
+                  <ActionIcon onClick={() => handleViewPDF(agreement.pdf)}>
                     <IconEye />
                   </ActionIcon>
                 </Table.Td>
