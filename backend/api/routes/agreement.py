@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File, Form
 from services.doc_agent import create_agreement_details, AgreementRequest
 from auth.clerk_auth import requires_auth
 from database.connection import get_db
 from prisma import Prisma
+from datetime import datetime, timezone
+from services.template_doc_agent import template_based_agreement, TemplateAgreementRequest
 
 router = APIRouter()
+
 
 
 @router.post("/create-agreement")
@@ -37,3 +40,17 @@ async def create_agreement(
         )
 
     return await create_agreement_details(agreement, agreements.id, db)
+
+@router.post("/create-template-based-agreement")
+async def create_template_based_agreement(
+    user_prompt: str = Form(...),
+    authority_email: str = Form(...),
+    participant_email: str = Form(...),
+    file: UploadFile = File(...)
+):
+    req = TemplateAgreementRequest(
+        user_prompt=user_prompt,
+        authority_email=authority_email,
+        participant_email=participant_email
+    )
+    return await template_based_agreement(req, file)

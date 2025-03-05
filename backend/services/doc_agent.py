@@ -174,12 +174,12 @@ async def create_agreement_details(
             )
 
         owner_success, _ = send_email_with_attachment(
-            request.owner_email, agreement_state.pdf_file_path, "owner"
+            request.owner_email, agreement_state.pdf_file_path, "owner", False
         )
         tenant_successes = []
         for tenant_id, tenant_email in tenants:
             success, _ = send_email_with_attachment(
-                tenant_email, agreement_state.pdf_file_path, "tenant", tenant_id
+                tenant_email, agreement_state.pdf_file_path, "tenant", False, tenant_id
             )
             tenant_successes.append(success)
         agreement_state.is_pdf_generated = True
@@ -188,7 +188,7 @@ async def create_agreement_details(
             delete_temp_file()
             try:
                 # Wait for approvals
-                approved = await listen_for_approval(timeout_seconds=300)
+                approved = await listen_for_approval(timeout_seconds=300, is_template=False)
                 if approved:
                     # Mark as approved and generate final PDF with signatures
                     agreement_state.owner_approved = True
@@ -200,11 +200,11 @@ async def create_agreement_details(
 
                     # Send final agreement with replaced signatures/photos
                     owner_success, _ = send_email_with_attachment(
-                        request.owner_email, final_pdf_path, "owner"
+                        request.owner_email, final_pdf_path, "owner", False
                     )
                     for tenant_id, tenant_email in tenants:
                         send_email_with_attachment(
-                            tenant_email, final_pdf_path, "tenant", tenant_id
+                            tenant_email, final_pdf_path, "tenant", False, tenant_id
                         )
                     with open(agreement_state.pdf_file_path, "rb") as pdf_file:
                         pdf_base64 = Base64.encode(pdf_file.read())

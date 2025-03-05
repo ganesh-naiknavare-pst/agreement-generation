@@ -87,7 +87,7 @@ def create_pdf(state: State):
         if os.path.isfile(agreement_state.owner_photo):
             owner_photo_data, _ = resize_image(agreement_state.owner_photo, 60, 60)
             content = content.replace(
-                "[OWNER PHOTO]", f"![Owner PHOTO]({owner_photo_data})"
+                "[OWNER PHOTO]", f" ![Owner PHOTO]({owner_photo_data})"
             )
         else:
             content = content.replace("[OWNER PHOTO]", agreement_state.owner_photo)
@@ -116,7 +116,7 @@ def create_pdf(state: State):
             if os.path.isfile(photo):
                 tenant_photos_data, _ = resize_image(photo, 60, 60)
                 content = content.replace(
-                    placeholder, f"![Tenant PHOTO]({tenant_photos_data})"
+                    placeholder, f" ![Tenant PHOTO]({tenant_photos_data})"
                 )
             else:
                 content = content.replace(placeholder, photo)

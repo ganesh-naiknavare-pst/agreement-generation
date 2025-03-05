@@ -44,3 +44,21 @@ class AgreementState:
 
 
 agreement_state = AgreementState()
+
+class TemplateAgreementState:
+    def __init__(self):
+        self.participant_id = str(uuid.uuid4())
+        self.authority_id = str(uuid.uuid4())
+        self.participant_approved = False
+        self.authority_approved = False
+        self.agreement_text = ""
+        self.participant_signature = ""
+        self.authority_signature = ""
+        self.pdf_file_path = ""
+        self.template_file_path = ""
+        self.is_pdf_generated = False
+
+    def is_fully_approved(self):
+        return self.participant_approved and self.authority_approved
+
+template_agreement_state = TemplateAgreementState()
