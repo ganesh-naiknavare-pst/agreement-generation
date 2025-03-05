@@ -2,31 +2,34 @@ import base64
 import requests
 from constants import SMTP2GO_EMAIL_SEND_URL
 from config import SMTP2GO_API_KEY, SENDER_EMAIL
-from helpers.state_manager import agreement_state
+from helpers.state_manager import agreement_state, template_agreement_state
 from templates import generate_email_template
 
 
-def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, user_id=None):
+def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, is_template: bool=False, user_id=None):
 
     with open(pdf_path, "rb") as attachment_file:
         file_content = attachment_file.read()
         encoded_file = base64.b64encode(file_content).decode("utf-8")
 
     # Use the provided user_id for tenants, or owner_id for owner
-    if role == "owner" or user_id is None:
-        user_id = agreement_state.owner_id  # fallback, though this shouldn't happen
+    if is_template:
+        user_id = (template_agreement_state.participant_id if role == "Participant" else template_agreement_state.authority_id)
+    else :
+        if role == "owner" or user_id is None:
+            user_id = agreement_state.owner_id
 
-    email_body = generate_email_template(role, user_id)
+    email_body = generate_email_template(role, user_id, is_template)
 
     payload = {
         "sender": SENDER_EMAIL,
         "to": [recipient_email],
-        "subject": f"Rental Agreement for {role.capitalize()}",
+        "subject": f"Agreement for {role.capitalize()}" if is_template else f"Rental Agreement for {role.capitalize()}",
         "html_body": email_body,
         "attachments": [
             {
                 "fileblob": encoded_file,
-                "filename": "rental-agreement.pdf",
+                "filename": "agreement.pdf" if is_template else "rental-agreement.pdf",
                 "content_type": "application/pdf",
             }
         ],
