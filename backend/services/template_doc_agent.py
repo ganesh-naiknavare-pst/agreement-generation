@@ -118,7 +118,7 @@ async def template_based_agreement(req: TemplateAgreementRequest, file):
         template_agreement_state.is_pdf_generated = True
 
         if authority_success and participant_success:
-            # delete_temp_file()
+            delete_temp_file()
             delete_template_file()
             try:
                 # Wait for approvals

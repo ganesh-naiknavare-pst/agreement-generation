@@ -221,10 +221,10 @@ async def create_agreement_details(
                         where={"id": agreement_id},
                         data={"pdf": pdf_base64, "status": "APPROVED"},
                     )
-                    agreement_state.reset()
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")
+                    agreement_state.reset()
                     return {
                         "message": "Final signed agreement with signatures sent to all parties!"
                     }
