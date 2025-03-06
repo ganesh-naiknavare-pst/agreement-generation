@@ -74,7 +74,7 @@ async def create_template_based_agreement(
             "email": participant_email,
         }
     )
-    return await template_based_agreement(req, file, db)
+    return await template_based_agreement(req, file, agreements.id, db)
 
 
 @router.get("/agreements")
