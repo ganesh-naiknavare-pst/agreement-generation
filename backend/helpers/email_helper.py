@@ -6,20 +6,27 @@ from helpers.state_manager import agreement_state, template_agreement_state
 from templates import generate_email_template
 
 
-def send_rejection_email(rejected_by_name: str, rejected_by_role: str):
+def send_rejection_email(rejected_by_name: str, rejected_by_role: str=None, is_template: bool=False):
     """Send rejection notification emails to all parties involved in the agreement."""
     # Get all email addresses
     emails_to_notify = []
     
     # Add owner's email
-    if hasattr(agreement_state, 'owner_email') and agreement_state.owner_email:
-        emails_to_notify.append((agreement_state.owner_email, "owner", agreement_state.owner_id))
+    if is_template:
+        if hasattr(template_agreement_state, 'authority_email') and template_agreement_state.authority_email:
+            emails_to_notify.append((template_agreement_state.authority_email, "Authority", template_agreement_state.authority_id))
+        if hasattr(template_agreement_state, 'participant_email') and template_agreement_state.participant_email:
+            emails_to_notify.append((template_agreement_state.participant_email, "Participant", template_agreement_state.participant_id))
     
-    # Add all tenants' emails
-    for tenant_id in agreement_state.tenants.keys():
-        tenant_email = getattr(agreement_state, 'tenant_emails', {}).get(tenant_id)
-        if tenant_email:
-            emails_to_notify.append((tenant_email, "tenant", tenant_id))
+        
+    else:
+        if hasattr(agreement_state, 'owner_email') and agreement_state.owner_email:
+            emails_to_notify.append((agreement_state.owner_email, "owner", agreement_state.owner_id))
+        # Add all tenants' emails
+        for tenant_id in agreement_state.tenants.keys():
+            tenant_email = getattr(agreement_state, 'tenant_emails', {}).get(tenant_id)
+            if tenant_email:
+                emails_to_notify.append((tenant_email, "tenant", tenant_id))
 
     success_list = []
     failed_list = {}
@@ -29,7 +36,7 @@ def send_rejection_email(rejected_by_name: str, rejected_by_role: str):
             role=role,
             user_id=user_id,
             is_rejection=True,
-            rejected_by=f"{rejected_by_name} ({rejected_by_role})"
+            rejected_by=f"{rejected_by_name} ({rejected_by_role})" if rejected_by_name and rejected_by_role else rejected_by_name
         )
         
         payload = {

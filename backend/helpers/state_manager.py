@@ -54,6 +54,8 @@ class TemplateAgreementState:
     def __init__(self):
         self.participant_id = str(uuid.uuid4())
         self.authority_id = str(uuid.uuid4())
+        self.authority_email = ""
+        self.participant_email = ""
         self.participant_approved = False
         self.authority_approved = False
         self.agreement_text = ""
@@ -63,6 +65,12 @@ class TemplateAgreementState:
         self.template_file_path = ""
         self.is_pdf_generated = False
 
+    def set_authority(self, authority_email):
+        self.authority_email = authority_email
+        
+    def set_participant(self, participant_email):
+        self.participant_email = participant_email
+            
     def is_fully_approved(self):
         return self.participant_approved and self.authority_approved
 
