@@ -10,6 +10,8 @@ CREATE TABLE "Agreement" (
     "address" TEXT NOT NULL,
     "city" TEXT NOT NULL,
     "startDate" TIMESTAMP(3) NOT NULL,
+    "rentAmount" INT NOT NULL,
+    "agreementPeriod" INT NOT NULL,
 
     CONSTRAINT "Agreement_pkey" PRIMARY KEY ("id")
 );
