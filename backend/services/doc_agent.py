@@ -69,20 +69,28 @@ def delete_temp_file():
 
 def save_base64_image(photo_data: str, user_id: str, is_signature: bool = False) -> str:
     if photo_data.startswith("data:image/jpeg;base64,"):
+        file_ext = "jpg"
         photo_data = photo_data.replace("data:image/jpeg;base64,", "")
-        photo_bytes = base64.b64decode(photo_data)
-        save_dir = "./utils"
-        os.makedirs(save_dir, exist_ok=True)
+    elif photo_data.startswith("data:image/png;base64,"):
+        file_ext = "png"
+        photo_data = photo_data.replace("data:image/png;base64,", "")
+    else:
+        return ""  
 
-        if is_signature:
-            photo_path = f"{save_dir}/{user_id}_signature.jpg"
-        else:
-            photo_path = f"{save_dir}/{user_id}_photo.jpg"
+    photo_bytes = base64.b64decode(photo_data)
+    save_dir = "./utils"
+    os.makedirs(save_dir, exist_ok=True)
 
-        with open(photo_path, "wb") as photo_file:
-            photo_file.write(photo_bytes)
-        return photo_path
-    return ""
+    if is_signature:
+        photo_path = f"{save_dir}/{user_id}_signature.{file_ext}"
+    else:
+        photo_path = f"{save_dir}/{user_id}_photo.{file_ext}"
+
+    with open(photo_path, "wb") as photo_file:
+        photo_file.write(photo_bytes)
+
+    return photo_path
+
 
 
 # Initialize agent
@@ -92,7 +100,6 @@ agent = initialize_agent(
     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
     verbose=True,
     memory=memory,
-    handle_parsing_errors=True,
     max_iterations=1,
     early_stopping_method="generate",
     prompt=PromptTemplate.from_template(template),

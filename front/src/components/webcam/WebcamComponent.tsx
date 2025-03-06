@@ -32,9 +32,8 @@ function WebcamComponent({
   setFieldValue,
 }: WebcamComponentProps): JSX.Element {
   const webcamRef = useRef<Webcam>(null);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showCamera, setShowCamera] = useState<boolean>(true);
   const [rederWebCamm, setRederWebCamm] = useState<boolean>(false);
 
   const capture = useCallback(() => {
@@ -44,38 +43,19 @@ function WebcamComponent({
       setIsLoading(false);
       if (imageSrc) {
         setCapturedImage(imageSrc);
-        setFieldValue(imageSrc);
       }
     }
   }, [webcamRef]);
 
   const retakePhoto = useCallback(() => {
-    setCapturedImage(null);
-    setFieldValue("");
-  }, [setFieldValue]);
+    setCapturedImage("");
+  }, [setCapturedImage]);
 
   const confirmPhoto = useCallback(() => {
-    setShowCamera(false);
-  }, [setShowCamera]);
+    setFieldValue(capturedImage);
+  }, [setFieldValue]);
 
-  if (imageUrl !== "" && !showCamera) {
-    return (
-      <Group>
-        <IconCircleCheck color={COLORS.green} />
-        <Paper
-          p="sm"
-          radius="md"
-          withBorder
-          shadow="md"
-          style={{ borderColor: COLORS.green }}
-        >
-          <Image src={imageUrl} alt="caputured Image" height="200rem" />
-        </Paper>
-      </Group>
-    );
-  }
-
-  if (!rederWebCamm) {
+  if (!rederWebCamm && imageUrl == "") {
     return (
       <Button
         leftSection={<IconCamera />}
@@ -102,7 +82,7 @@ function WebcamComponent({
   }
   return (
     <>
-      {showCamera ? (
+      {imageUrl == "" ? (
         <Container size="md" p="xl">
           {capturedImage ? (
             <Stack p="md" align="center">

@@ -73,7 +73,6 @@ agent = initialize_agent(
     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
     verbose=True,
     memory=memory,
-    handle_parsing_errors=True,
     max_iterations=1,
     early_stopping_method="generate",
     prompt=PromptTemplate.from_template(template),
@@ -96,7 +95,7 @@ def log_after_failure(retry_state):
     after=log_after_failure
 )
 def generate_agreement_with_retry(agreement_details):
-    return agent.run(agreement_details)
+    return agent.invoke(agreement_details)
 
 async def template_based_agreement(req: TemplateAgreementRequest, file):
     try:
