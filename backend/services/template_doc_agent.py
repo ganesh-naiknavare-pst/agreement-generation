@@ -129,6 +129,7 @@ async def template_based_agreement(req: TemplateAgreementRequest, file):
                     authority_success, _ = send_email_with_attachment(req.authority_email, template_agreement_state.pdf_file_path, "Authority", True)
                     participant_success, _ = send_email_with_attachment(req.participant_email, template_agreement_state.pdf_file_path, "Participant", True)
                     delete_temp_file()
+                    template_agreement_state.reset()
                     return {"message": "Final signed agreement sent to all parties!"}
                 else:
                     return {"message": "Agreement was rejected or approval process failed."}
