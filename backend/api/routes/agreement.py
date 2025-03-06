@@ -21,6 +21,8 @@ async def create_agreement(
             "address": agreement.property_address,
             "city": agreement.city,
             "startDate": agreement.start_date,
+            "rentAmount": agreement.rent_amount,
+            "agreementPeriod": agreement.agreement_period,
         }
     )
 
