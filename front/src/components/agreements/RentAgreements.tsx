@@ -43,14 +43,6 @@ export function RentAgreements() {
     }
   };
 
-  if (loadRentAgreemnts) {
-    return (
-      <Center h="60vh">
-        <Loader />
-      </Center>
-    );
-  }
-
   return (
     <Box>
       <Title order={3} mb={20}>
@@ -67,7 +59,15 @@ export function RentAgreements() {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {Array.isArray(agreements) && agreements.length > 0 ? (
+          {loadRentAgreemnts ? (
+            <Table.Tr>
+              <Table.Td colSpan={6}>
+                <Center>
+                  <Loader />
+                </Center>
+              </Table.Td>
+            </Table.Tr>
+          ) : Array.isArray(agreements) && agreements.length > 0 ? (
             agreements.map((agreement) => (
               <Table.Tr key={agreement.id}>
                 <Table.Td style={{ textAlign: "left" }}>

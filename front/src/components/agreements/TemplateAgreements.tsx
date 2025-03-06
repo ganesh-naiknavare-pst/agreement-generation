@@ -43,14 +43,6 @@ export function TemplateAgreements() {
     }
   };
 
-  if (loadTemplatetAgreemnts) {
-    return (
-      <Center h="60vh">
-        <Loader />
-      </Center>
-    );
-  }
-
   return (
     <Box>
       <Title order={3} mb={20}>
@@ -67,7 +59,16 @@ export function TemplateAgreements() {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {Array.isArray(templateAgreement) && templateAgreement.length > 0 ? (
+          {loadTemplatetAgreemnts ? (
+            <Table.Tr>
+              <Table.Td colSpan={6}>
+                <Center>
+                  <Loader />
+                </Center>
+              </Table.Td>
+            </Table.Tr>
+          ) : Array.isArray(templateAgreement) &&
+            templateAgreement.length > 0 ? (
             templateAgreement.map((agreement) => (
               <Table.Tr key={agreement.id}>
                 <Table.Td style={{ textAlign: "left" }}>

@@ -25,6 +25,7 @@ import {
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 import { COLORS } from "../colors";
 import { useForm } from "@mantine/form";
+import { useAgreements } from "../hooks/useAgreements";
 
 export function Templates() {
   const [file, setFile] = useState<File | null>(null);
@@ -32,6 +33,7 @@ export function Templates() {
   const [displayBanner, setDisplayBanner] = useState(false);
   const { colorScheme } = useMantineColorScheme();
   const [showAlert, setShowAlert] = useState(false);
+  const { fetchTemplateAgreements } = useAgreements();
 
   const { fetchData } = useApi(BackendEndpoints.CreateTemplateBasedAgreement);
 
@@ -76,6 +78,7 @@ export function Templates() {
     setTimeout(() => {
       setLoading(false);
       setDisplayBanner(true);
+      fetchTemplateAgreements({ method: "GET" });
     }, 2000);
     try {
       const formData = new FormData();
@@ -87,6 +90,7 @@ export function Templates() {
         method: "POST",
         data: formData,
       });
+      await fetchTemplateAgreements({ method: "GET" });
     } catch (error) {
       console.error("Error processing template:", error);
     }

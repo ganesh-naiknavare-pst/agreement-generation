@@ -36,19 +36,19 @@ export interface TemplateAgreement {
 interface AgreementContextType {
   agreements: Agreement[] | null;
   loadRentAgreemnts: boolean;
-  fetchAgreements: () => Promise<void>;
+  fetchAgreements: (method:{}) => Promise<void>;
   templateAgreement: TemplateAgreement[] | null;
   loadTemplatetAgreemnts: boolean;
-  fetchTemplateAgreements: () => Promise<void>;
+  fetchTemplateAgreements: (method:{}) => Promise<void>;
 }
 
 const AgreementsContext = createContext<AgreementContextType>({
   agreements: [],
   loadRentAgreemnts: false,
-  fetchAgreements: () => Promise.resolve(),
+  fetchAgreements: (method:{}) => Promise.resolve(),
   templateAgreement: [],
   loadTemplatetAgreemnts: false,
-  fetchTemplateAgreements: () => Promise.resolve(),
+  fetchTemplateAgreements: (method:{}) => Promise.resolve(),
 });
 
 export const AgreementsProvider = ({ children }: { children: ReactNode }) => {
