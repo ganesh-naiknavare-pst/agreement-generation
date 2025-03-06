@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.post("/create-agreement")
-# @requires_auth
+@requires_auth
 async def create_agreement(
     agreement: AgreementRequest, request: Request, db: Prisma = Depends(get_db)
 ):

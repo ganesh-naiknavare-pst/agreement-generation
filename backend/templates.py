@@ -8,57 +8,41 @@ REJECTION_NOTIFICATION_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agreement Rejected</title>
-    <style>
-        body {{
-            font-family: 'Arial', sans-serif;
-            background-color: #f9f9f9;
-            padding: 20px;
-            text-align: center;
-        }}
-        .container {{
-            max-width: 600px;
-            margin: 0 auto;
-            background: #ffffff;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }}
-        .header {{
-            background-color: #dc3545;
-            color: #fff;
-            padding: 15px;
-            font-size: 20px;
-            font-weight: bold;
-            border-radius: 8px 8px 0 0;
-        }}
-        .content {{
-            padding: 20px;
-            font-size: 16px;
-            color: #333;
-            line-height: 1.6;
-            text-align: left;
-        }}
-        .footer {{
-            margin-top: 30px;
-            font-size: 14px;
-            color: #666;
-        }}
-    </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">Agreement Rejected</div>
-        <div class="content">
-            <p>Hello,</p>
-            <p>{message}</p>
-            <p>If you have any questions or need to generate a new agreement, please contact the property owner.</p>
-            <p>Best regards,<br><strong>Agreement Agent Team</strong><br><br></p>
-        </div>
-    </div>
-    <div style="margin-top: 20px; text-align: center; font-size: 14px; color: #777;">
-        This email was generated automatically as part of the agreement process. Please do not respond to this email.
-    </div>
-
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center;">
+    <table role="presentation" width="100%" bgcolor="#f4f4f4" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <table role="presentation" width="600" bgcolor="#ffffff" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td bgcolor="#dc3545" style="padding: 15px; font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; border-radius: 8px 8px 0 0;">
+                            Agreement Rejected
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 20px; font-size: 16px; color: #333333; text-align: left; line-height: 1.5;">
+                            <p>Hello,</p>
+                            <p>{message}</p>
+                            <p>If you have any questions or need to generate a new agreement, please contact the property owner.</p>
+                            <p>Best regards,</p>
+                            <p><strong>Agreement Agent Team</strong></p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 15px; font-size: 14px; color: #666666; text-align: center; border-top: 1px solid #dddddd;">
+                            This email was generated automatically as part of the agreement process. Please do not respond to this email.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
 
