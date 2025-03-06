@@ -7,20 +7,23 @@ import {
   Tooltip,
   Box,
   Title,
+  Pagination,
 } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
 import { useAgreements } from "../../hooks/useAgreements";
+import { useState } from "react";
 
 export function RentAgreements() {
   const { agreements } = useAgreements();
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5;
+
   const handleViewPDF = (pdfBase64: string) => {
     if (!pdfBase64) {
-      alert("No PDF available for this agreement.");
       return;
     }
 
-    // Convert Base64 to Blob
     const byteCharacters = atob(pdfBase64);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
@@ -34,14 +37,17 @@ export function RentAgreements() {
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "APPROVED":
-        return COLORS.approval;
-      case "REJECTED":
-        return COLORS.red;
-    }
-  };
+    return status === "APPROVED" 
+        ? COLORS.approval 
+        : status === "PROCESSING" 
+        ? COLORS.blue 
+        : COLORS.red;
+};
 
+  const totalPages = Math.ceil((agreements?.length || 0) / pageSize);
+  const paginatedData = Array.isArray(agreements) && agreements.length > 0
+    ? agreements.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+    : [];
   return (
     <Box>
       <Title order={3} mb={20}>
@@ -58,8 +64,8 @@ export function RentAgreements() {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {Array.isArray(agreements) && agreements.length > 0 ? (
-            agreements.map((agreement) => (
+          {paginatedData.length > 0 ? (
+            paginatedData.map((agreement) => (
               <Table.Tr key={agreement.id}>
                 <Table.Td style={{ textAlign: "left" }}>
                   {agreement.owner.map((owner) => owner.name).join(", ")}
@@ -78,9 +84,14 @@ export function RentAgreements() {
                   </Tooltip>
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  <ActionIcon onClick={() => handleViewPDF(agreement.pdf)}>
-                    <IconEye />
-                  </ActionIcon>
+                  <Tooltip label={agreement.pdf ? "View PDF" : "No PDF available"} withArrow>
+                    <ActionIcon
+                      onClick={() => handleViewPDF(agreement.pdf)}
+                      disabled={!agreement.pdf}
+                    >
+                      <IconEye />
+                    </ActionIcon>
+                  </Tooltip>
                 </Table.Td>
               </Table.Tr>
             ))
@@ -95,6 +106,11 @@ export function RentAgreements() {
           )}
         </Table.Tbody>
       </Table>
+      {totalPages > 1 && (
+        <Center mt={20} ml={1000}>
+          <Pagination total={totalPages} boundaries={1} value={currentPage} onChange={setCurrentPage} />
+        </Center>
+      )}
     </Box>
   );
 }
