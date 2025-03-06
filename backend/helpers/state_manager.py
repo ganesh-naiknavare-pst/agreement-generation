@@ -1,64 +1,73 @@
-from typing import Annotated
+from typing import Annotated, Dict, Optional
 import uuid
 from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
+from dataclasses import dataclass, field
 
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
 
 
+@dataclass
 class AgreementState:
-    def __init__(self):
-        self.reset()
+    owner_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    owner_name: str = ""
+    tenants: Dict[str, bool] = field(default_factory=dict)
+    tenant_names: Dict[str, str] = field(default_factory=dict)
+    owner_approved: bool = False
+    agreement_text: str = ""
+    owner_signature: str = ""
+    tenant_signatures: Dict[str, Optional[str]] = field(default_factory=dict)
+    owner_photo: str = ""
+    tenant_photos: Dict[str, Optional[str]] = field(default_factory=dict)
+    pdf_file_path: str = ""
+    is_pdf_generated: bool = False
 
-    def reset(self):
-        self.owner_id = str(uuid.uuid4())
-        self.owner_name = ""
-        self.tenants = {}
-        self.tenant_names = {}
-        self.owner_approved = False
-        self.agreement_text = ""
-        self.owner_signature = ""
-        self.tenant_signatures = {}
-        self.owner_photo = ""
-        self.tenant_photos = {}
-        self.pdf_file_path = ""
-        self.is_pdf_generated = False
+    def reset(self) -> None:
+        """Resets the agreement state to its default values."""
+        self.__init__()
 
-    def add_tenant(
-        self, tenant_email, tenant_name, tenant_signature=None, tenant_photo=None
-    ):
+    def add_tenant(self, tenant_email: str, tenant_name: str,
+                   tenant_signature: Optional[str] = None,
+                   tenant_photo: Optional[str] = None) -> str:
+        """Adds a new tenant to the agreement."""
         tenant_id = str(uuid.uuid4())
-        self.tenants[tenant_id] = False
+        self.tenants[tenant_id] = False  # False indicates not yet approved
+        self.tenant_names[tenant_id] = tenant_name
         self.tenant_signatures[tenant_id] = tenant_signature
         self.tenant_photos[tenant_id] = tenant_photo
-        self.tenant_names[tenant_id] = tenant_name
         return tenant_id
 
-    def set_owner(self, owner_name):
+    def set_owner(self, owner_name: str) -> None:
+        """Sets the owner's name."""
         self.owner_name = owner_name
 
-    def is_fully_approved(self):
+    def is_fully_approved(self) -> bool:
+        """Checks if the agreement is fully approved."""
         return self.owner_approved and all(self.tenants.values())
-
 
 agreement_state = AgreementState()
 
+@dataclass
 class TemplateAgreementState:
-    def __init__(self):
-        self.participant_id = str(uuid.uuid4())
-        self.authority_id = str(uuid.uuid4())
-        self.participant_approved = False
-        self.authority_approved = False
-        self.agreement_text = ""
-        self.participant_signature = ""
-        self.authority_signature = ""
-        self.pdf_file_path = ""
-        self.template_file_path = ""
-        self.is_pdf_generated = False
+    authority_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    participant_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    authority_approved: bool = False
+    participant_approved: bool = False
+    agreement_text: str = ""
+    authority_signature: str = ""
+    participant_signature: str = ""
+    pdf_file_path: str = ""
+    template_file_path: str = ""
+    is_pdf_generated: bool = False
 
-    def is_fully_approved(self):
+    def reset(self) -> None:
+        """Agreement state to its default values."""
+        self.__init__()
+
+    def is_fully_approved(self) -> bool:
+        """Checks if the agreement is fully approved."""
         return self.participant_approved and self.authority_approved
-
+    
 template_agreement_state = TemplateAgreementState()

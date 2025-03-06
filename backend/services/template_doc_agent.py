@@ -156,7 +156,7 @@ async def template_based_agreement(
         template_agreement_state.is_pdf_generated = True
 
         if authority_success and participant_success:
-            # delete_temp_file()
+            delete_temp_file()
             delete_template_file()
             try:
                 # Wait for approvals
@@ -183,6 +183,7 @@ async def template_based_agreement(
                         data={"status": "APPROVED"},
                     )
                     delete_temp_file()
+                    template_agreement_state.reset()
                     return {"message": "Final signed agreement sent to all parties!"}
                 else:
                     await db.templateagreement.update(
