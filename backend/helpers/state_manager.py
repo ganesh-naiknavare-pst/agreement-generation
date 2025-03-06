@@ -14,7 +14,7 @@ class AgreementState:
     owner_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     owner_name: str = ""
     owner_email: str = ""
-    tenant_emails = Dict[str, Optional[str]] = field(default_factory=dict)
+    tenant_emails: Dict[str, Optional[str]] = field(default_factory=dict)
     tenants: Dict[str, bool] = field(default_factory=dict)
     tenant_names: Dict[str, str] = field(default_factory=dict)
     owner_approved: bool = False
