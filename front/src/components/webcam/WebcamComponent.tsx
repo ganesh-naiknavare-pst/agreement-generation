@@ -49,7 +49,7 @@ function WebcamComponent({
 
   const retakePhoto = useCallback(() => {
     setCapturedImage("");
-  }, [setFieldValue]);
+  }, [setCapturedImage]);
 
   const confirmPhoto = useCallback(() => {
     setFieldValue(capturedImage);
