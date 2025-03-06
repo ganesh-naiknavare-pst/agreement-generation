@@ -85,7 +85,8 @@ async def get_agreements(db: Prisma = Depends(get_db)):
         include={
             "owner": True,
             "tenants": True,
-        }
+        },
+        orderBy={"createdAt": "desc"},
     )
     return agreements
 
@@ -96,6 +97,7 @@ async def get_agreements(db: Prisma = Depends(get_db)):
         include={
             "authority": True,
             "participant": True,
-        }
+        },
+        orderBy={"createdAt": "desc"},
     )
     return agreements
