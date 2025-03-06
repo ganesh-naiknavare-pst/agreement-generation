@@ -91,7 +91,7 @@ export function TemplateAgreements() {
                     .join(", ")}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  {new Date(agreement.startDate).toLocaleString()}
+                  {new Date(agreement.createdAt).toLocaleString()}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
                   <Tooltip label={agreement.status} withArrow>

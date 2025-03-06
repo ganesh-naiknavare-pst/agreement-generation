@@ -22,7 +22,7 @@ export interface TemplateAgreement {
   id: number;
   address: string;
   city: string;
-  startDate: string;
+  createdAt: string;
   pdf: string;
   authority: {
     email: string;
