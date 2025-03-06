@@ -51,6 +51,7 @@ model TemplateAgreement {
   id            Int             @id @default(autoincrement())
   createdAt     DateTime        @default(now())
   status        AgreementStatus @default(PROCESSING)
+  pdf           Bytes?
   authority     Authority[]
   participant   Participant[]
 }
