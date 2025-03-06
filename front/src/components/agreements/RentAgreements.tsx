@@ -8,6 +8,7 @@ import {
   Box,
   Title,
   Pagination,
+  Group,
 } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
@@ -16,13 +17,14 @@ import { useState } from "react";
 
 export function RentAgreements() {
   const { agreements } = useAgreements();
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5;
+  const [page, setPage] = useState(1);
+  const pageSize = 3;
+  const total = agreements?.length || 0;
+  const totalPages = Math.ceil(total / pageSize);
+  const message = `Showing ${total > 0 ? (page - 1) * pageSize + 1 : 0} – ${Math.min(total, page * pageSize)} of ${total}`;
 
-  const handleViewPDF = (pdfBase64: string) => {
-    if (!pdfBase64) {
-      return;
-    }
+  const handleViewPDF = (pdfBase64: string | null) => {
+    if (!pdfBase64) return;
 
     const byteCharacters = atob(pdfBase64);
     const byteNumbers = new Array(byteCharacters.length);
@@ -37,17 +39,15 @@ export function RentAgreements() {
   };
 
   const getStatusColor = (status: string) => {
-    return status === "APPROVED" 
-        ? COLORS.approval 
-        : status === "PROCESSING" 
-        ? COLORS.blue 
+    return status === "APPROVED"
+      ? COLORS.approval
+      : status === "PROCESSING"
+        ? COLORS.blue
         : COLORS.red;
-};
+  };
 
-  const totalPages = Math.ceil((agreements?.length || 0) / pageSize);
-  const paginatedData = Array.isArray(agreements) && agreements.length > 0
-    ? agreements.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-    : [];
+  const paginatedData = agreements ? agreements.slice((page - 1) * pageSize, page * pageSize) : [];
+
   return (
     <Box>
       <Title order={3} mb={20}>
@@ -107,9 +107,10 @@ export function RentAgreements() {
         </Table.Tbody>
       </Table>
       {totalPages > 1 && (
-        <Center mt={20} ml={1000}>
-          <Pagination total={totalPages} boundaries={1} value={currentPage} onChange={setCurrentPage} />
-        </Center>
+        <Group justify="flex-end" mt={20}>
+          <Text size="sm">{message}</Text>
+          <Pagination total={totalPages} value={page} onChange={setPage} withPages={false} />
+        </Group>
       )}
     </Box>
   );

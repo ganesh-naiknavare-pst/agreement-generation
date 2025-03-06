@@ -7,13 +7,22 @@ import {
   Tooltip,
   Box,
   Title,
+  Group,
+  Pagination,
 } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
 import { useAgreements } from "../../hooks/useAgreements";
+import { useState } from "react";
 
 export function TemplateAgreements() {
   const { templateAgreement } = useAgreements();
+  const [page, setPage] = useState(1);
+  const pageSize = 3;
+  const total = templateAgreement?.length || 0;
+  const totalPages = Math.ceil(total / pageSize);
+  const message = `Showing ${total > 0 ? (page - 1) * pageSize + 1 : 0} – ${Math.min(total, page * pageSize)} of ${total}`;
+
   const handleViewPDF = (pdfBase64: string) => {
     if (!pdfBase64) {
       alert("No PDF available for this agreement.");
@@ -42,6 +51,7 @@ export function TemplateAgreements() {
     }
   };
 
+  const paginatedData = templateAgreement ? templateAgreement.slice((page - 1) * pageSize, page * pageSize) : [];
   return (
     <Box>
       <Title order={3} mb={20}>
@@ -58,8 +68,8 @@ export function TemplateAgreements() {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {Array.isArray(templateAgreement) && templateAgreement.length > 0 ? (
-            templateAgreement.map((agreement) => (
+          {paginatedData.length > 0 ? (
+            paginatedData.map((agreement) => (
               <Table.Tr key={agreement.id}>
                 <Table.Td style={{ textAlign: "left" }}>
                   {agreement.authority
@@ -82,9 +92,14 @@ export function TemplateAgreements() {
                   </Tooltip>
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  <ActionIcon onClick={() => handleViewPDF(agreement.pdf)}>
-                    <IconEye />
-                  </ActionIcon>
+                  <Tooltip label={agreement.pdf ? "View PDF" : "No PDF available"} withArrow>
+                    <ActionIcon
+                      onClick={() => handleViewPDF(agreement.pdf)}
+                      disabled={!agreement.pdf}
+                    >
+                      <IconEye />
+                    </ActionIcon>
+                  </Tooltip>
                 </Table.Td>
               </Table.Tr>
             ))
@@ -99,6 +114,12 @@ export function TemplateAgreements() {
           )}
         </Table.Tbody>
       </Table>
+      {totalPages > 1 && (
+        <Group justify="flex-end" mt={20}>
+          <Text size="sm">{message}</Text>
+          <Pagination total={totalPages} value={page} onChange={setPage} withPages={false} />
+        </Group>
+      )}
     </Box>
   );
 }
