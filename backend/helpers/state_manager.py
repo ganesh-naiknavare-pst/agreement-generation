@@ -13,6 +13,8 @@ class State(TypedDict):
 class AgreementState:
     owner_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     owner_name: str = ""
+    owner_email: str = ""
+    tenant_emails: Dict[str, Optional[str]] = field(default_factory=dict)
     tenants: Dict[str, bool] = field(default_factory=dict)
     tenant_names: Dict[str, str] = field(default_factory=dict)
     owner_approved: bool = False
@@ -37,11 +39,13 @@ class AgreementState:
         self.tenant_names[tenant_id] = tenant_name
         self.tenant_signatures[tenant_id] = tenant_signature
         self.tenant_photos[tenant_id] = tenant_photo
+        self.tenant_emails[tenant_id] = tenant_email
         return tenant_id
 
-    def set_owner(self, owner_name: str) -> None:
+    def set_owner(self, owner_name: str, owner_email: str) -> None:
         """Sets the owner's name."""
         self.owner_name = owner_name
+        self.owner_email = owner_email
 
     def is_fully_approved(self) -> bool:
         """Checks if the agreement is fully approved."""
@@ -53,6 +57,8 @@ agreement_state = AgreementState()
 class TemplateAgreementState:
     authority_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     participant_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    authority_email: str = ""
+    participant_email: str = ""
     authority_approved: bool = False
     participant_approved: bool = False
     agreement_text: str = ""
@@ -66,6 +72,12 @@ class TemplateAgreementState:
         """Agreement state to its default values."""
         self.__init__()
 
+    def set_authority(self, authority_email):
+        self.authority_email = authority_email
+
+    def set_participant(self, participant_email):
+        self.participant_email = participant_email
+        
     def is_fully_approved(self) -> bool:
         """Checks if the agreement is fully approved."""
         return self.participant_approved and self.authority_approved
