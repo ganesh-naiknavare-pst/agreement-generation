@@ -173,6 +173,7 @@ export function Templates() {
               <Button
                 onClick={() => {
                   form.reset();
+                  setFile(null);
                   setDisplayBanner(false);
                 }}
               >
