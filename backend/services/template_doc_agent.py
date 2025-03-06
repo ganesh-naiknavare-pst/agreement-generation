@@ -18,6 +18,7 @@ import os
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from constants import MAX_RETRIES, RETRY_DELAY
 from langchain_core.prompts.prompt import PromptTemplate
+from prisma import Base64
 
 
 logging.basicConfig(level=logging.INFO)
@@ -178,9 +179,11 @@ async def template_based_agreement(
                         "Participant",
                         True,
                     )
+                    with open(template_agreement_state.pdf_file_path, "rb") as pdf_file:
+                        pdf_base64 = Base64.encode(pdf_file.read())
                     await db.templateagreement.update(
                         where={"id": agreement_id},
-                        data={"status": "APPROVED"},
+                        data={"pdf": pdf_base64, "status": "APPROVED"},
                     )
                     delete_temp_file()
                     template_agreement_state.reset()
