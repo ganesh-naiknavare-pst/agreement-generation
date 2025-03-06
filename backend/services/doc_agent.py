@@ -30,7 +30,8 @@ class AgreementRequest(BaseModel):
     tenant_details: list[dict]
     property_address: str
     city: str
-    rent_amount: str
+    rent_amount: int
+    agreement_period: int
     start_date: datetime
 
 
@@ -169,6 +170,7 @@ async def create_agreement_details(
             property_address=request.property_address,
             city=request.city,
             rent_amount=request.rent_amount,
+            agreement_period=request.agreement_period,
             start_date=request.start_date,
         )
 

@@ -53,6 +53,8 @@ export function AgreementGenerator() {
       address: "",
       city: "",
       date: new Date(),
+      rentAmount: 0,
+      agreementPeriod: 11,
     },
 
     validate: (values) => {
@@ -112,6 +114,12 @@ export function AgreementGenerator() {
         if (!values.date) {
           errors.date = "Start date is required";
         }
+        if (values.rentAmount <= 0) {
+          errors.rentAmount = "Rent amount must be greater than 0";
+        }
+        if (values.agreementPeriod <= 1) {
+          errors.agreementPeriod = "Agreement period must be greater than 1";
+        }
       }
 
       return errors;
@@ -168,7 +176,8 @@ export function AgreementGenerator() {
       })),
       property_address: form.values.address,
       city: form.values.city,
-      rent_amount: "1500",
+      rent_amount: form.values.rentAmount,
+      agreement_period: form.values.agreementPeriod,
       start_date: form.values.date.toISOString(),
     };
     try {
@@ -383,6 +392,24 @@ export function AgreementGenerator() {
               key={form.key("city")}
               style={{ textAlign: "start" }}
               {...form.getInputProps("city")}
+              withAsterisk
+            />
+            <NumberInput
+              label="Rent Amount"
+              placeholder="Enter rent amount"
+              min={0}
+              key={form.key("rentAmount")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("rentAmount")}
+              withAsterisk
+            />
+            <NumberInput
+              label="Agreement Period (months)"
+              placeholder="Enter agreement period"
+              min={1}
+              key={form.key("agreementPeriod")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("agreementPeriod")}
               withAsterisk
             />
             <DateInput

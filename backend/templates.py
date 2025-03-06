@@ -147,7 +147,8 @@ def format_agreement_details(
     tenant_details: list,
     property_address: str,
     city: str,
-    rent_amount: str,
+    rent_amount: int,
+    agreement_period: int,
     start_date: str,
 ) -> str:
     return f"""
@@ -163,7 +164,7 @@ Property Details:
 - City: {city}
 - Monthly Rent: Rs. {rent_amount}
 - Agreement Start Date: {start_date}
-- Duration: 11 months
+- Duration: {agreement_period} months
 
 Additional Terms:
 - Rent will be split equally among all tenants
