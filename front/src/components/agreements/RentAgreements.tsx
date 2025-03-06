@@ -7,7 +7,6 @@ import {
   Tooltip,
   Box,
   Loader,
-  Alert,
   Title,
 } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
@@ -15,7 +14,7 @@ import { COLORS } from "../../colors";
 import { useAgreements } from "../../hooks/useAgreements";
 
 export function RentAgreements() {
-  const { agreements, loadRentAgreemnts, rentAgreementError } = useAgreements();
+  const { agreements, loadRentAgreemnts } = useAgreements();
   const handleViewPDF = (pdfBase64: string) => {
     if (!pdfBase64) {
       alert("No PDF available for this agreement.");
@@ -48,14 +47,6 @@ export function RentAgreements() {
     return (
       <Center h="60vh">
         <Loader />
-      </Center>
-    );
-  }
-
-  if (rentAgreementError) {
-    return (
-      <Center h="60vh">
-        <Alert color="red">{rentAgreementError}</Alert>
       </Center>
     );
   }

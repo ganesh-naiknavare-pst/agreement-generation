@@ -7,7 +7,6 @@ import {
   Tooltip,
   Box,
   Loader,
-  Alert,
   Title,
 } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
@@ -15,8 +14,7 @@ import { COLORS } from "../../colors";
 import { useAgreements } from "../../hooks/useAgreements";
 
 export function TemplateAgreements() {
-  const { templateAgreement, loadTemplatetAgreemnts, templateAgreementError } =
-    useAgreements();
+  const { templateAgreement, loadTemplatetAgreemnts } = useAgreements();
   const handleViewPDF = (pdfBase64: string) => {
     if (!pdfBase64) {
       alert("No PDF available for this agreement.");
@@ -49,14 +47,6 @@ export function TemplateAgreements() {
     return (
       <Center h="60vh">
         <Loader />
-      </Center>
-    );
-  }
-
-  if (templateAgreementError) {
-    return (
-      <Center h="60vh">
-        <Alert color="red">{templateAgreementError}</Alert>
       </Center>
     );
   }

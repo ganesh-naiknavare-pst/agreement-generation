@@ -154,9 +154,6 @@ export function AgreementGenerator() {
       setIsSubmitting(false);
       setShowMessage(true);
     }, 2000);
-    setTimeout(() => {
-      fetchAgreements({ method: "GET" });
-    }, 300000);
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,

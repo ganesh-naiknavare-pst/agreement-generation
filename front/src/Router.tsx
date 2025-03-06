@@ -9,11 +9,18 @@ import { AppLayout } from "./layout/AppLayout";
 import { Templates } from "./pages/Templates";
 import { HomePage } from "./pages/HomePage";
 import { AgreementGenerator } from "./pages/AgreementGenerator";
+import { AgreementsProvider } from "./hooks/useAgreements";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<AuthGuard />}>
-      <Route element={<AppLayout />}>
+      <Route
+        element={
+          <AgreementsProvider>
+            <AppLayout />
+          </AgreementsProvider>
+        }
+      >
         <Route index element={<Navigate to="home" replace />} />
         <Route path="home" element={<HomePage />} />
         <Route path="templates" element={<Templates />} />
