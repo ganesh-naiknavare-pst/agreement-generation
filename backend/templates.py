@@ -48,53 +48,6 @@ REJECTION_NOTIFICATION_TEMPLATE = """
 
 """
 
-FULLY_APPROVED_TEMPLATE="""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agreement Rejected</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            padding: 20px;
-            background-color: #f4f4f4;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid #dc3545;
-            border-radius: 4px;
-            color: #dc3545;
-            background-color: #f8d7da;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="alert">
-            <p>Agreement Rejected</p>
-        </div>
-        <p>Hello,</p>
-        <p>{message}</p>
-        <p>For any questions or to generate a new agreement, please contact the property owner.</p>
-        <p>Best regards,<br>Agreement Agent Team</p>
-    </div>
-</body>
-</html>
-"""
-
 FULLY_APPROVED_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -237,7 +190,6 @@ def generate_email_template(role: str, user_id: str, is_template: bool=False, is
             approve_url=approve_url,
             reject_url=reject_url,
         )
-
 
 def format_agreement_details(
     owner_name: str,
