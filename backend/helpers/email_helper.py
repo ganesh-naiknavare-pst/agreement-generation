@@ -11,7 +11,6 @@ def send_rejection_email(rejected_by_name: str, rejected_by_role: str=None, is_t
     # Get all email addresses
     emails_to_notify = []
     
-    # Add owner's email
     if is_template:
         if hasattr(template_agreement_state, 'authority_email') and template_agreement_state.authority_email:
             emails_to_notify.append((template_agreement_state.authority_email, "Authority", template_agreement_state.authority_id))

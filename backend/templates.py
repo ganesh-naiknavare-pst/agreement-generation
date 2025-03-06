@@ -191,6 +191,7 @@ def generate_email_template(role: str, user_id: str, is_template: bool=False, is
             reject_url=reject_url,
         )
 
+
 def format_agreement_details(
     owner_name: str,
     tenant_details: list,

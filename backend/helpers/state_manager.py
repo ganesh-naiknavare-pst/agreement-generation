@@ -39,10 +39,9 @@ class AgreementState:
         self.tenant_emails[tenant_id] = tenant_email
         return tenant_id
 
-    def set_owner(self, owner_name, owner_email=None):
+    def set_owner(self, owner_name, owner_email):
         self.owner_name = owner_name
-        if owner_email:
-            self.owner_email = owner_email
+        self.owner_email = owner_email
 
     def is_fully_approved(self):
         return self.owner_approved and all(self.tenants.values())

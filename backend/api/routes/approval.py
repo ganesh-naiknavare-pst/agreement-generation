@@ -31,7 +31,7 @@ async def reject_user(user: str):
     if user == agreement_state.owner_id:
         rejected_by_name = agreement_state.owner_name
         rejected_by_role = "owner"
-    elif user in agreement_state.tenant_names:
+    elif user in agreement_state.tenants:
         rejected_by_name = agreement_state.tenant_names[user]
         rejected_by_role = "tenant"
     elif user == template_agreement_state.authority_id:
