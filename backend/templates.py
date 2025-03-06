@@ -1,6 +1,53 @@
 from config import BASE_APPROVAL_URL
 from helpers.state_manager import agreement_state, template_agreement_state
 
+REJECTION_NOTIFICATION_TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agreement Rejected</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center;">
+    <table role="presentation" width="100%" bgcolor="#f4f4f4" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <table role="presentation" width="600" bgcolor="#ffffff" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td bgcolor="#dc3545" style="padding: 15px; font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; border-radius: 8px 8px 0 0;">
+                            Agreement Rejected
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 20px; font-size: 16px; color: #333333; text-align: left; line-height: 1.5;">
+                            <p>Hello,</p>
+                            <p>{message}</p>
+                            <p>If you have any questions or need to generate a new agreement, please contact the property owner.</p>
+                            <p>Best regards,</p>
+                            <p><strong>Agreement Agent Team</strong></p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 15px; font-size: 14px; color: #666666; text-align: center; border-top: 1px solid #dddddd;">
+                            This email was generated automatically as part of the agreement process. Please do not respond to this email.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+
+"""
+
 FULLY_APPROVED_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -116,12 +163,15 @@ PENDING_APPROVAL_TEMPLATE = """
 """
 
 
-def generate_email_template(role: str, user_id: str, is_template: bool = False) -> str:
+def generate_email_template(role: str, user_id: str, is_template: bool=False, is_rejection: bool=False, rejected_by: str=None) -> str:
 
     approve_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/approve"
     reject_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/reject"
-
-    if (
+    
+    if is_rejection:
+        message = f"The agreement has been rejected by {rejected_by}."
+        return REJECTION_NOTIFICATION_TEMPLATE.format(message=message)
+    elif (
         agreement_state.is_fully_approved()
         or template_agreement_state.is_fully_approved()
     ):

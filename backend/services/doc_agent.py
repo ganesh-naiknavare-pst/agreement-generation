@@ -140,7 +140,7 @@ async def create_agreement_details(
         agreement_state.owner_photo = save_base64_image(
             request.owner_photo, request.owner_name
         )
-        agreement_state.set_owner(request.owner_name)
+        agreement_state.set_owner(request.owner_name, request.owner_email)
 
         agreement_state.owner_signature = save_base64_image(
             request.owner_signature, request.owner_name, is_signature=True

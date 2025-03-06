@@ -99,7 +99,8 @@ def generate_agreement_with_retry(agreement_details):
 
 async def template_based_agreement(req: TemplateAgreementRequest, file):
     try:
-
+        template_agreement_state.set_authority(req.authority_email)
+        template_agreement_state.set_participant(req.participant_email)
         secure_filename = os.path.basename(file.filename)
         base_dir = os.path.join(os.path.dirname(__file__), "temp")
         os.makedirs(base_dir, exist_ok=True)
