@@ -2,7 +2,7 @@ import tempfile
 from constants import Model, CHAT_OPENAI_BASE_URL
 import pypandoc
 from langgraph.graph import StateGraph, START, END
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from helpers.state_manager import State, template_agreement_state
 from helpers.agreement_generator_helper import extract_text_from_pdf
