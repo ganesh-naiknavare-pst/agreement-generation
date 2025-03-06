@@ -6,7 +6,6 @@ import {
   Badge,
   Tooltip,
   Box,
-  Loader,
   Title,
 } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
@@ -14,7 +13,7 @@ import { COLORS } from "../../colors";
 import { useAgreements } from "../../hooks/useAgreements";
 
 export function RentAgreements() {
-  const { agreements, loadRentAgreemnts } = useAgreements();
+  const { agreements } = useAgreements();
   const handleViewPDF = (pdfBase64: string) => {
     if (!pdfBase64) {
       alert("No PDF available for this agreement.");
@@ -59,15 +58,7 @@ export function RentAgreements() {
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {loadRentAgreemnts ? (
-            <Table.Tr>
-              <Table.Td colSpan={6}>
-                <Center>
-                  <Loader />
-                </Center>
-              </Table.Td>
-            </Table.Tr>
-          ) : Array.isArray(agreements) && agreements.length > 0 ? (
+          {Array.isArray(agreements) && agreements.length > 0 ? (
             agreements.map((agreement) => (
               <Table.Tr key={agreement.id}>
                 <Table.Td style={{ textAlign: "left" }}>
