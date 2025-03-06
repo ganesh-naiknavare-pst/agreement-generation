@@ -6,15 +6,14 @@ import {
   Badge,
   Tooltip,
   Box,
-  Loader,
-  Alert,
+  Title,
 } from "@mantine/core";
 import { IconEye } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
 import { useAgreements } from "../../hooks/useAgreements";
 
-export function Agreements() {
-  const { agreements, loading, error } = useAgreements();
+export function TemplateAgreements() {
+  const { templateAgreement } = useAgreements();
   const handleViewPDF = (pdfBase64: string) => {
     if (!pdfBase64) {
       alert("No PDF available for this agreement.");
@@ -43,46 +42,37 @@ export function Agreements() {
     }
   };
 
-  if (loading) {
-    return (
-      <Center h="60vh">
-        <Loader />
-      </Center>
-    );
-  }
-
-  if (error) {
-    return (
-      <Center h="60vh">
-        <Alert color="red">{error}</Alert>
-      </Center>
-    );
-  }
-
   return (
     <Box>
+      <Title order={3} mb={20}>
+        Other Agreements
+      </Title>
       <Table highlightOnHover verticalSpacing="md" horizontalSpacing={20}>
         <Table.Thead>
           <Table.Tr>
-            <Table.Th>Owner Name</Table.Th>
-            <Table.Th>Tenant Name</Table.Th>
+            <Table.Th>Authority Email</Table.Th>
+            <Table.Th>Participants Email</Table.Th>
             <Table.Th>Created Time</Table.Th>
             <Table.Th>Status</Table.Th>
             <Table.Th>Actions</Table.Th>
           </Table.Tr>
         </Table.Thead>
         <Table.Tbody>
-          {Array.isArray(agreements) && agreements.length > 0 ? (
-            agreements.map((agreement) => (
+          {Array.isArray(templateAgreement) && templateAgreement.length > 0 ? (
+            templateAgreement.map((agreement) => (
               <Table.Tr key={agreement.id}>
                 <Table.Td style={{ textAlign: "left" }}>
-                  {agreement.owner.map((owner) => owner.name).join(", ")}
+                  {agreement.authority
+                    .map((authority) => authority.email)
+                    .join(", ")}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  {agreement.tenants.map((tenant) => tenant.name).join(", ")}
+                  {agreement.participant
+                    .map((participant) => participant.email)
+                    .join(", ")}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  {new Date(agreement.startDate).toLocaleString()}
+                  {new Date(agreement.createdAt).toLocaleString()}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
                   <Tooltip label={agreement.status} withArrow>
@@ -101,7 +91,7 @@ export function Agreements() {
           ) : (
             <Table.Tr>
               <Table.Td colSpan={6}>
-                <Center h="60vh">
+                <Center>
                   <Text c="dimmed">No agreements available</Text>
                 </Center>
               </Table.Td>

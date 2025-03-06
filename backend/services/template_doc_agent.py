@@ -2,8 +2,13 @@ import logging
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
 from langchain.agents import initialize_agent, Tool, AgentType
-from helpers.template_based_agreement_generator import llm, memory, template_graph, update_pdf_with_signatures
-from prompts import  template
+from helpers.template_based_agreement_generator import (
+    llm,
+    memory,
+    template_graph,
+    update_pdf_with_signatures,
+)
+from prompts import template
 from helpers.state_manager import template_agreement_state
 from fastapi import HTTPException
 import os
@@ -16,6 +21,7 @@ from langchain_core.prompts.prompt import PromptTemplate
 
 
 logging.basicConfig(level=logging.INFO)
+
 
 class TemplateAgreementRequest(BaseModel):
     user_prompt: str
@@ -31,6 +37,7 @@ def run_agreement_tool(user_input: str) -> str:
             return output
     return "Failed to generate agreement"
 
+
 # Define Tool
 tools = [
     Tool(
@@ -40,6 +47,7 @@ tools = [
     )
 ]
 
+
 def delete_temp_file():
     """Deletes the temporary agreement file if it exists."""
     try:
@@ -47,12 +55,17 @@ def delete_temp_file():
             template_agreement_state.pdf_file_path
         ):
             os.remove(template_agreement_state.pdf_file_path)
-            logging.info(f"Temporary file deleted: {template_agreement_state.pdf_file_path}")
+            logging.info(
+                f"Temporary file deleted: {template_agreement_state.pdf_file_path}"
+            )
         else:
-            logging.info(f"Temp file not found: {template_agreement_state.pdf_file_path}")
+            logging.info(
+                f"Temp file not found: {template_agreement_state.pdf_file_path}"
+            )
     except Exception as e:
         logging.info(f"Error deleting temp file: {str(e)}")
-        
+
+
 def delete_template_file():
     """Deletes the template agreement file if it exists."""
     try:
@@ -60,11 +73,16 @@ def delete_template_file():
             template_agreement_state.template_file_path
         ):
             os.remove(template_agreement_state.template_file_path)
-            logging.info(f"Template file deleted: {template_agreement_state.template_file_path}")
+            logging.info(
+                f"Template file deleted: {template_agreement_state.template_file_path}"
+            )
         else:
-            logging.info(f"Template file not found: {template_agreement_state.template_file_path}")
+            logging.info(
+                f"Template file not found: {template_agreement_state.template_file_path}"
+            )
     except Exception as e:
         logging.info(f"Error deleting template file: {str(e)}")
+
 
 # Initialize agent
 agent = initialize_agent(
@@ -78,26 +96,34 @@ agent = initialize_agent(
     prompt=PromptTemplate.from_template(template),
 )
 
+
 def log_before_retry(retry_state):
     attempt = retry_state.attempt_number
     logging.info(f"Retry attempt {attempt}: Retrying agreement generation...")
     delete_temp_file()
 
+
 def log_after_failure(retry_state):
     exception = retry_state.outcome.exception()
-    logging.info(f"Agreement generation failed after {retry_state.attempt_number} attempts : {str(exception)}")
+    logging.info(
+        f"Agreement generation failed after {retry_state.attempt_number} attempts : {str(exception)}"
+    )
+
 
 @retry(
     stop=stop_after_attempt(MAX_RETRIES),
     wait=wait_fixed(RETRY_DELAY),
     retry=retry_if_exception_type(Exception),
     before_sleep=log_before_retry,
-    after=log_after_failure
+    after=log_after_failure,
 )
 def generate_agreement_with_retry(agreement_details):
     return agent.invoke(agreement_details)
 
-async def template_based_agreement(req: TemplateAgreementRequest, file):
+
+async def template_based_agreement(
+    req: TemplateAgreementRequest, file, agreement_id: int, db: object
+):
     try:
 
         secure_filename = os.path.basename(file.filename)
@@ -111,29 +137,70 @@ async def template_based_agreement(req: TemplateAgreementRequest, file):
         try:
             response = generate_agreement_with_retry(req.user_prompt)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error generating agreement: {str(e)}")
+            raise HTTPException(
+                status_code=500, detail=f"Error generating agreement: {str(e)}"
+            )
 
-        authority_success, _ = send_email_with_attachment(req.authority_email, template_agreement_state.pdf_file_path, "Authority", True)
-        participant_success, _ = send_email_with_attachment(req.participant_email, template_agreement_state.pdf_file_path, "Participant", True)
+        authority_success, _ = send_email_with_attachment(
+            req.authority_email,
+            template_agreement_state.pdf_file_path,
+            "Authority",
+            True,
+        )
+        participant_success, _ = send_email_with_attachment(
+            req.participant_email,
+            template_agreement_state.pdf_file_path,
+            "Participant",
+            True,
+        )
         template_agreement_state.is_pdf_generated = True
 
         if authority_success and participant_success:
-            # delete_temp_file()
+            delete_temp_file()
             delete_template_file()
             try:
                 # Wait for approvals
-                approved = await listen_for_approval(timeout_seconds=300, is_template=True)
+                approved = await listen_for_approval(
+                    timeout_seconds=300, is_template=True
+                )
                 if approved:
                     update_pdf_with_signatures()
                     # Send final agreement emails
-                    authority_success, _ = send_email_with_attachment(req.authority_email, template_agreement_state.pdf_file_path, "Authority", True)
-                    participant_success, _ = send_email_with_attachment(req.participant_email, template_agreement_state.pdf_file_path, "Participant", True)
+                    authority_success, _ = send_email_with_attachment(
+                        req.authority_email,
+                        template_agreement_state.pdf_file_path,
+                        "Authority",
+                        True,
+                    )
+                    participant_success, _ = send_email_with_attachment(
+                        req.participant_email,
+                        template_agreement_state.pdf_file_path,
+                        "Participant",
+                        True,
+                    )
+                    await db.templateagreement.update(
+                        where={"id": agreement_id},
+                        data={"status": "APPROVED"},
+                    )
                     delete_temp_file()
+                    template_agreement_state.reset()
                     return {"message": "Final signed agreement sent to all parties!"}
                 else:
-                    return {"message": "Agreement was rejected or approval process failed."}
+                    await db.templateagreement.update(
+                        where={"id": agreement_id},
+                        data={"status": "REJECTED"},
+                    )
+                    return {
+                        "message": "Agreement was rejected or approval process failed."
+                    }
             except ApprovalTimeoutError:
-                return {"message": "Approval process timed out. Please try again later."}
+                await db.templateagreement.update(
+                    where={"id": agreement_id},
+                    data={"status": "REJECTED"},
+                )
+                return {
+                    "message": "Approval process timed out. Please try again later."
+                }
         else:
             return {"message": "Error sending initial agreement emails."}
     except Exception as e:

@@ -161,10 +161,8 @@ export function AgreementGenerator() {
     setTimeout(() => {
       setIsSubmitting(false);
       setShowMessage(true);
-    }, 2000);
-    setTimeout(() => {
       fetchAgreements({ method: "GET" });
-    }, 300000);
+    }, 2000);
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
@@ -187,6 +185,7 @@ export function AgreementGenerator() {
         method: "POST",
         data: requestData,
       });
+      await fetchAgreements({ method: "GET" });
     } catch (error) {
       console.error("Error creating agreement:", error);
     }
