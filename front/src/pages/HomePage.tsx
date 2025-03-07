@@ -1,5 +1,6 @@
-import { Center, Title, Divider } from "@mantine/core";
-import { Agreements } from "../components/agreements/Agreements";
+import { Center, Title, Divider, Flex } from "@mantine/core";
+import { RentAgreements } from "../components/agreements/RentAgreements";
+import { TemplateAgreements } from "../components/agreements/TemplateAgreements";
 import { COLORS } from "../colors";
 
 export function HomePage() {
@@ -11,10 +12,10 @@ export function HomePage() {
         </Title>
       </Center>
       <Divider my="sm" />
-      <Title order={3} mb={20}>
-        My Agreements
-      </Title>
-      <Agreements />
+      <Flex direction="column" justify="space-between" h="60vh">
+        <RentAgreements />
+        <TemplateAgreements />
+      </Flex>
     </>
   );
 }
