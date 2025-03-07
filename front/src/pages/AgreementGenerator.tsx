@@ -36,6 +36,40 @@ export function AgreementGenerator() {
   const [showAlertForSign, setShowAlertForSign] = useState(false);
   const [showAlertForPhoto, setShowAlertForPhoto] = useState(false);
   const { fetchAgreements } = useAgreements();
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [isOtpVerified, setIsOtpVerified] = useState(false);
+  const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
+  const { fetchData: verifyOTP } = useApi(BackendEndpoints.VerifyOTP);
+  const handleSendOTP = async () => {
+    console.log("Sending OTP to:", form.values.ownerEmailAddress);
+    try {
+      await sendOTP({
+        method: "POST",
+        data: { email: form.values.ownerEmailAddress },
+      });
+      setOtpSent(true);
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+    }
+  };
+  const handleVerifyOTP = async () => {
+    console.log("Verifying OTP:", otp);
+    try {
+      const response = await verifyOTP({
+        method: "POST",
+        data: { email: form.values.ownerEmailAddress, otp },
+      });
+      if (response.success) {
+        setIsOtpVerified(true);
+        console.log("OTP verified successfully");
+      } else {
+        console.error("OTP verification failed");
+      }
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+    }
+  };
   const form = useForm({
     mode: "controlled",
     initialValues: {
@@ -236,6 +270,25 @@ export function AgreementGenerator() {
               {...form.getInputProps("ownerEmailAddress")}
               withAsterisk
             />
+                        {!otpSent && (
+              <Button mt="md" onClick={handleSendOTP} disabled={otpSent}>
+                Send OTP
+              </Button>
+            )}
+            {otpSent && (
+              <>
+                <TextInput
+                  label="Enter OTP"
+                  placeholder="Enter OTP received"
+                  value={otp}
+                  onChange={(event) => setOtp(event.currentTarget.value)}
+                  withAsterisk
+                />
+                <Button mt="md" onClick={handleVerifyOTP} disabled={isOtpVerified}>
+                  Verify OTP
+                </Button>
+              </>
+            )}
             <Group justify="flex-start" mt="xl" mb={5}>
               <Text display="inline" size="sm" fw={500}>
                 Upload Your Signature{" "}
@@ -481,6 +534,7 @@ export function AgreementGenerator() {
             )}
           </Stepper.Completed>
         </Stepper>
+
 
         <Group justify="flex-end" mt="xl">
           {active > 0 && active < 4 && !isSubmitting && (
