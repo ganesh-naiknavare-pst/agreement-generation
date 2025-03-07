@@ -10,3 +10,13 @@
   height: 40px !important;
   display: flex;
 }
+.mantine-DatePickerInput-levelsGroup{
+  width: 200px !important;
+  height: 300px !important;
+  display: flex;
+}
+.mantine-DatePickerInput-calendarHeaderControlIcon{
+  width: 10% !important;
+  height: 10% !important;
+  display: block;
+}

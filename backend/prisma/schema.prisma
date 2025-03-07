@@ -18,8 +18,8 @@ model Agreement {
   city      String
   startDate DateTime
   rentAmount   Int
-  agreementPeriod Int
-  owner     Owner[]
+  agreementPeriod DateTime[]
+    owner     Owner[]
   tenants   Tenant[]
 }
 

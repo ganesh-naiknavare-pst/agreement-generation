@@ -20,7 +20,7 @@ import {
 } from "@mantine/core";
 import { IconCheck, IconAlertTriangle, IconUpload } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
-import { DateInput } from "@mantine/dates";
+import { DateInput, DatePickerInput } from "@mantine/dates";
 import { COLORS } from "../colors";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
@@ -54,8 +54,8 @@ export function AgreementGenerator() {
       city: "",
       date: new Date(),
       rentAmount: 0,
-      agreementPeriod: 11,
-    },
+      agreementPeriod: [new Date(), new Date(new Date().setMonth(new Date().getMonth() + 6))],
+          },
 
     validate: (values) => {
       const errors: Record<string, string> = {};
@@ -117,8 +117,15 @@ export function AgreementGenerator() {
         if (values.rentAmount <= 0) {
           errors.rentAmount = "Rent amount must be greater than 0";
         }
-        if (values.agreementPeriod <= 1) {
-          errors.agreementPeriod = "Agreement period must be greater than 1";
+        if (values.agreementPeriod.length !== 2) {
+          errors.agreementPeriod = "Agreement period must be a valid date range";
+        } else {
+          const [start, end] = values.agreementPeriod;
+          const oneMonthLater = new Date(start);
+          oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+          if (end < oneMonthLater) {
+            errors.agreementPeriod = "Agreement period must be at least one month";
+          }
         }
       }
 
@@ -177,9 +184,9 @@ export function AgreementGenerator() {
       property_address: form.values.address,
       city: form.values.city,
       rent_amount: form.values.rentAmount,
-      agreement_period: form.values.agreementPeriod,
+      agreement_period: form.values.agreementPeriod.map(date => date.toISOString()),
       start_date: form.values.date.toISOString(),
-    };
+          };
     try {
       await fetchData({
         method: "POST",
@@ -403,14 +410,15 @@ export function AgreementGenerator() {
               {...form.getInputProps("rentAmount")}
               withAsterisk
             />
-            <NumberInput
-              label="Agreement Period (months)"
-              placeholder="Enter agreement period"
-              min={1}
+            <DatePickerInput
+              label="Agreement Period"
+              placeholder="Select agreement period"
+              minDate={new Date()}
               key={form.key("agreementPeriod")}
               style={{ textAlign: "start" }}
               {...form.getInputProps("agreementPeriod")}
               withAsterisk
+              type="range"
             />
             <DateInput
               label="Start date"
