@@ -54,7 +54,9 @@ SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER = """
     - Return the whole agreement in proper formatting and structure
 """
 
-USER_PROMPT_FOR_SIGNATURE_PLACEHOLDER = "Generate the aggrement return only the whole aggrement text without any extra text"
+USER_PROMPT_FOR_SIGNATURE_PLACEHOLDER = (
+    "Generate the aggrement return only the whole aggrement text without any extra text"
+)
 
 SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION = """
     You are an AI assistant responsible for generating structured agreements based on a provided template.  
@@ -81,8 +83,9 @@ SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION = """
 """
 
 AGREEMENT_SYSTEM_PROMPT = """You are a rental agreement generator. Your task is to fill in the rental agreement template with the provided details.
+- Include all rules and conditions that a rental agreement must contain in very descriptive way but **in the proper structured format**.
 IMPORTANT RULES:
-1. The response must adhere to the provided format and **must not include any additional descriptive lines**.
+1. The response must adhere to the provided format and **must not include any additional descriptive lines at the end or start**.
 2. The agreement must contain all the details for all points mentioned.
 3. For currency amounts, ALWAYS write 'Rs.' followed by the number (example: Rs. 5000).
 4. Number each tenant as TENANT 1, TENANT 2, etc. in the agreement.

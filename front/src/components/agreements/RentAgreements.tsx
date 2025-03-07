@@ -21,7 +21,9 @@ export function RentAgreements() {
   const pageSize = 3;
   const total = agreements?.length || 0;
   const totalPages = Math.ceil(total / pageSize);
-  const message = `Showing ${total > 0 ? (page - 1) * pageSize + 1 : 0} – ${Math.min(total, page * pageSize)} of ${total}`;
+  const message = `Showing ${
+    total > 0 ? (page - 1) * pageSize + 1 : 0
+  } – ${Math.min(total, page * pageSize)} of ${total}`;
 
   const handleViewPDF = (pdfBase64: string | null) => {
     if (!pdfBase64) return;
@@ -42,16 +44,18 @@ export function RentAgreements() {
     return status === "APPROVED"
       ? COLORS.approval
       : status === "PROCESSING"
-        ? COLORS.blue
-        : COLORS.red;
+      ? COLORS.blue
+      : COLORS.red;
   };
 
-  const paginatedData = agreements ? agreements.slice((page - 1) * pageSize, page * pageSize) : [];
+  const paginatedData = agreements
+    ? agreements.slice((page - 1) * pageSize, page * pageSize)
+    : [];
 
   return (
     <Box>
       <Title order={3} mb={20}>
-        My Rent Agreements
+        Rent Agreements
       </Title>
       <Table highlightOnHover verticalSpacing="md" horizontalSpacing={20}>
         <Table.Thead>
@@ -84,7 +88,10 @@ export function RentAgreements() {
                   </Tooltip>
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  <Tooltip label={agreement.pdf ? "View PDF" : "No PDF available"} withArrow>
+                  <Tooltip
+                    label={agreement.pdf ? "View PDF" : "No PDF available"}
+                    withArrow
+                  >
                     <ActionIcon
                       onClick={() => handleViewPDF(agreement.pdf)}
                       disabled={!agreement.pdf}
@@ -109,7 +116,12 @@ export function RentAgreements() {
       {totalPages > 1 && (
         <Group justify="flex-end" mt={20}>
           <Text size="sm">{message}</Text>
-          <Pagination total={totalPages} value={page} onChange={setPage} withPages={false} />
+          <Pagination
+            total={totalPages}
+            value={page}
+            onChange={setPage}
+            withPages={false}
+          />
         </Group>
       )}
     </Box>
