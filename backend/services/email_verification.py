@@ -54,23 +54,22 @@ def send_otp_endpoint(request: OTPRequest):
 def verify_otp_endpoint(request: OTPVerification):
     email = request.email
     user_otp = request.otp
-    
+
     if email not in otp_storage:
         raise HTTPException(status_code=400, detail="No OTP found for this email")
-    
+
     otp_data = otp_storage[email]
     if time.time() - otp_data["timestamp"] > OTP_EXPIRY_SECONDS:
         del otp_storage[email]
         raise HTTPException(status_code=400, detail="OTP expired. Request a new one.")
-    
+
     if otp_data["attempts"] >= MAX_ATTEMPTS:
         del otp_storage[email]
         raise HTTPException(status_code=400, detail="Maximum attempts reached. Request a new OTP.")
-    
+
     otp_data["attempts"] += 1
     if user_otp == otp_data["otp"]:
         del otp_storage[email]
-        return {"success": True, "message": "OTP verified successfully"}
+        return {"success": True, "message": "OTP verified successfully"}  # ✅ Ensure this is returned
     else:
         raise HTTPException(status_code=400, detail="Incorrect OTP. Try again.")
-
