@@ -70,7 +70,7 @@ def verify_otp_endpoint(request: OTPVerification):
     otp_data["attempts"] += 1
     if user_otp == otp_data["otp"]:
         del otp_storage[email]
-        return {"message": "OTP verified successfully"}
+        return {"success": True, "message": "OTP verified successfully"}
     else:
         raise HTTPException(status_code=400, detail="Incorrect OTP. Try again.")
 
