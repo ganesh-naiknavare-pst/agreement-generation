@@ -69,7 +69,7 @@ export const AppLayout = () => {
             <IconChevronLeftPipe
               style={{
                 transition: "transform 200ms",
-                marginLeft: isCollapsed ? 45 : 235,
+                marginLeft: isCollapsed ? 1 : 235,
                 transform: isCollapsed ? "rotate(180deg)" : "rotate(0deg)",
                 cursor: "pointer",
               }}
