@@ -107,9 +107,11 @@ async def get_agreements(request: Request, db: Prisma = Depends(get_db)):
     return agreements
 
 @router.post("/send-otp")
-def send_otp(sendotp: OTPRequest,request: Request):
+@requires_auth
+async def send_otp(sendotp: OTPRequest,request: Request):
     return send_otp_endpoint(sendotp)
 
 @router.post("/verify-otp")
-def otp_verification(verify_otp: OTPVerification):
+@requires_auth
+async def otp_verification(verify_otp: OTPVerification,request: Request):
     return verify_otp_endpoint(verify_otp)

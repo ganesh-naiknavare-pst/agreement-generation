@@ -53,13 +53,13 @@ export function Templates() {
   const [authorityOtp, setAuthorityOtp] = useState("");
   const [authorityOtpVerified, setAuthorityOtpVerified] = useState(false);
   const [authorityOtpError, setAuthorityOtpError] = useState("");
-  const [authorityTimer, setAuthorityTimer] = useState(120);
+  const [authorityTimer, setAuthorityTimer] = useState(300);
 
   const [participantsOtpSent, setParticipantsOtpSent] = useState(false);
   const [participantsOtp, setParticipantsOtp] = useState("");
   const [participantsOtpVerified, setParticipantsOtpVerified] = useState(false);
   const [participantsOtpError, setParticipantsOtpError] = useState("");
-  const [participantsTimer, setParticipantsTimer] = useState(120);
+  const [participantsTimer, setParticipantsTimer] = useState(300);
 
   const timerRef = useRef<{
     authority: number | null;
@@ -73,7 +73,7 @@ export function Templates() {
     if (timerRef.current[type]) clearInterval(timerRef.current[type]!);
 
     if (type === "authority") {
-      setAuthorityTimer(120);
+      setAuthorityTimer(300);
       timerRef.current[type] = setInterval(() => {
         setAuthorityTimer((prev) => {
           if (prev <= 1) {
@@ -85,7 +85,7 @@ export function Templates() {
         });
       }, 1000);
     } else {
-      setParticipantsTimer(120);
+      setParticipantsTimer(300);
       timerRef.current[type] = setInterval(() => {
         setParticipantsTimer((prev) => {
           if (prev <= 1) {
@@ -110,12 +110,12 @@ export function Templates() {
       if (type === "authority") {
         setAuthorityOtpSent(true);
         setAuthorityOtpError("");
-        setAuthorityTimer(120);
+        setAuthorityTimer(300);
         startCountdown("authority");
       } else {
         setParticipantsOtpSent(true);
         setParticipantsOtpError("");
-        setParticipantsTimer(120);
+        setParticipantsTimer(300);
         startCountdown("participants");
       }
     } catch (error) {

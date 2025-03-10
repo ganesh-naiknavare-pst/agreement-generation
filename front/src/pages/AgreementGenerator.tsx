@@ -46,7 +46,9 @@ export function AgreementGenerator() {
   const [otp, setOtp] = useState("");
   const [isOtpVerified, setIsOtpVerified] = useState(false);
   const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
-  const { data, fetchData: verifyOTP } = useApi<OTPVerificationResponse>(BackendEndpoints.VerifyOTP);
+  const { data, fetchData: verifyOTP } = useApi<OTPVerificationResponse>(
+    BackendEndpoints.VerifyOTP
+  );
   const [tenantOtpSent, setTenantOtpSent] = useState<Record<number, boolean>>(
     {}
   );
@@ -65,57 +67,40 @@ export function AgreementGenerator() {
   const [ownerTimer, setOwnerTimer] = useState(0);
   const [ownerCountdownActive, setOwnerCountdownActive] = useState(false);
   const [otpIndex, setOtpIndex] = useState<number | null>(null);
+  const startOwnerCountdown = () => {
+    if (ownerCountdownActive) return;
+    setOwnerCountdownActive(true);
+    setOwnerTimer(300);
 
-  useEffect(() => {
-    const timers: Record<number, ReturnType<typeof setInterval>> = {};
-
-    Object.entries(countdownActive).forEach(([index, active]) => {
-      if (active) {
-        const numericIndex = parseInt(index, 10);
-        timers[numericIndex] = setInterval(() => {
-          setTenantTimer((prev) => ({
-            ...prev,
-            [numericIndex]: prev[numericIndex] > 0 ? prev[numericIndex] - 1 : 0,
-          }));
-        }, 1000);
-      }
-    });
-
-    return () => {
-      Object.values(timers).forEach((timer) => clearInterval(timer));
-    };
-  }, [countdownActive]);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setInterval>;
-    if (ownerCountdownActive && ownerTimer > 0) {
-      timer = setInterval(() => {
-        setOwnerTimer((prev) => prev - 1);
-      }, 1000);
-    } else if (ownerTimer === 0) {
-      setOwnerCountdownActive(false);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [ownerCountdownActive, ownerTimer]);
-
-  const handleSendOTP = async () => {
-    console.log("Sending OTP to:", form.values.ownerEmailAddress);
-    try {
-      await sendOTP({
-        method: "POST",
-        data: { email: form.values.ownerEmailAddress },
+    const timer = setInterval(() => {
+      setOwnerTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setOwnerCountdownActive(false);
+          return 0;
+        }
+        return prev - 1;
       });
-      setOtpSent(true);
-      setOwnerTimer(120);
-      setOwnerCountdownActive(true);
-      setOtpError("");
-    } catch (error) {
-      console.error("Error sending OTP:", error);
-      setOtpError("Failed to send OTP. Please try again.");
-    }
+    }, 1000);
   };
+
+  const startTenantCountdown = (index: number) => {
+    if (countdownActive[index]) return;
+    setCountdownActive((prev) => ({ ...prev, [index]: true }));
+    setTenantTimer((prev) => ({ ...prev, [index]: 300 }));
+
+    const timer = setInterval(() => {
+      setTenantTimer((prev) => {
+        if (prev[index] <= 1) {
+          clearInterval(timer);
+          setCountdownActive((prev) => ({ ...prev, [index]: false }));
+          return { ...prev, [index]: 0 };
+        }
+        return { ...prev, [index]: prev[index] - 1 };
+      });
+    }, 1000);
+  };
+
   useEffect(() => {
     if (data) {
       const { success, type } = data;
@@ -154,6 +139,21 @@ export function AgreementGenerator() {
     }
   }, [data]);
 
+  const handleSendOTP = async () => {
+    try {
+      await sendOTP({
+        method: "POST",
+        data: { email: form.values.ownerEmailAddress },
+      });
+      setOtpSent(true);
+      setOtpError("");
+      startOwnerCountdown(); // Start countdown without useEffect
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      setOtpError("Failed to send OTP. Please try again.");
+    }
+  };
+
   const handleVerifyOTP = async () => {
     console.log("Verifying OTP:", otp);
     if (!otp) {
@@ -164,11 +164,11 @@ export function AgreementGenerator() {
     try {
       await verifyOTP({
         method: "POST",
-        data: { 
-          email: form.values.ownerEmailAddress, 
+        data: {
+          email: form.values.ownerEmailAddress,
           otp,
-          type: "owner"
-        }
+          type: "owner",
+        },
       });
     } catch (error: any) {
       console.error("Error verifying OTP:", error);
@@ -184,9 +184,8 @@ export function AgreementGenerator() {
         data: { email: form.values.tenants[index].email },
       });
       setTenantOtpSent((prev) => ({ ...prev, [index]: true }));
-      setTenantTimer((prev) => ({ ...prev, [index]: 120 }));
-      setCountdownActive((prev) => ({ ...prev, [index]: true }));
       setTenantOtpError((prev) => ({ ...prev, [index]: "" }));
+      startTenantCountdown(index);
     } catch (error) {
       console.error("Error sending OTP:", error);
       setTenantOtpError((prev) => ({
@@ -214,7 +213,7 @@ export function AgreementGenerator() {
         data: {
           email: form.values.tenants[index].email,
           otp: tenantOtp[index],
-          type: "tenant"
+          type: "tenant",
         },
       });
     } catch (error: any) {
@@ -597,7 +596,7 @@ export function AgreementGenerator() {
                   style={{ textAlign: "start" }}
                   {...form.getInputProps(`tenants.${index}.email`)}
                   withAsterisk
-                  disabled={tenantOtpVerified[index]} 
+                  disabled={tenantOtpVerified[index]}
                 />
 
                 {!tenantOtpVerified[index] ? (
@@ -611,31 +610,31 @@ export function AgreementGenerator() {
                       </Button>
                     ) : (
                       <>
-                        <TextInput
-                          label="Enter OTP"
-                          placeholder="Enter OTP received"
-                          value={tenantOtp[index] || ""}
-                          onChange={(event) => {
-                            const newValue = event.currentTarget.value;
-                            if (/^\d{0,6}$/.test(newValue)) {
-                              setTenantOtp((prev) => ({
-                                ...prev,
-                                [index]: newValue,
-                              }));
-                            }
-                          }}
-                          withAsterisk
-                          error={
-                            tenantOtp[index] &&
-                            tenantOtp[index].length > 0 &&
-                            tenantOtp[index].length !== 6
-                              ? "OTP must be exactly 6 digits"
-                              : ""
-                          }
-                        />
 
                         {tenantTimer[index] > 0 ? (
                           <>
+                          <TextInput
+                            label="Enter OTP"
+                            placeholder="Enter OTP received"
+                            value={tenantOtp[index] || ""}
+                            onChange={(event) => {
+                              const newValue = event.currentTarget.value;
+                              if (/^\d{0,6}$/.test(newValue)) {
+                                setTenantOtp((prev) => ({
+                                  ...prev,
+                                  [index]: newValue,
+                                }));
+                              }
+                            }}
+                            withAsterisk
+                            error={
+                              tenantOtp[index] &&
+                              tenantOtp[index].length > 0 &&
+                              tenantOtp[index].length !== 6
+                                ? "OTP must be exactly 6 digits"
+                                : ""
+                            }
+                          />
                             <Text size="sm" c="dimmed" mt="xs">
                               Time remaining:{" "}
                               {Math.floor(tenantTimer[index] / 60)}:
