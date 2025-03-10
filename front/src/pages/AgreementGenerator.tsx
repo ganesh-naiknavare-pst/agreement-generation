@@ -55,7 +55,7 @@ export function AgreementGenerator() {
       date: new Date(),
       rentAmount: 0,
       agreementPeriod: [new Date(), new Date(new Date().setMonth(new Date().getMonth() + 6))],
-          },
+    },
 
     validate: (values) => {
       const errors: Record<string, string> = {};
@@ -118,10 +118,10 @@ export function AgreementGenerator() {
           errors.agreementPeriod = "Agreement period must be a valid date range";
         } else {
           const [start, end] = values.agreementPeriod;
-          const oneMonthLater = new Date(start);
-          oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-          if (end < oneMonthLater) {
-            errors.agreementPeriod = "Agreement period must be at least one month";
+          const sixMonthLater = new Date(start);
+          sixMonthLater.setMonth(sixMonthLater.getMonth() + 6);
+          if (end < sixMonthLater) {
+            errors.agreementPeriod = "Agreement period must be at least Six months";
           }
         }
       }
@@ -182,7 +182,7 @@ export function AgreementGenerator() {
       city: form.values.city,
       rent_amount: form.values.rentAmount,
       agreement_period: form.values.agreementPeriod.map(date => date.toISOString()),
-          };
+    };
     try {
       await fetchData({
         method: "POST",

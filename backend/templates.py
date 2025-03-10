@@ -1,5 +1,6 @@
 from config import BASE_APPROVAL_URL
 from helpers.state_manager import agreement_state, template_agreement_state
+from datetime import datetime
 
 REJECTION_NOTIFICATION_TEMPLATE = """
 <!DOCTYPE html>
@@ -201,6 +202,9 @@ def format_agreement_details(
     agreement_period: list,
 ) -> str:
     start_date, end_date = agreement_period
+    start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S.%f%z")
+    end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S.%f%z")
+    num_months = (end_date_obj.year - start_date_obj.year) * 12 + end_date_obj.month - start_date_obj.month
     return f"""
 Create a rental agreement with the following details:
 
@@ -213,7 +217,7 @@ Property Details:
 - Address: {property_address}
 - City: {city}
 - Monthly Rent: Rs. {rent_amount}
-- Duration: From {start_date} to {end_date}
+- Duration: {num_months} months (From {start_date} to {end_date})
 
 Additional Terms:
 - Rent will be split equally among all tenants
