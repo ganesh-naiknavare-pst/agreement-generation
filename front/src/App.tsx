@@ -5,7 +5,6 @@ import { MantineProvider } from "@mantine/core";
 import { theme } from "./theme";
 import { ClerkProvider } from "@clerk/clerk-react";
 import "@mantine/dropzone/styles.css";
-import { Notifications } from '@mantine/notifications';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -16,7 +15,6 @@ if (!PUBLISHABLE_KEY) {
 function App() {
   return (
     <MantineProvider theme={theme}>
-      <Notifications />
       <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
         <RouterProvider router={router} />
       </ClerkProvider>

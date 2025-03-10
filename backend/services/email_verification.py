@@ -3,14 +3,11 @@ from pydantic import BaseModel
 import random
 import time
 import requests
-from constants import SMTP2GO_EMAIL_SEND_URL
+from constants import SMTP2GO_EMAIL_SEND_URL, OTP_EXPIRY_SECONDS
 from config import SMTP2GO_API_KEY, SENDER_EMAIL
 app = FastAPI()
 
-# OTP Settings
-OTP_EXPIRY_SECONDS = 120  # OTP valid for 120 seconds
-MAX_ATTEMPTS = 3
-otp_storage = {} 
+otp_storage = {}
 
 class OTPRequest(BaseModel):
     email: str
@@ -44,7 +41,7 @@ def send_otp(email, otp):
 def send_otp_endpoint(request: OTPRequest):
     email = request.email
     otp = generate_otp()
-    otp_storage[email] = {"otp": otp, "timestamp": time.time(), "attempts": 0}
+    otp_storage[email] = {"otp": otp, "timestamp": time.time()}
     
     if send_otp(email, otp):
         return {"message": "OTP sent successfully"}
@@ -63,13 +60,8 @@ def verify_otp_endpoint(request: OTPVerification):
         del otp_storage[email]
         raise HTTPException(status_code=400, detail="OTP expired. Request a new one.")
 
-    if otp_data["attempts"] >= MAX_ATTEMPTS:
-        del otp_storage[email]
-        raise HTTPException(status_code=400, detail="Maximum attempts reached. Request a new OTP.")
-
-    otp_data["attempts"] += 1
     if user_otp == otp_data["otp"]:
         del otp_storage[email]
-        return {"success": True, "message": "OTP verified successfully"}  # ✅ Ensure this is returned
+        return {"success": True, "message": "OTP verified successfully"}
     else:
-        raise HTTPException(status_code=400, detail="Incorrect OTP. Try again.")
+        return {"success": False, "message": "Incorrect OTP. Try again."}

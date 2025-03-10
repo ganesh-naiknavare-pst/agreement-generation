@@ -12,3 +12,7 @@ SMTP2GO_EMAIL_SEND_URL = "https://api.smtp2go.com/v3/email/send"
 
 MAX_RETRIES = 5
 RETRY_DELAY = 2
+
+
+# OTP valid for 120 seconds
+OTP_EXPIRY_SECONDS = 120

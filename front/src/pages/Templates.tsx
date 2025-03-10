@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Group,
   Button,
@@ -35,13 +35,134 @@ export function Templates() {
   const [showAlert, setShowAlert] = useState(false);
   const { fetchTemplateAgreements } = useAgreements();
 
-  const { fetchData } = useApi(BackendEndpoints.CreateTemplateBasedAgreement);
-
   const handleDrop = (field: string, files: File[]) => {
     setFile(files[0]);
     form.setFieldValue(field, files[0]);
     setShowAlert(false);
   };
+  const { fetchData } = useApi(BackendEndpoints.CreateTemplateBasedAgreement);
+  const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
+  const { data, fetchData: verifyOTP } = useApi(BackendEndpoints.VerifyOTP);
+  const [authorityOtpSent, setAuthorityOtpSent] = useState(false);
+  const [authorityOtp, setAuthorityOtp] = useState("");
+  const [authorityOtpVerified, setAuthorityOtpVerified] = useState(false);
+  const [authorityOtpError, setAuthorityOtpError] = useState("");
+  const [authorityTimer, setAuthorityTimer] = useState(120);
+
+  const [participantsOtpSent, setParticipantsOtpSent] = useState(false);
+  const [participantsOtp, setParticipantsOtp] = useState("");
+  const [participantsOtpVerified, setParticipantsOtpVerified] = useState(false);
+  const [participantsOtpError, setParticipantsOtpError] = useState("");
+  const [participantsTimer, setParticipantsTimer] = useState(120);
+
+  const timerRef = useRef<{
+    authority: NodeJS.Timeout | null;
+    participants: NodeJS.Timeout | null;
+  }>({
+    authority: null,
+    participants: null,
+  });
+
+  const startCountdown = (type: "authority" | "participants") => {
+    if (timerRef.current[type]) clearInterval(timerRef.current[type]!);
+
+    if (type === "authority") {
+      setAuthorityTimer(120);
+      timerRef.current[type] = setInterval(() => {
+        setAuthorityTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current[type]!);
+            timerRef.current[type] = null;
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setParticipantsTimer(120);
+      timerRef.current[type] = setInterval(() => {
+        setParticipantsTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current[type]!);
+            timerRef.current[type] = null;
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  };
+
+  const handleSendOTP = async (type: "authority" | "participants") => {
+    try {
+      const email =
+        type === "authority"
+          ? form.values.authorityEmail
+          : form.values.participantsEmail;
+      await sendOTP({ method: "POST", data: { email } });
+
+      if (type === "authority") {
+        setAuthorityOtpSent(true);
+        setAuthorityOtpError("");
+        startCountdown("authority");
+      } else {
+        setParticipantsOtpSent(true);
+        setParticipantsOtpError("");
+        startCountdown("participants");
+      }
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      if (type === "authority") setAuthorityOtpError("Failed to send OTP.");
+      else setParticipantsOtpError("Failed to send OTP.");
+    }
+  };
+
+  const handleVerifyOTP = async (type: "authority" | "participants") => {
+    try {
+      const email =
+        type === "authority"
+          ? form.values.authorityEmail
+          : form.values.participantsEmail;
+      const otp = type === "authority" ? authorityOtp : participantsOtp;
+
+      if (!otp) {
+        if (type === "authority") setAuthorityOtpError("Please enter OTP.");
+        else setParticipantsOtpError("Please enter OTP.");
+        return;
+      }
+
+      await verifyOTP({ method: "POST", data: { email, otp } });
+    } catch (error: any) {
+      console.error("Error verifying OTP:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (data) {
+      if (data?.success === true) {
+        // ✅ If OTP is correct, mark it as verified
+        if (authorityOtpSent) {
+          setAuthorityOtpVerified(true);
+          setAuthorityOtpSent(false);
+          setAuthorityOtp("");
+          setAuthorityOtpError("");
+        }
+        if (participantsOtpSent) {
+          setParticipantsOtpVerified(true);
+          setParticipantsOtpSent(false);
+          setParticipantsOtp("");
+          setParticipantsOtpError("");
+        }
+      }
+
+      if (data?.success === false) {
+        if (authorityOtpSent)
+          setAuthorityOtpError("Invalid OTP. Please enter the correct OTP.");
+        if (participantsOtpSent)
+          setParticipantsOtpError("Invalid OTP. Please enter the correct OTP.");
+      }
+    }
+  }, [data]);
 
   const form = useForm({
     mode: "controlled",
@@ -70,26 +191,34 @@ export function Templates() {
       return errors;
     },
   });
-
   const handleSubmit = async () => {
+    if (!authorityOtpVerified || !participantsOtpVerified) {
+      setShowAlert(true); // ✅ Show an alert if emails are not verified
+      return;
+    }
+
     const { hasErrors } = form.validate();
     if (hasErrors) return;
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
       setDisplayBanner(true);
       fetchTemplateAgreements({ method: "GET" });
     }, 2000);
+
     try {
       const formData = new FormData();
       formData.append("user_prompt", form.values.userPrompt);
       formData.append("authority_email", form.values.authorityEmail);
       formData.append("participant_email", form.values.participantsEmail);
       formData.append("file", form.values.file ? form.values.file : "");
+
       await fetchData({
         method: "POST",
         data: formData,
       });
+
       await fetchTemplateAgreements({ method: "GET" });
     } catch (error) {
       console.error("Error processing template:", error);
@@ -103,18 +232,18 @@ export function Templates() {
           Generate an Agreement by Uploading Templates
         </Title>
       </Group>
-      {showAlert && (
+      {showAlert && !authorityOtpVerified && !participantsOtpVerified && (
         <Alert
           m="1rem"
           variant="light"
-          color="yellow"
-          title="Warning"
+          color="red"
+          title="Verification Required"
           icon={<IconAlertTriangle />}
         >
-          Please fill in all required fields before proceeding. All fields are
-          mandatory.
+          Both emails must be verified before generating the agreement.
         </Alert>
       )}
+
       <Divider my="sm" />
       <Container>
         {loading ? (
@@ -217,7 +346,41 @@ export function Templates() {
               placeholder="Enter authority's email"
               {...form.getInputProps("authorityEmail")}
               withAsterisk
+              disabled={authorityOtpVerified}
             />
+            {!authorityOtpVerified ? (
+              authorityOtpSent ? (
+                <>
+                  <TextInput
+                    label="Enter OTP"
+                    placeholder="Enter OTP received"
+                    value={authorityOtp}
+                    onChange={(e) => setAuthorityOtp(e.currentTarget.value)}
+                    withAsterisk
+                  />
+                  <Text size="sm">
+                    Time remaining: {Math.floor(authorityTimer / 60)}:
+                    {(authorityTimer % 60).toString().padStart(2, "0")}
+                  </Text>
+                  {authorityOtpError && (
+                    <Text size="sm" c="red">
+                      {authorityOtpError}
+                    </Text>
+                  )}
+                  <Button mt="md" onClick={() => handleVerifyOTP("authority")}>
+                    Verify OTP
+                  </Button>
+                </>
+              ) : (
+                <Button mt="md" onClick={() => handleSendOTP("authority")}>
+                  Send OTP
+                </Button>
+              )
+            ) : (
+              <Alert color="green">
+                ✓ Authority Email verified successfully
+              </Alert>
+            )}
 
             <TextInput
               my="md"
@@ -225,8 +388,45 @@ export function Templates() {
               placeholder="Enter participants' email"
               {...form.getInputProps("participantsEmail")}
               withAsterisk
+              disabled={participantsOtpVerified}
             />
+            {!participantsOtpVerified ? (
+              participantsOtpSent ? (
+                <>
+                  <TextInput
+                    label="Enter OTP"
+                    placeholder="Enter OTP received"
+                    value={participantsOtp}
+                    onChange={(e) => setParticipantsOtp(e.currentTarget.value)}
+                    withAsterisk
+                  />
+                  <Text size="sm">
+                    Time remaining: {Math.floor(participantsTimer / 60)}:
+                    {(participantsTimer % 60).toString().padStart(2, "0")}
+                  </Text>
 
+                  {participantsOtpError && (
+                    <Text size="sm" c="red">
+                      {participantsOtpError}
+                    </Text>
+                  )}
+                  <Button
+                    mt="md"
+                    onClick={() => handleVerifyOTP("participants")}
+                  >
+                    Verify OTP
+                  </Button>
+                </>
+              ) : (
+                <Button mt="md" onClick={() => handleSendOTP("participants")}>
+                  Send OTP
+                </Button>
+              )
+            ) : (
+              <Alert color="green">
+                ✓ Participants Email verified successfully
+              </Alert>
+            )}
             <Textarea
               label="Enter the prompt"
               placeholder="Describe the template details"
@@ -235,8 +435,12 @@ export function Templates() {
               {...form.getInputProps("userPrompt")}
               withAsterisk
             />
-
-            <Button onClick={handleSubmit} fullWidth mt="md">
+            <Button
+              onClick={handleSubmit}
+              fullWidth
+              mt="md"
+              disabled={!authorityOtpVerified || !participantsOtpVerified}
+            >
               Generate agreement
             </Button>
           </>
