@@ -60,15 +60,14 @@ export function AgreementGenerator() {
     validate: (values) => {
       const errors: Record<string, string> = {};
       const fullNameRegex = /^[A-Za-z]+(?:[\s-][A-Za-z]+)+$/;
-      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$/;
-
+      const emailRegex = /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/;
 
       if (active === 0) {
         if (!fullNameRegex.test(values.ownerFullName.trim())) {
           errors.ownerFullName = "Full name must include at least a first name and a surname";
         }
         if (!emailRegex.test(values.ownerEmailAddress)) {
-          errors.ownerEmailAddress = "Invalid email address";
+          errors.ownerEmailAddress = "Please enter a valid email address";
         }
         if (values.ownerImageUrl === "") {
           setShowAlertForPhoto(true);
@@ -92,7 +91,7 @@ export function AgreementGenerator() {
               "Tenant full name must include at least a first name and a surname";
           }
           if (!emailRegex.test(tenant.email)) {
-            errors[`tenants.${index}.email`] = "Invalid email address";
+            errors[`tenants.${index}.email`] = "Please enter a valid email address";
           }
           if (tenant.tenantImageUrl === "") {
             setShowAlertForPhoto(true);
