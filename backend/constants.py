@@ -14,5 +14,5 @@ MAX_RETRIES = 5
 RETRY_DELAY = 2
 
 
-# OTP valid for 120 seconds
+# OTP valid in seconds
 OTP_EXPIRY_SECONDS = 300
