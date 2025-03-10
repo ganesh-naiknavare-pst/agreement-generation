@@ -123,7 +123,7 @@ export function AgreementGenerator() {
           const sixMonthLater = new Date(start);
           sixMonthLater.setMonth(sixMonthLater.getMonth() + 6);
           if (end < sixMonthLater) {
-            errors.agreementPeriod = "Agreement period must be at least Six months";
+            errors.agreementPeriod = "Agreement period must be at least six months";
           }
         }
       }
