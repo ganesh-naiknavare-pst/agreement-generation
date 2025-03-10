@@ -1,5 +1,5 @@
 import React from "react";
-import { Center, Title, Button } from "@mantine/core";
+import { Center, Title, Button, Flex } from "@mantine/core";
 import { COLORS } from "../colors";
 import { useParams } from "react-router-dom";
 import { BackendEndpoints } from "../hooks/useApi";
@@ -27,15 +27,19 @@ const ApprovalPage = () => {
   };
   return (
     <Center>
-      <Title order={2} c={COLORS.blue}>
-        Welcome to the AI Agreement Agent
-      </Title>
-      <Button variant="filled" onClick={processApproval}>
-        Approve
-      </Button>
-      <Button variant="filled" onClick={processRejection}>
-        Reject
-      </Button>
+      <div style={{ textAlign: "center" }}>
+        <Title order={2} c={COLORS.blue}>
+          Welcome to the AI Agreement Agent
+        </Title>
+        <Flex justify="center" gap={16} mt={16}>
+          <Button color="green" onClick={processApproval}>
+            Approve Agreement
+          </Button>
+          <Button color="red" onClick={processRejection}>
+            Reject Agreement
+          </Button>
+        </Flex>
+      </div>
     </Center>
   );
 };
