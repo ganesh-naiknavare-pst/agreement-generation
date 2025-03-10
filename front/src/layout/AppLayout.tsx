@@ -66,15 +66,15 @@ export const AppLayout = () => {
         </AppShell.Section>
         <AppShell.Section>
           <Center>
-          <IconChevronLeftPipe
+            <IconChevronLeftPipe
               style={{
                 transition: "transform 200ms",
-                marginLeft: isCollapsed ? 45 : 235, 
+                marginLeft: isCollapsed ? 45 : 235,
                 transform: isCollapsed ? "rotate(180deg)" : "rotate(0deg)",
                 cursor: "pointer",
               }}
               onClick={() => setIsCollapsed((prevCollapsed) => !prevCollapsed)}
-               />
+            />
           </Center>
         </AppShell.Section>
       </AppShell.Navbar>
