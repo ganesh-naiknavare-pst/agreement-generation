@@ -23,7 +23,7 @@ export const router = createBrowserRouter(
         }
       >
         <Route index element={<Navigate to="home" replace />} />
-        <Route path="review-agreement" element={<ApprovalPage />} />
+        <Route path="review-agreement/:id" element={<ApprovalPage />} />
         <Route path="home" element={<HomePage />} />
         <Route path="templates" element={<Templates />} />
         <Route path="agreement-generator" element={<AgreementGenerator />} />

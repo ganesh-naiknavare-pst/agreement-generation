@@ -12,31 +12,31 @@ approved_users = set()
 rejected_users = set()
 
 
-@router.get("/sign/{user}/approve")
-async def approve_user(user: str):
-    approved_users.add(user)
-    response = {"status": "approved", "user_id": user, "approved": True}
+@router.post("/approve")
+async def approve_user(data):
+    approved_users.add(data.user)
+    response = {"status": "approved", "user_id": data.user, "approved": True}
     await notify_clients(response)
     return JSONResponse(content=response)
 
 
-@router.get("/sign/{user}/reject")
-async def reject_user(user: str):
-    rejected_users.add(user)
+@router.post("/reject")
+async def reject_user(data):
+    rejected_users.add(data.user)
     
     # Determine the role and name of the person who rejected
     rejected_by_name = None
     rejected_by_role = None
     
-    if user == agreement_state.owner_id:
+    if data.user == agreement_state.owner_id:
         rejected_by_name = agreement_state.owner_name
         rejected_by_role = "owner"
-    elif user in agreement_state.tenants:
-        rejected_by_name = agreement_state.tenant_names[user]
+    elif data.user in agreement_state.tenants:
+        rejected_by_name = agreement_state.tenant_names[data.user]
         rejected_by_role = "tenant"
-    elif user == template_agreement_state.authority_id:
+    elif data.user == template_agreement_state.authority_id:
         rejected_by_name = "Authority"
-    elif user == template_agreement_state.participant_id:
+    elif data.user == template_agreement_state.participant_id:
         rejected_by_name = "Participant"
     
     # Send rejection notifications to all parties
@@ -50,6 +50,6 @@ async def reject_user(user: str):
         delete_temp_file()
         delete_template_file()
     
-    response = {"status": "rejected", "user_id": user, "approved": False}
+    response = {"status": "rejected", "user_id": data.user, "approved": False}
     await notify_clients(response)
     return JSONResponse(content=response)
