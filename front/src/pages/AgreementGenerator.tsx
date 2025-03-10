@@ -59,13 +59,15 @@ export function AgreementGenerator() {
 
     validate: (values) => {
       const errors: Record<string, string> = {};
+      const fullNameRegex = /^[A-Za-z]+(?:[\s-][A-Za-z]+)+$/;
+      const emailRegex = /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/;
 
       if (active === 0) {
-        if (values.ownerFullName.trim().length < 2) {
-          errors.ownerFullName = "Name must include at least 2 characters";
+        if (!fullNameRegex.test(values.ownerFullName.trim())) {
+          errors.ownerFullName = "Full name must include at least a first name and a surname";
         }
-        if (!/^\S+@\S+$/.test(values.ownerEmailAddress)) {
-          errors.ownerEmailAddress = "Invalid email";
+        if (!emailRegex.test(values.ownerEmailAddress)) {
+          errors.ownerEmailAddress = "Please enter a valid email address";
         }
         if (values.ownerImageUrl === "") {
           setShowAlertForPhoto(true);
@@ -84,12 +86,12 @@ export function AgreementGenerator() {
 
       if (active === 2) {
         values.tenants.forEach((tenant, index) => {
-          if (tenant.fullName.trim().length < 2) {
+          if (!fullNameRegex.test(tenant.fullName.trim())) {
             errors[`tenants.${index}.fullName`] =
-              "Tenant name must be at least 2 characters";
+              "Tenant full name must include at least a first name and a surname";
           }
-          if (!/^\S+@\S+$/.test(tenant.email)) {
-            errors[`tenants.${index}.email`] = "Invalid email";
+          if (!emailRegex.test(tenant.email)) {
+            errors[`tenants.${index}.email`] = "Please enter a valid email address";
           }
           if (tenant.tenantImageUrl === "") {
             setShowAlertForPhoto(true);
@@ -117,8 +119,8 @@ export function AgreementGenerator() {
         if (values.rentAmount <= 0) {
           errors.rentAmount = "Rent amount must be greater than 0";
         }
-        if (values.agreementPeriod <= 1) {
-          errors.agreementPeriod = "Agreement period must be greater than 1";
+        if (values.agreementPeriod < 6) {
+          errors.agreementPeriod = "Agreement period must be at least 6 months";
         }
       }
 
