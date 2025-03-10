@@ -20,7 +20,7 @@ import {
 } from "@mantine/core";
 import { IconCheck, IconAlertTriangle, IconUpload } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
-import { DateInput } from "@mantine/dates";
+import { DatePickerInput } from "@mantine/dates";
 import { COLORS } from "../colors";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
@@ -54,7 +54,7 @@ export function AgreementGenerator() {
       city: "",
       date: new Date(),
       rentAmount: 0,
-      agreementPeriod: 11,
+      agreementPeriod: [new Date(), new Date(new Date().setMonth(new Date().getMonth() + 6))],
     },
 
     validate: (values) => {
@@ -113,14 +113,18 @@ export function AgreementGenerator() {
         if (!values.city.trim()) {
           errors.city = "City is required";
         }
-        if (!values.date) {
-          errors.date = "Start date is required";
-        }
         if (values.rentAmount <= 0) {
           errors.rentAmount = "Rent amount must be greater than 0";
         }
-        if (values.agreementPeriod < 6) {
-          errors.agreementPeriod = "Agreement period must be at least 6 months";
+        if (values.agreementPeriod.length !== 2) {
+          errors.agreementPeriod = "Agreement period must be a valid date range";
+        } else {
+          const [start, end] = values.agreementPeriod;
+          const sixMonthLater = new Date(start);
+          sixMonthLater.setMonth(sixMonthLater.getMonth() + 6);
+          if (end < sixMonthLater) {
+            errors.agreementPeriod = "Agreement period must be at least six months";
+          }
         }
       }
 
@@ -179,8 +183,7 @@ export function AgreementGenerator() {
       property_address: form.values.address,
       city: form.values.city,
       rent_amount: form.values.rentAmount,
-      agreement_period: form.values.agreementPeriod,
-      start_date: form.values.date.toISOString(),
+      agreement_period: form.values.agreementPeriod.map(date => date.toISOString()),
     };
     try {
       await fetchData({
@@ -405,23 +408,15 @@ export function AgreementGenerator() {
               {...form.getInputProps("rentAmount")}
               withAsterisk
             />
-            <NumberInput
-              label="Agreement Period (months)"
-              placeholder="Enter agreement period"
-              min={1}
+            <DatePickerInput
+              label="Agreement Period"
+              placeholder="Select agreement period"
+              minDate={new Date()}
               key={form.key("agreementPeriod")}
               style={{ textAlign: "start" }}
               {...form.getInputProps("agreementPeriod")}
               withAsterisk
-            />
-            <DateInput
-              label="Start date"
-              placeholder="Start date"
-              key={form.key("date")}
-              style={{ textAlign: "start" }}
-              {...form.getInputProps("date")}
-              withAsterisk
-              hideOutsideDates
+              type="range"
             />
           </Stepper.Step>
 
