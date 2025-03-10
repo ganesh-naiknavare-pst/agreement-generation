@@ -21,7 +21,6 @@ async def create_agreement(
         data={
             "address": agreement.property_address,
             "city": agreement.city,
-            "startDate": agreement.start_date,
             "rentAmount": agreement.rent_amount,
             "agreementPeriod": agreement.agreement_period,
         }
@@ -47,7 +46,9 @@ async def create_agreement(
 
 
 @router.post("/create-template-based-agreement")
+@requires_auth
 async def create_template_based_agreement(
+    request: Request,
     user_prompt: str = Form(...),
     authority_email: str = Form(...),
     participant_email: str = Form(...),
@@ -81,7 +82,8 @@ async def create_template_based_agreement(
 
 
 @router.get("/agreements")
-async def get_agreements(db: Prisma = Depends(get_db)):
+@requires_auth
+async def get_agreements(request: Request, db: Prisma = Depends(get_db)):
     agreements = await db.agreement.find_many(
         include={
             "owner": True,
@@ -93,7 +95,8 @@ async def get_agreements(db: Prisma = Depends(get_db)):
 
 
 @router.get("/template-agreements")
-async def get_agreements(db: Prisma = Depends(get_db)):
+@requires_auth
+async def get_agreements(request: Request, db: Prisma = Depends(get_db)):
     agreements = await db.templateagreement.find_many(
         include={
             "authority": True,

@@ -5,7 +5,7 @@ export interface Agreement {
   id: number;
   address: string;
   city: string;
-  startDate: string;
+  agreementPeriod: string[];
   pdf: string;
   owner: {
     name: string;

@@ -62,7 +62,7 @@ export function RentAgreements() {
           <Table.Tr>
             <Table.Th>Owner Name</Table.Th>
             <Table.Th>Tenant Name</Table.Th>
-            <Table.Th>Created Time</Table.Th>
+            <Table.Th>Agreement Period</Table.Th>
             <Table.Th>Status</Table.Th>
             <Table.Th>Actions</Table.Th>
           </Table.Tr>
@@ -78,7 +78,7 @@ export function RentAgreements() {
                   {agreement.tenants.map((tenant) => tenant.name).join(", ")}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  {new Date(agreement.startDate).toLocaleString()}
+                  {new Date(agreement.agreementPeriod[0]).toLocaleDateString()} - {new Date(agreement.agreementPeriod[1]).toLocaleDateString()}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
                   <Tooltip label={agreement.status} withArrow>

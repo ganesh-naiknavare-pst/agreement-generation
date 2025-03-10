@@ -31,8 +31,7 @@ class AgreementRequest(BaseModel):
     property_address: str
     city: str
     rent_amount: int
-    agreement_period: int
-    start_date: datetime
+    agreement_period: list[datetime]
 
 
 def run_agreement_tool(user_input: str) -> str:
@@ -170,8 +169,7 @@ async def create_agreement_details(
             property_address=request.property_address,
             city=request.city,
             rent_amount=request.rent_amount,
-            agreement_period=request.agreement_period,
-            start_date=request.start_date,
+            agreement_period=[date.isoformat() for date in request.agreement_period],
         )
 
         try:
