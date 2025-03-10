@@ -20,7 +20,7 @@ import {
 } from "@mantine/core";
 import { IconCheck, IconAlertTriangle, IconUpload } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
-import { DateInput, DatePickerInput } from "@mantine/dates";
+import { DatePickerInput } from "@mantine/dates";
 import { COLORS } from "../colors";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
@@ -111,9 +111,6 @@ export function AgreementGenerator() {
         if (!values.city.trim()) {
           errors.city = "City is required";
         }
-        if (!values.date) {
-          errors.date = "Start date is required";
-        }
         if (values.rentAmount <= 0) {
           errors.rentAmount = "Rent amount must be greater than 0";
         }
@@ -185,7 +182,6 @@ export function AgreementGenerator() {
       city: form.values.city,
       rent_amount: form.values.rentAmount,
       agreement_period: form.values.agreementPeriod.map(date => date.toISOString()),
-      start_date: form.values.date.toISOString(),
           };
     try {
       await fetchData({
@@ -419,15 +415,6 @@ export function AgreementGenerator() {
               {...form.getInputProps("agreementPeriod")}
               withAsterisk
               type="range"
-            />
-            <DateInput
-              label="Start date"
-              placeholder="Start date"
-              key={form.key("date")}
-              style={{ textAlign: "start" }}
-              {...form.getInputProps("date")}
-              withAsterisk
-              hideOutsideDates
             />
           </Stepper.Step>
 

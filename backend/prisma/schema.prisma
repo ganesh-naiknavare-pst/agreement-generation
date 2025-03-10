@@ -10,17 +10,16 @@ datasource db {
 }
 
 model Agreement {
-  id        Int             @id @default(autoincrement())
-  createdAt DateTime        @default(now())
-  status    AgreementStatus @default(PROCESSING)
-  pdf       Bytes?
-  address   String
-  city      String
-  startDate DateTime
-  rentAmount   Int
-  agreementPeriod DateTime[]
-    owner     Owner[]
-  tenants   Tenant[]
+  id               Int             @id @default(autoincrement())
+  createdAt        DateTime        @default(now())
+  status           AgreementStatus @default(PROCESSING)
+  pdf              Bytes?
+  address          String
+  city             String
+  rentAmount       Int
+  agreementPeriod  DateTime[]
+  owner            Owner[]
+  tenants          Tenant[]
 }
 
 model Owner {

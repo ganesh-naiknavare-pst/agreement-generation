@@ -198,9 +198,9 @@ def format_agreement_details(
     property_address: str,
     city: str,
     rent_amount: int,
-    agreement_period: int,
-    start_date: str,
+    agreement_period: list,
 ) -> str:
+    start_date, end_date = agreement_period
     return f"""
 Create a rental agreement with the following details:
 
@@ -213,8 +213,7 @@ Property Details:
 - Address: {property_address}
 - City: {city}
 - Monthly Rent: Rs. {rent_amount}
-- Agreement Start Date: {start_date}
-- Duration: {agreement_period} months
+- Duration: From {start_date} to {end_date}
 
 Additional Terms:
 - Rent will be split equally among all tenants
