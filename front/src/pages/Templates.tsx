@@ -54,19 +54,23 @@ export function Templates() {
 
     validate: (values) => {
       const errors: Record<string, string> = {};
-      if (!/^\S+@\S+$/.test(values.participantsEmail)) {
-        errors.participantsEmail = "Invalid Email";
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,3}$/;
+    
+      if (!emailRegex.test(values.participantsEmail)) {
+        errors.participantsEmail = "Invalid email address";
       }
-      if (!/^\S+@\S+$/.test(values.authorityEmail)) {
-        errors.authorityEmail = "Invalid Email";
+      if (!emailRegex.test(values.authorityEmail)) {
+        errors.authorityEmail = "Invalid Email address";
       }
       if (values.file === null) {
         setShowAlert(true);
         errors.file = "Please upload a file to proceed";
       }
-      if (values.userPrompt === "") {
-        errors.userPrompt = "This field is mandetory";
-      }
+      if (values.userPrompt.trim() === "") {
+        errors.userPrompt = "This field is mandatory";
+      } else if (values.userPrompt.trim().split(/\s+/).length < 10) {
+        errors.userPrompt = "Please enter at least 10 words";
+      }      
       return errors;
     },
   });
