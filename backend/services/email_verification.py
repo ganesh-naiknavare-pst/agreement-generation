@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 import random
 import time
 import requests
@@ -10,11 +10,12 @@ app = FastAPI()
 otp_storage = {}
 
 class OTPRequest(BaseModel):
-    email: str
+    email: EmailStr
 
 class OTPVerification(BaseModel):
-    email: str
+    email: EmailStr
     otp: str
+    type: str
 
 # Generate a random OTP
 def generate_otp():
@@ -51,6 +52,7 @@ def send_otp_endpoint(request: OTPRequest):
 def verify_otp_endpoint(request: OTPVerification):
     email = request.email
     user_otp = request.otp
+    verification_type = request.type
 
     if email not in otp_storage:
         raise HTTPException(status_code=400, detail="No OTP found for this email")
@@ -62,6 +64,14 @@ def verify_otp_endpoint(request: OTPVerification):
 
     if user_otp == otp_data["otp"]:
         del otp_storage[email]
-        return {"success": True, "message": "OTP verified successfully"}
+        return {
+            "success": True,
+            "type": verification_type,
+            "message": "OTP verified successfully"
+        }
     else:
-        return {"success": False, "message": "Incorrect OTP. Try again."}
+        return {
+            "success": False,
+            "type": verification_type,
+            "message": "Incorrect OTP. Try again."
+        }

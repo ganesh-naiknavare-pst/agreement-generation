@@ -27,9 +27,10 @@ import useApi, { BackendEndpoints } from "../hooks/useApi";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { useAgreements } from "../hooks/useAgreements";
 
-interface OTPResponse {
+interface OTPVerificationResponse {
   success: boolean;
-  message?: string;
+  type: "owner" | "tenant";
+  message: string;
 }
 
 export function AgreementGenerator() {
@@ -45,7 +46,7 @@ export function AgreementGenerator() {
   const [otp, setOtp] = useState("");
   const [isOtpVerified, setIsOtpVerified] = useState(false);
   const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
-  const { data, fetchData: verifyOTP } = useApi(BackendEndpoints.VerifyOTP);
+  const { data, fetchData: verifyOTP } = useApi<OTPVerificationResponse>(BackendEndpoints.VerifyOTP);
   const [tenantOtpSent, setTenantOtpSent] = useState<Record<number, boolean>>(
     {}
   );
@@ -117,9 +118,11 @@ export function AgreementGenerator() {
   };
   useEffect(() => {
     if (data) {
-      if (data?.success === true) {
+      const { success, type } = data;
+
+      if (success === true) {
         // Owner OTP Verified
-        if (otpSent) {
+        if (type === "owner" && otpSent) {
           setIsOtpVerified(true);
           setOtpSent(false);
           setOtp("");
@@ -128,7 +131,7 @@ export function AgreementGenerator() {
         }
 
         // Tenant OTP Verified
-        if (otpIndex !== null && tenantOtpSent[otpIndex]) {
+        if (type === "tenant" && otpIndex !== null && tenantOtpSent[otpIndex]) {
           setTenantOtpVerified((prev) => ({ ...prev, [otpIndex]: true }));
           setTenantOtpSent((prev) => ({ ...prev, [otpIndex]: false }));
           setTenantOtp((prev) => ({ ...prev, [otpIndex]: "" }));
@@ -136,10 +139,10 @@ export function AgreementGenerator() {
           setCountdownActive((prev) => ({ ...prev, [otpIndex]: false }));
         }
       } else {
-        if (otpSent) {
+        if (type === "owner" && otpSent) {
           setOtpError("Invalid OTP. Please enter the correct OTP.");
         }
-        if (otpIndex !== null && tenantOtpSent[otpIndex]) {
+        if (type === "tenant" && otpIndex !== null && tenantOtpSent[otpIndex]) {
           setTenantOtpError((prev) => ({
             ...prev,
             [otpIndex]: "Invalid OTP. Please enter the correct OTP.",
@@ -147,7 +150,6 @@ export function AgreementGenerator() {
         }
       }
 
-      // ✅ Reset `otpIndex` after handling the response
       setOtpIndex(null);
     }
   }, [data]);
@@ -162,9 +164,12 @@ export function AgreementGenerator() {
     try {
       await verifyOTP({
         method: "POST",
-        data: { email: form.values.ownerEmailAddress, otp },
+        data: { 
+          email: form.values.ownerEmailAddress, 
+          otp,
+          type: "owner"
+        }
       });
-      setOtpError("Invalid OTP. Please enter the correct OTP.");
     } catch (error: any) {
       console.error("Error verifying OTP:", error);
       setOtpError("Error verifying OTP. Please try again.");
@@ -209,6 +214,7 @@ export function AgreementGenerator() {
         data: {
           email: form.values.tenants[index].email,
           otp: tenantOtp[index],
+          type: "tenant"
         },
       });
     } catch (error: any) {
@@ -438,7 +444,7 @@ export function AgreementGenerator() {
               style={{ textAlign: "start" }}
               {...form.getInputProps("ownerEmailAddress")}
               withAsterisk
-              disabled={isOtpVerified} // ✅ Disable after verification
+              disabled={isOtpVerified}
             />
             {!isOtpVerified ? (
               <>
@@ -586,7 +592,7 @@ export function AgreementGenerator() {
                   style={{ textAlign: "start" }}
                   {...form.getInputProps(`tenants.${index}.email`)}
                   withAsterisk
-                  disabled={tenantOtpVerified[index]} // ✅ Disable after verification
+                  disabled={tenantOtpVerified[index]} 
                 />
 
                 {!tenantOtpVerified[index] ? (
@@ -606,7 +612,6 @@ export function AgreementGenerator() {
                           value={tenantOtp[index] || ""}
                           onChange={(event) => {
                             const newValue = event.currentTarget.value;
-                            // Allow only numbers & limit to 6 digits
                             if (/^\d{0,6}$/.test(newValue)) {
                               setTenantOtp((prev) => ({
                                 ...prev,

@@ -27,6 +27,12 @@ import { COLORS } from "../colors";
 import { useForm } from "@mantine/form";
 import { useAgreements } from "../hooks/useAgreements";
 
+interface OTPVerificationResponse {
+  success: boolean;
+  type: "authority" | "participants";
+  message: string;
+}
+
 export function Templates() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -42,7 +48,7 @@ export function Templates() {
   };
   const { fetchData } = useApi(BackendEndpoints.CreateTemplateBasedAgreement);
   const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
-  const { data, fetchData: verifyOTP } = useApi(BackendEndpoints.VerifyOTP);
+  const { data, fetchData: verifyOTP } = useApi<OTPVerificationResponse>(BackendEndpoints.VerifyOTP);
   const [authorityOtpSent, setAuthorityOtpSent] = useState(false);
   const [authorityOtp, setAuthorityOtp] = useState("");
   const [authorityOtpVerified, setAuthorityOtpVerified] = useState(false);
@@ -56,8 +62,8 @@ export function Templates() {
   const [participantsTimer, setParticipantsTimer] = useState(120);
 
   const timerRef = useRef<{
-    authority: NodeJS.Timeout | null;
-    participants: NodeJS.Timeout | null;
+    authority: number | null;
+    participants: number | null;
   }>({
     authority: null,
     participants: null,
@@ -104,10 +110,12 @@ export function Templates() {
       if (type === "authority") {
         setAuthorityOtpSent(true);
         setAuthorityOtpError("");
+        setAuthorityTimer(120);
         startCountdown("authority");
       } else {
         setParticipantsOtpSent(true);
         setParticipantsOtpError("");
+        setParticipantsTimer(120);
         startCountdown("participants");
       }
     } catch (error) {
@@ -131,7 +139,7 @@ export function Templates() {
         return;
       }
 
-      await verifyOTP({ method: "POST", data: { email, otp } });
+      await verifyOTP({ method: "POST", data: { email, otp, type } });
     } catch (error: any) {
       console.error("Error verifying OTP:", error);
     }
@@ -139,15 +147,16 @@ export function Templates() {
 
   useEffect(() => {
     if (data) {
-      if (data?.success === true) {
-        // ✅ If OTP is correct, mark it as verified
-        if (authorityOtpSent) {
+      const { success, type } = data;
+      
+      if (success === true) {
+        if (type === "authority" && authorityOtpSent) {
           setAuthorityOtpVerified(true);
           setAuthorityOtpSent(false);
           setAuthorityOtp("");
           setAuthorityOtpError("");
         }
-        if (participantsOtpSent) {
+        if (type === "participants" && participantsOtpSent) {
           setParticipantsOtpVerified(true);
           setParticipantsOtpSent(false);
           setParticipantsOtp("");
@@ -155,11 +164,13 @@ export function Templates() {
         }
       }
 
-      if (data?.success === false) {
-        if (authorityOtpSent)
+      if (success === false) {
+        if (type === "authority" && authorityOtpSent) {
           setAuthorityOtpError("Invalid OTP. Please enter the correct OTP.");
-        if (participantsOtpSent)
+        }
+        if (type === "participants" && participantsOtpSent) {
           setParticipantsOtpError("Invalid OTP. Please enter the correct OTP.");
+        }
       }
     }
   }, [data]);
@@ -193,7 +204,7 @@ export function Templates() {
   });
   const handleSubmit = async () => {
     if (!authorityOtpVerified || !participantsOtpVerified) {
-      setShowAlert(true); // ✅ Show an alert if emails are not verified
+      setShowAlert(true);
       return;
     }
 
@@ -351,25 +362,55 @@ export function Templates() {
             {!authorityOtpVerified ? (
               authorityOtpSent ? (
                 <>
-                  <TextInput
-                    label="Enter OTP"
-                    placeholder="Enter OTP received"
-                    value={authorityOtp}
-                    onChange={(e) => setAuthorityOtp(e.currentTarget.value)}
-                    withAsterisk
-                  />
-                  <Text size="sm">
-                    Time remaining: {Math.floor(authorityTimer / 60)}:
-                    {(authorityTimer % 60).toString().padStart(2, "0")}
-                  </Text>
-                  {authorityOtpError && (
-                    <Text size="sm" c="red">
-                      {authorityOtpError}
-                    </Text>
+                  {authorityTimer > 0 ? (
+                    <>
+                      <TextInput
+                        label="Enter OTP"
+                        placeholder="Enter OTP received"
+                        value={authorityOtp}
+                        onChange={(e) => {
+                          const value = e.currentTarget.value;
+                          if (/^\d{0,6}$/.test(value)) {
+                            setAuthorityOtp(value);
+                          }
+                        }}
+                        withAsterisk
+                        error={
+                          authorityOtp.length > 0 && authorityOtp.length !== 6
+                            ? "OTP must be exactly 6 digits"
+                            : ""
+                        }
+                      />
+
+                      <Text size="sm">
+                        Time remaining: {Math.floor(authorityTimer / 60)}:
+                        {(authorityTimer % 60).toString().padStart(2, "0")}
+                      </Text>
+                      {authorityOtpError && (
+                        <Text size="sm" c="red">
+                          {authorityOtpError}
+                        </Text>
+                      )}
+                      <Button
+                        mt="md"
+                        onClick={() => handleVerifyOTP("authority")}
+                      >
+                        Verify OTP
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Text size="sm" c="red" mt="xs">
+                        OTP expired. Please request a new OTP.
+                      </Text>
+                      <Button
+                        mt="md"
+                        onClick={() => handleSendOTP("authority")}
+                      >
+                        Send OTP Again
+                      </Button>
+                    </>
                   )}
-                  <Button mt="md" onClick={() => handleVerifyOTP("authority")}>
-                    Verify OTP
-                  </Button>
                 </>
               ) : (
                 <Button mt="md" onClick={() => handleSendOTP("authority")}>
@@ -393,29 +434,56 @@ export function Templates() {
             {!participantsOtpVerified ? (
               participantsOtpSent ? (
                 <>
-                  <TextInput
-                    label="Enter OTP"
-                    placeholder="Enter OTP received"
-                    value={participantsOtp}
-                    onChange={(e) => setParticipantsOtp(e.currentTarget.value)}
-                    withAsterisk
-                  />
-                  <Text size="sm">
-                    Time remaining: {Math.floor(participantsTimer / 60)}:
-                    {(participantsTimer % 60).toString().padStart(2, "0")}
-                  </Text>
+                  {participantsTimer > 0 ? (
+                    <>
+                      <TextInput
+                        label="Enter OTP"
+                        placeholder="Enter OTP received"
+                        value={participantsOtp}
+                        onChange={(e) => {
+                          const value = e.currentTarget.value;
+                          if (/^\d{0,6}$/.test(value)) {
+                            setParticipantsOtp(value);
+                          }
+                        }}
+                        withAsterisk
+                        error={
+                          participantsOtp.length > 0 &&
+                          participantsOtp.length !== 6
+                            ? "OTP must be exactly 6 digits"
+                            : ""
+                        }
+                      />
 
-                  {participantsOtpError && (
-                    <Text size="sm" c="red">
-                      {participantsOtpError}
-                    </Text>
+                      <Text size="sm">
+                        Time remaining: {Math.floor(participantsTimer / 60)}:
+                        {(participantsTimer % 60).toString().padStart(2, "0")}
+                      </Text>
+                      {participantsOtpError && (
+                        <Text size="sm" c="red">
+                          {participantsOtpError}
+                        </Text>
+                      )}
+                      <Button
+                        mt="md"
+                        onClick={() => handleVerifyOTP("participants")}
+                      >
+                        Verify OTP
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Text size="sm" c="red" mt="xs">
+                        OTP expired. Please request a new OTP.
+                      </Text>
+                      <Button
+                        mt="md"
+                        onClick={() => handleSendOTP("participants")}
+                      >
+                        Send OTP Again
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    mt="md"
-                    onClick={() => handleVerifyOTP("participants")}
-                  >
-                    Verify OTP
-                  </Button>
                 </>
               ) : (
                 <Button mt="md" onClick={() => handleSendOTP("participants")}>
@@ -427,6 +495,7 @@ export function Templates() {
                 ✓ Participants Email verified successfully
               </Alert>
             )}
+
             <Textarea
               label="Enter the prompt"
               placeholder="Describe the template details"
