@@ -19,6 +19,7 @@ import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { COLORS } from "../colors";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 import WebcamComponent from "../components/webcam/WebcamComponent";
+import ResponseCard from "../components/ResponseCard";
 
 export type ApprovedUser = {
   status: string;
@@ -134,64 +135,8 @@ const ApprovalPage = () => {
           </Flex>
         </Container>
       )}
-      {messageType === "approved" && (
-        <Center style={{ height: "60vh" }}>
-          <Card
-            shadow="sm"
-            mt={40}
-            padding="lg"
-            withBorder
-
-            style={{ textAlign: "center", height: "300px", width: "700px" }}
-          >
-            <Text>
-              <ThemeIcon radius="xl" size="xl" color={COLORS.green}>
-                <IconCheck size="1.5rem" />
-              </ThemeIcon>
-            </Text>
-
-            <Text size="lg" fw={700} c={COLORS.green} mt="md">
-              Agreement approved successfully!
-            </Text>
-
-            <Text size="md" mt="sm">
-              📨 You will receive an email shortly with the approved agreement attached as a PDF.
-            </Text>
-
-            <Text size="lg" fw={700} c={COLORS.blue} mt="md">
-              Please review and keep a copy for your records.
-            </Text>
-          </Card>
-        </Center>
-      )}
-      {messageType === "rejected" && (
-        <Center style={{ height: "60vh" }}>
-          <Card
-            shadow="sm"
-            mt={40}
-            padding="lg"
-            withBorder
-            style={{ textAlign: "center", height: "300px", width: "700px" }}
-          >
-            <Text>
-              <ThemeIcon radius="xl" size="xl" color={COLORS.red}>
-                <IconX size="1.5rem" />
-              </ThemeIcon>
-            </Text>
-
-            <Text size="lg" fw={700} c={COLORS.red} mt="md">
-              Agreement rejected successfully!
-            </Text>
-
-            <Text size="md" mt="sm">
-              ❌ Your rejection has been recorded. If this was a mistake, please contact support.
-            </Text>
-
-            <Text size="lg" fw={700} c={COLORS.blue} mt="md">
-              Thank you for your response.
-            </Text>
-          </Card>
-        </Center>
+      {messageType && (
+        <ResponseCard type={messageType} />
       )}
     </>
   );
