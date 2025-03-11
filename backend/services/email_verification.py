@@ -11,6 +11,7 @@ otp_storage = {}
 
 class OTPRequest(BaseModel):
     email: EmailStr
+    type: str
 
 class OTPVerification(BaseModel):
     email: EmailStr
@@ -41,11 +42,12 @@ def send_otp(email, otp):
 
 def send_otp_endpoint(request: OTPRequest):
     email = request.email
+    verification_type = request.type
     otp = generate_otp()
-    otp_storage[email] = {"otp": otp, "timestamp": time.time()}
+    otp_storage[email] = {"otp": otp, "timestamp": time.time(), "type": verification_type}
     
     if send_otp(email, otp):
-        return {"message": "OTP sent successfully"}
+        return {"message": "OTP sent successfully", "type": verification_type}
     else:
         raise HTTPException(status_code=500, detail="Failed to send OTP")
 
@@ -61,6 +63,9 @@ def verify_otp_endpoint(request: OTPVerification):
     if time.time() - otp_data["timestamp"] > OTP_EXPIRY_SECONDS:
         del otp_storage[email]
         raise HTTPException(status_code=400, detail="OTP expired. Request a new one.")
+
+    if verification_type != otp_data["type"]:
+        raise HTTPException(status_code=400, detail="Invalid verification type")
 
     if user_otp == otp_data["otp"]:
         del otp_storage[email]

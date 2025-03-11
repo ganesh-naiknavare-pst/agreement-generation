@@ -79,6 +79,8 @@ export function Templates() {
           if (prev <= 1) {
             clearInterval(timerRef.current[type]!);
             timerRef.current[type] = null;
+            setAuthorityOtp("");
+            setAuthorityOtpError("OTP expired. Please request a new OTP.");
             return 0;
           }
           return prev - 1;
@@ -91,6 +93,8 @@ export function Templates() {
           if (prev <= 1) {
             clearInterval(timerRef.current[type]!);
             timerRef.current[type] = null;
+            setParticipantsOtp("");
+            setParticipantsOtpError("OTP expired. Please request a new OTP.");
             return 0;
           }
           return prev - 1;
@@ -105,7 +109,7 @@ export function Templates() {
         type === "authority"
           ? form.values.authorityEmail
           : form.values.participantsEmail;
-      await sendOTP({ method: "POST", data: { email } });
+      await sendOTP({ method: "POST", data: { email, type } });
 
       if (type === "authority") {
         setAuthorityOtpSent(true);
@@ -404,9 +408,11 @@ export function Templates() {
                     </>
                   ) : (
                     <>
-                      <Text size="sm" c="red" mt="xs">
-                        OTP expired. Please request a new OTP.
-                      </Text>
+                      {authorityOtpError && (
+                        <Text size="sm" c="red">
+                          {authorityOtpError}
+                        </Text>
+                      )}
                       <Button
                         mt="md"
                         onClick={() => handleSendOTP("authority")}
@@ -477,9 +483,11 @@ export function Templates() {
                     </>
                   ) : (
                     <>
-                      <Text size="sm" c="red" mt="xs">
-                        OTP expired. Please request a new OTP.
-                      </Text>
+                      {participantsOtpError && (
+                        <Text size="sm" c="red">
+                          {participantsOtpError}
+                        </Text>
+                      )}
                       <Button
                         mt="md"
                         onClick={() => handleSendOTP("participants")}

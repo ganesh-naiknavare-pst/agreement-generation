@@ -77,13 +77,15 @@ export function AgreementGenerator() {
         if (prev <= 1) {
           clearInterval(timer);
           setOwnerCountdownActive(false);
+          setOtp("");
+          setOtpError("OTP expired. Please request a new OTP.");
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
   };
-
+  
   const startTenantCountdown = (index: number) => {
     if (countdownActive[index]) return;
     setCountdownActive((prev) => ({ ...prev, [index]: true }));
@@ -94,13 +96,18 @@ export function AgreementGenerator() {
         if (prev[index] <= 1) {
           clearInterval(timer);
           setCountdownActive((prev) => ({ ...prev, [index]: false }));
+          setTenantOtp((prev) => ({ ...prev, [index]: "" })); // Clear tenant OTP
+          setTenantOtpError((prev) => ({
+            ...prev,
+            [index]: "OTP expired. Please request a new OTP.",
+          }));
           return { ...prev, [index]: 0 };
         }
         return { ...prev, [index]: prev[index] - 1 };
       });
     }, 1000);
   };
-
+  
   useEffect(() => {
     if (data) {
       const { success, type } = data;
@@ -143,11 +150,11 @@ export function AgreementGenerator() {
     try {
       await sendOTP({
         method: "POST",
-        data: { email: form.values.ownerEmailAddress },
+        data: { email: form.values.ownerEmailAddress, type: "owner" }
       });
       setOtpSent(true);
       setOtpError("");
-      startOwnerCountdown(); // Start countdown without useEffect
+      startOwnerCountdown();
     } catch (error) {
       console.error("Error sending OTP:", error);
       setOtpError("Failed to send OTP. Please try again.");
@@ -181,7 +188,7 @@ export function AgreementGenerator() {
     try {
       await sendOTP({
         method: "POST",
-        data: { email: form.values.tenants[index].email },
+        data: { email: form.values.tenants[index].email, type: "tenant" }
       });
       setTenantOtpSent((prev) => ({ ...prev, [index]: true }));
       setTenantOtpError((prev) => ({ ...prev, [index]: "" }));
@@ -496,9 +503,11 @@ export function AgreementGenerator() {
                       </>
                     ) : (
                       <>
-                        <Text size="sm" c="red" mt="xs">
-                          OTP expired. Please request a new OTP.
-                        </Text>
+                        {otpError && (
+                          <Text size="sm" c="red" mt="xs">
+                            {otpError}
+                          </Text>
+                        )}
                         <Button mt="md" onClick={handleSendOTP}>
                           Send OTP Again
                         </Button>
@@ -657,9 +666,11 @@ export function AgreementGenerator() {
                           </>
                         ) : (
                           <>
-                            <Text size="sm" c="red" mt="xs">
-                              OTP expired. Please request a new OTP.
-                            </Text>
+                            {tenantOtpError[index] && (
+                              <Text size="sm" c="red" mt="xs">
+                                {tenantOtpError[index]}
+                              </Text>
+                            )}
                             <Button
                               mt="md"
                               onClick={() => handleSendTenantOTP(index)}
