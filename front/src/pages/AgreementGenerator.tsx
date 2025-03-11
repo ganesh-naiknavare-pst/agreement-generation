@@ -26,6 +26,7 @@ import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { useAgreements } from "../hooks/useAgreements";
+import { OTPInput } from "../components/OTPInput";
 
 interface OTPVerificationResponse {
   success: boolean;
@@ -458,7 +459,7 @@ export function AgreementGenerator() {
               withAsterisk
             />
             <TextInput
-              my="md"
+              mt="md"
               label="Email"
               placeholder="Type owner's email address here"
               key={form.key("ownerEmailAddress")}
@@ -467,73 +468,17 @@ export function AgreementGenerator() {
               withAsterisk
               disabled={otpSent || isOtpVerified}
             />
-
-            {!isOtpVerified ? (
-              <>
-                {!otpSent ? (
-                  <Button mt="md" onClick={handleSendOTP}>
-                    Send OTP
-                  </Button>
-                ) : (
-                  <>
-                    {ownerTimer > 0 ? (
-                      <>
-                        <TextInput
-                          label="Enter OTP"
-                          placeholder="Enter OTP received"
-                          value={otp}
-                          onChange={(e) => {
-                            const value = e.currentTarget.value;
-                            if (/^\d{0,6}$/.test(value)) {
-                              setOtp(value);
-                            }
-                          }}
-                          withAsterisk
-                          error={
-                            otp.length > 0 && otp.length !== 6
-                              ? "OTP must be exactly 6 digits"
-                              : ""
-                          }
-                        />
-                        <Text size="sm" c="dimmed" mt="xs">
-                          Time remaining: {Math.floor(ownerTimer / 60)}:
-                          {(ownerTimer % 60).toString().padStart(2, "0")}
-                        </Text>
-                        {otpError && (
-                          <Text size="sm" c="red" mt="xs">
-                            {otpError}
-                          </Text>
-                        )}
-                        <Button
-                          mt="md"
-                          onClick={handleVerifyOTP}
-                          disabled={ownerTimer === 0}
-                        >
-                          Verify OTP
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        {otpError && (
-                          <Text size="sm" c="red" mt="xs">
-                            {otpError}
-                          </Text>
-                        )}
-                        <Button mt="md" onClick={handleSendOTP}>
-                          Send OTP Again
-                        </Button>
-                      </>
-                    )}
-                  </>
-                )}
-              </>
-            ) : (
-              <Box mt="md">
-                <Alert color="green">
-                  <Text size="sm">✓ OTP verified successfully</Text>
-                </Alert>
-              </Box>
-            )}
+            <OTPInput
+              isVerified={isOtpVerified}
+              isOtpSent={otpSent}
+              timer={ownerTimer}
+              otpValue={otp}
+              otpError={otpError}
+              onOtpChange={setOtp}
+              onSendOtp={handleSendOTP}
+              onVerifyOtp={handleVerifyOTP}
+              label="Enter Owner OTP"
+            />
 
             <Group justify="flex-start" mt="xl" mb={5}>
               <Text display="inline" size="sm" fw={500}>
@@ -609,7 +554,7 @@ export function AgreementGenerator() {
                   withAsterisk
                 />
                 <TextInput
-                  my="md"
+                  mt="md"
                   label={`Email`}
                   placeholder="Type tenant's email address here"
                   key={form.key(`tenants.${index}.email`)}
@@ -618,87 +563,17 @@ export function AgreementGenerator() {
                   withAsterisk
                   disabled={tenantOtpSent[index] || tenantOtpVerified[index]}
                 />
-
-                {!tenantOtpVerified[index] ? (
-                  <>
-                    {!tenantOtpSent[index] ? (
-                      <Button
-                        mt="md"
-                        onClick={() => handleSendTenantOTP(index)}
-                      >
-                        Send OTP
-                      </Button>
-                    ) : (
-                      <>
-                        {tenantTimer[index] > 0 ? (
-                          <>
-                            <TextInput
-                              label="Enter OTP"
-                              placeholder="Enter OTP received"
-                              value={tenantOtp[index] || ""}
-                              onChange={(event) => {
-                                const newValue = event.currentTarget.value;
-                                if (/^\d{0,6}$/.test(newValue)) {
-                                  setTenantOtp((prev) => ({
-                                    ...prev,
-                                    [index]: newValue,
-                                  }));
-                                }
-                              }}
-                              withAsterisk
-                              error={
-                                tenantOtp[index] &&
-                                tenantOtp[index].length > 0 &&
-                                tenantOtp[index].length !== 6
-                                  ? "OTP must be exactly 6 digits"
-                                  : ""
-                              }
-                            />
-                            <Text size="sm" c="dimmed" mt="xs">
-                              Time remaining:{" "}
-                              {Math.floor(tenantTimer[index] / 60)}:
-                              {(tenantTimer[index] % 60)
-                                .toString()
-                                .padStart(2, "0")}
-                            </Text>
-                            {tenantOtpError[index] && (
-                              <Text size="sm" c="red" mt="xs">
-                                {tenantOtpError[index]}
-                              </Text>
-                            )}
-                            <Button
-                              mt="md"
-                              onClick={() => handleVerifyTenantOTP(index)}
-                              disabled={tenantTimer[index] === 0}
-                            >
-                              Verify OTP
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            {tenantOtpError[index] && (
-                              <Text size="sm" c="red" mt="xs">
-                                {tenantOtpError[index]}
-                              </Text>
-                            )}
-                            <Button
-                              mt="md"
-                              onClick={() => handleSendTenantOTP(index)}
-                            >
-                              Send OTP Again
-                            </Button>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <Box mt="md">
-                    <Alert color="green">
-                      <Text size="sm">✓ OTP verified successfully</Text>
-                    </Alert>
-                  </Box>
-                )}
+                <OTPInput
+                  isVerified={tenantOtpVerified[index]}
+                  isOtpSent={tenantOtpSent[index]}
+                  timer={tenantTimer[index]}
+                  otpValue={tenantOtp[index] || ""}
+                  otpError={tenantOtpError[index]}
+                  onOtpChange={(value) => setTenantOtp((prev) => ({ ...prev, [index]: value }))}
+                  onSendOtp={() => handleSendTenantOTP(index)}
+                  onVerifyOtp={() => handleVerifyTenantOTP(index)}
+                  label={`Enter OTP for Tenant ${index + 1}`}
+                />
 
                 <Group justify="flex-start" mt="xl" mb={5}>
                   <Text display="inline" size="sm" fw={500}>

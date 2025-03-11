@@ -26,6 +26,7 @@ import useApi, { BackendEndpoints } from "../hooks/useApi";
 import { COLORS } from "../colors";
 import { useForm } from "@mantine/form";
 import { useAgreements } from "../hooks/useAgreements";
+import { OTPInput } from "../components/OTPInput";
 
 interface OTPVerificationResponse {
   success: boolean;
@@ -363,159 +364,51 @@ export function Templates() {
               </Text>
             )}
             <TextInput
-              my="md"
+              mt="md"
               label="Authority Email"
               placeholder="Enter authority's email"
               {...form.getInputProps("authorityEmail")}
               withAsterisk
               disabled={authorityOtpSent || authorityOtpVerified}
             />
-            {!authorityOtpVerified ? (
-              authorityOtpSent ? (
-                <>
-                  {authorityTimer > 0 ? (
-                    <>
-                      <TextInput
-                        label="Enter OTP"
-                        placeholder="Enter OTP received"
-                        value={authorityOtp}
-                        onChange={(e) => {
-                          const value = e.currentTarget.value;
-                          if (/^\d{0,6}$/.test(value)) {
-                            setAuthorityOtp(value);
-                          }
-                        }}
-                        withAsterisk
-                        error={
-                          authorityOtp.length > 0 && authorityOtp.length !== 6
-                            ? "OTP must be exactly 6 digits"
-                            : ""
-                        }
-                      />
-
-                      <Text size="sm">
-                        Time remaining: {Math.floor(authorityTimer / 60)}:
-                        {(authorityTimer % 60).toString().padStart(2, "0")}
-                      </Text>
-                      {authorityOtpError && (
-                        <Text size="sm" c="red">
-                          {authorityOtpError}
-                        </Text>
-                      )}
-                      <Button
-                        mt="md"
-                        onClick={() => handleVerifyOTP("authority")}
-                      >
-                        Verify OTP
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      {authorityOtpError && (
-                        <Text size="sm" c="red">
-                          {authorityOtpError}
-                        </Text>
-                      )}
-                      <Button
-                        mt="md"
-                        onClick={() => handleSendOTP("authority")}
-                      >
-                        Send OTP Again
-                      </Button>
-                    </>
-                  )}
-                </>
-              ) : (
-                <Button mt="md" onClick={() => handleSendOTP("authority")}>
-                  Send OTP
-                </Button>
-              )
-            ) : (
-              <Alert color="green">
-                ✓ Authority Email verified successfully
-              </Alert>
-            )}
+            <OTPInput
+              isVerified={authorityOtpVerified}
+              isOtpSent={authorityOtpSent}
+              timer={authorityTimer}
+              otpValue={authorityOtp}
+              otpError={authorityOtpError}
+              onOtpChange={setAuthorityOtp}
+              onSendOtp={() => handleSendOTP("authority")}
+              onVerifyOtp={() => handleVerifyOTP("authority")}
+              label="Enter Authority OTP"
+            />
 
             <TextInput
-              my="md"
+              mt="md"
               label="Participants Email"
               placeholder="Enter participants' email"
               {...form.getInputProps("participantsEmail")}
               withAsterisk
               disabled={participantsOtpSent || participantsOtpVerified}
             />
-            {!participantsOtpVerified ? (
-              participantsOtpSent ? (
-                <>
-                  {participantsTimer > 0 ? (
-                    <>
-                      <TextInput
-                        label="Enter OTP"
-                        placeholder="Enter OTP received"
-                        value={participantsOtp}
-                        onChange={(e) => {
-                          const value = e.currentTarget.value;
-                          if (/^\d{0,6}$/.test(value)) {
-                            setParticipantsOtp(value);
-                          }
-                        }}
-                        withAsterisk
-                        error={
-                          participantsOtp.length > 0 &&
-                          participantsOtp.length !== 6
-                            ? "OTP must be exactly 6 digits"
-                            : ""
-                        }
-                      />
-
-                      <Text size="sm">
-                        Time remaining: {Math.floor(participantsTimer / 60)}:
-                        {(participantsTimer % 60).toString().padStart(2, "0")}
-                      </Text>
-                      {participantsOtpError && (
-                        <Text size="sm" c="red">
-                          {participantsOtpError}
-                        </Text>
-                      )}
-                      <Button
-                        mt="md"
-                        onClick={() => handleVerifyOTP("participants")}
-                      >
-                        Verify OTP
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      {participantsOtpError && (
-                        <Text size="sm" c="red">
-                          {participantsOtpError}
-                        </Text>
-                      )}
-                      <Button
-                        mt="md"
-                        onClick={() => handleSendOTP("participants")}
-                      >
-                        Send OTP Again
-                      </Button>
-                    </>
-                  )}
-                </>
-              ) : (
-                <Button mt="md" onClick={() => handleSendOTP("participants")}>
-                  Send OTP
-                </Button>
-              )
-            ) : (
-              <Alert color="green">
-                ✓ Participants Email verified successfully
-              </Alert>
-            )}
+            <OTPInput
+              isVerified={participantsOtpVerified}
+              isOtpSent={participantsOtpSent}
+              timer={participantsTimer}
+              otpValue={participantsOtp}
+              otpError={participantsOtpError}
+              onOtpChange={setParticipantsOtp}
+              onSendOtp={() => handleSendOTP("participants")}
+              onVerifyOtp={() => handleVerifyOTP("participants")}
+              label="Enter Participants OTP"
+            />
 
             <Textarea
               label="Enter the prompt"
               placeholder="Describe the template details"
               autosize
               minRows={5}
+              mt="md"
               {...form.getInputProps("userPrompt")}
               withAsterisk
             />
