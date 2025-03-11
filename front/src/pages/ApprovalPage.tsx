@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useForm } from "@mantine/form";
-import { IconCheck, IconUpload, IconX } from "@tabler/icons-react";
+import { IconUpload } from "@tabler/icons-react";
 import {
   Center,
   Title,
@@ -12,8 +12,6 @@ import {
   Container,
   Box,
   Image,
-  Card,
-  ThemeIcon,
 } from "@mantine/core";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { COLORS } from "../colors";
@@ -31,6 +29,9 @@ const ApprovalPage = () => {
   const param = useParams();
   const [showAlertForSign, setShowAlertForSign] = useState(false);
   const [showAlertForPhoto, setShowAlertForPhoto] = useState(false);
+  const [searchParams] = useSearchParams(); 
+  const agreementType = searchParams.get("type"); 
+  const isRentAgreement = agreementType === "rent";
   const { fetchData: approveAgreement } = useApi<ApprovedUser>(
     BackendEndpoints.ApproveURL
   );
@@ -45,6 +46,7 @@ const ApprovalPage = () => {
       user: param.id,
       imageUrl: form.values.imageUrl ?? "",
       signature: form.values.signature ?? "",
+      agreement_type: agreementType,
     };
     approveAgreement({ method: "POST", data: requestData });
     setMessageType("approved");
@@ -122,6 +124,7 @@ const ApprovalPage = () => {
               />
             </Box>
           )}
+           {isRentAgreement && (
           <Group justify="flex-star" mt="xl">
             <Text display="inline" size="sm" fw={500}>
               Take a Picture to Upload{" "}
@@ -137,6 +140,7 @@ const ApprovalPage = () => {
               }}
             />
           </Group>
+           )}
           <Flex justify="flex-end" gap={16} mt={16}>
             <Button color="green" onClick={processApproval}>
               Submit to Approve Agreement

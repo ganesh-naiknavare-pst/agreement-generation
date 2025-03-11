@@ -16,9 +16,10 @@ rejected_users = set()
 
 @router.post("/approve")
 async def approve_user(data: Data):
+    agreement_type = data.agreement_type
     await image_and_sign_upload(data)
     approved_users.add(data.user)
-    response = {"status": "approved", "user_id": data.user, "approved": True}
+    response = {"status": "approved", "user_id": data.user, "approved": True,  "agreement_type": agreement_type}
     await notify_clients(response)
     return JSONResponse(content=response)
 

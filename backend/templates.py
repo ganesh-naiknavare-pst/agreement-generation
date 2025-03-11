@@ -167,10 +167,8 @@ def generate_email_template(
     rejected_by: str = None,
 ) -> str:
 
-    # approve_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/approve"
-    # reject_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/reject"
-    url = f"{CORS_ALLOWED_ORIGIN}/review-agreement/{user_id}"
-
+    agreement_type_str = "template" if is_template else "rent"
+    url = f"{CORS_ALLOWED_ORIGIN}/review-agreement/{user_id}?type={agreement_type_str}"
     if is_rejection:
         message = f"The agreement has been rejected by {rejected_by}."
         return REJECTION_NOTIFICATION_TEMPLATE.format(message=message)
