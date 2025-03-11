@@ -11,6 +11,7 @@ export enum BackendEndpoints {
   RejectURL = "reject",
   SentOTP = "send-otp",
   VerifyOTP = "verify-otp",
+  ValidateImage = "validate-image"
 }
 
 interface ApiResponse<T> {
