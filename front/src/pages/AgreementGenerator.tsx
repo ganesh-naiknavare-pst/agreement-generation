@@ -26,7 +26,7 @@ import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { useAgreements } from "../hooks/useAgreements";
-import { OTPInput } from "../components/OTPInput";
+import { OTPInput } from "../components/agreements/OTPInput";
 
 interface OTPVerificationResponse {
   success: boolean;

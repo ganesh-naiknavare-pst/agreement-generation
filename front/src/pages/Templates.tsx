@@ -26,7 +26,7 @@ import useApi, { BackendEndpoints } from "../hooks/useApi";
 import { COLORS } from "../colors";
 import { useForm } from "@mantine/form";
 import { useAgreements } from "../hooks/useAgreements";
-import { OTPInput } from "../components/OTPInput";
+import { OTPInput } from "../components/agreements/OTPInput";
 
 interface OTPVerificationResponse {
   success: boolean;
