@@ -9,6 +9,8 @@ export enum BackendEndpoints {
   GetTemplateAgreements = "template-agreements",
   ApproveURL = "approve",
   RejectURL = "reject",
+  GetRentAgreementUser = "rent-agreement-user",
+  GetTemplateAgreementUSer = "template-agreement-user",
 }
 
 interface ApiResponse<T> {

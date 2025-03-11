@@ -9,6 +9,7 @@ class Data(BaseModel):
     imageUrl: Optional[str] = ""
     signature: Optional[str] = ""
     agreement_type: str
+    agreement_id: int
 
 
 async def image_and_sign_upload(agreement: Data):

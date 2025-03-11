@@ -3,11 +3,11 @@ import { IconCheck, IconX } from "@tabler/icons-react";
 import { COLORS } from "../colors";
 
 type ResponseCardProps = {
-    type: "approved" | "rejected";
+    type: string;
 };
 
 const ResponseCard: React.FC<ResponseCardProps> = ({ type }) => {
-    const isApproved = type === "approved";
+    const isApproved = type === "APPROVED";
 
     return (
         <Center style={{ height: "60vh" }}>

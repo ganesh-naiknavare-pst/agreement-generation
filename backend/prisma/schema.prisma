@@ -40,6 +40,13 @@ model Tenant {
   agreement     Agreement   @relation(fields: [agreementId], references: [id])
 }
 
+model UserRentAgreementStatus {
+  id            Int                 @id @default(autoincrement())
+  userId        String
+  agreementId   Int
+  status        AgreementStatus     @default(PROCESSING)
+}
+
 enum AgreementStatus {
   APPROVED
   PROCESSING
@@ -69,4 +76,11 @@ model Participant {
   email         String
   createdAt     DateTime            @default(now())
   agreement     TemplateAgreement   @relation(fields: [agreementId], references: [id])
+}
+
+model UserAgreementStatus {
+  id            Int                 @id @default(autoincrement())
+  userId        String
+  agreementId   Int
+  status        AgreementStatus     @default(PROCESSING)
 }

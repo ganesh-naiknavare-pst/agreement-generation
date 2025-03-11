@@ -162,13 +162,14 @@ PENDING_APPROVAL_TEMPLATE = """
 def generate_email_template(
     role: str,
     user_id: str,
+    agreement_id: int,
     is_template: bool = False,
     is_rejection: bool = False,
     rejected_by: str = None,
 ) -> str:
 
     agreement_type_str = "template" if is_template else "rent"
-    url = f"{CORS_ALLOWED_ORIGIN}/review-agreement/{user_id}?type={agreement_type_str}"
+    url = f"{CORS_ALLOWED_ORIGIN}/review-agreement/{user_id}/{agreement_id}?type={agreement_type_str}"
     if is_rejection:
         message = f"The agreement has been rejected by {rejected_by}."
         return REJECTION_NOTIFICATION_TEMPLATE.format(message=message)

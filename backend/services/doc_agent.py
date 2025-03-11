@@ -135,6 +135,8 @@ async def create_agreement_details(
         agreement_state.reset()
         agreement_state.set_owner(request.owner_name, request.owner_email)
 
+        agreement_state.agreement_id = agreement_id
+
         # Store tenant details
         tenants = []
         for tenant in request.tenant_details:
