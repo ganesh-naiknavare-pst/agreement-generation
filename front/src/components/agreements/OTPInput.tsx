@@ -1,17 +1,6 @@
 import { TextInput, Button, Box, Text, Alert } from "@mantine/core";
 import { OTPTimer } from "./OTPTimer";
-
-interface OTPInputProps {
-  isVerified: boolean;
-  isOtpSent: boolean;
-  timer: number;
-  otpValue: string;
-  otpError: string;
-  onOtpChange: (value: string) => void;
-  onSendOtp: () => void;
-  onVerifyOtp: () => void;
-  label?: string;
-}
+import { OTPInputProps } from "../../types/otp";
 
 export function OTPInput({
   isVerified,

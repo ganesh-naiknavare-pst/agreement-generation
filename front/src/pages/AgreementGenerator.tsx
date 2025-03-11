@@ -27,25 +27,11 @@ import useApi, { BackendEndpoints } from "../hooks/useApi";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { useAgreements } from "../hooks/useAgreements";
 import { OTPInput } from "../components/agreements/OTPInput";
-
-interface OTPVerificationResponse {
-  success: boolean;
-  type: "owner" | "tenant";
-  message: string;
-}
-
-interface OtpState {
-  otp: string;
-  isVerified: boolean;
-  isSent: boolean;
-  error: string;
-  timer: number;
-  isCountdownActive: boolean;
-}
-
-interface TenantsOtpState {
-  [key: number]: OtpState;
-}
+import {
+  OTPVerificationResponse,
+  OtpState,
+  TenantsOtpState,
+} from "../types/otp";
 
 export function AgreementGenerator() {
   const [active, setActive] = useState(0);
@@ -78,7 +64,7 @@ export function AgreementGenerator() {
     setOwnerOtpState((prev) => ({
       ...prev,
       isCountdownActive: true,
-      timer: 30,
+      timer: 300,
     }));
 
     const timer = setInterval(() => {
@@ -109,7 +95,7 @@ export function AgreementGenerator() {
       [index]: {
         ...(prev[index] || {}),
         isCountdownActive: true,
-        timer: 30,
+        timer: 300,
       },
     }));
 

@@ -27,21 +27,7 @@ import { COLORS } from "../colors";
 import { useForm } from "@mantine/form";
 import { useAgreements } from "../hooks/useAgreements";
 import { OTPInput } from "../components/agreements/OTPInput";
-
-interface OTPVerificationResponse {
-  success: boolean;
-  type: "authority" | "participants";
-  message: string;
-}
-
-interface OtpState {
-  sent: boolean;
-  otp: string;
-  verified: boolean;
-  error: string;
-  timer: number;
-  isCountdownActive: boolean;
-}
+import { OTPVerificationResponse, OtpState } from "../types/otp";
 
 export function Templates() {
   const [file, setFile] = useState<File | null>(null);
@@ -63,20 +49,20 @@ export function Templates() {
   );
 
   const [authorityOtpState, setAuthorityOtpState] = useState<OtpState>({
-    sent: false,
     otp: "",
-    verified: false,
+    isVerified: false,
+    isSent: false,
     error: "",
-    timer: 30,
+    timer: 0,
     isCountdownActive: false,
   });
 
   const [participantsOtpState, setParticipantsOtpState] = useState<OtpState>({
-    sent: false,
     otp: "",
-    verified: false,
+    isVerified: false,
+    isSent: false,
     error: "",
-    timer: 30,
+    timer: 0,
     isCountdownActive: false,
   });
 
@@ -91,7 +77,7 @@ export function Templates() {
     setState((prev) => ({
       ...prev,
       isCountdownActive: true,
-      timer: 30,
+      timer: 300,
     }));
 
     const timer = setInterval(() => {
@@ -125,14 +111,14 @@ export function Templates() {
       if (type === "authority") {
         setAuthorityOtpState((prev) => ({
           ...prev,
-          sent: true,
+          isSent: true,
           error: "",
         }));
         startCountdown("authority");
       } else {
         setParticipantsOtpState((prev) => ({
           ...prev,
-          sent: true,
+          isSent: true,
           error: "",
         }));
         startCountdown("participants");
@@ -188,21 +174,21 @@ export function Templates() {
       const { success, type } = data;
 
       if (success === true) {
-        if (type === "authority" && authorityOtpState.sent) {
+        if (type === "authority" && authorityOtpState.isSent) {
           setAuthorityOtpState((prev) => ({
             ...prev,
-            verified: true,
-            sent: false,
+            isVerified: true,
+            isSent: false,
             otp: "",
             error: "",
             isCountdownActive: false,
           }));
         }
-        if (type === "participants" && participantsOtpState.sent) {
+        if (type === "participants" && participantsOtpState.isSent) {
           setParticipantsOtpState((prev) => ({
             ...prev,
-            verified: true,
-            sent: false,
+            isVerified: true,
+            isSent: false,
             otp: "",
             error: "",
             isCountdownActive: false,
@@ -211,13 +197,13 @@ export function Templates() {
       }
 
       if (success === false) {
-        if (type === "authority" && authorityOtpState.sent) {
+        if (type === "authority" && authorityOtpState.isSent) {
           setAuthorityOtpState((prev) => ({
             ...prev,
             error: "Invalid OTP. Please enter the correct OTP.",
           }));
         }
-        if (type === "participants" && participantsOtpState.sent) {
+        if (type === "participants" && participantsOtpState.isSent) {
           setParticipantsOtpState((prev) => ({
             ...prev,
             error: "Invalid OTP. Please enter the correct OTP.",
@@ -260,7 +246,7 @@ export function Templates() {
     },
   });
   const handleSubmit = async () => {
-    if (!authorityOtpState.verified || !participantsOtpState.verified) {
+    if (!authorityOtpState.isVerified || !participantsOtpState.isVerified) {
       setShowAlert(true);
       return;
     }
@@ -301,8 +287,8 @@ export function Templates() {
         </Title>
       </Group>
       {showAlert &&
-        !authorityOtpState.verified &&
-        !participantsOtpState.verified && (
+        !authorityOtpState.isVerified &&
+        !participantsOtpState.isVerified && (
           <Alert
             m="1rem"
             variant="light"
@@ -416,11 +402,13 @@ export function Templates() {
               placeholder="Enter authority's email"
               {...form.getInputProps("authorityEmail")}
               withAsterisk
-              disabled={authorityOtpState.sent || authorityOtpState.verified}
+              disabled={
+                authorityOtpState.isSent || authorityOtpState.isVerified
+              }
             />
             <OTPInput
-              isVerified={authorityOtpState.verified}
-              isOtpSent={authorityOtpState.sent}
+              isVerified={authorityOtpState.isVerified}
+              isOtpSent={authorityOtpState.isSent}
               timer={authorityOtpState.timer}
               otpValue={authorityOtpState.otp}
               otpError={authorityOtpState.error}
@@ -442,12 +430,12 @@ export function Templates() {
               {...form.getInputProps("participantsEmail")}
               withAsterisk
               disabled={
-                participantsOtpState.sent || participantsOtpState.verified
+                participantsOtpState.isSent || participantsOtpState.isVerified
               }
             />
             <OTPInput
-              isVerified={participantsOtpState.verified}
-              isOtpSent={participantsOtpState.sent}
+              isVerified={participantsOtpState.isVerified}
+              isOtpSent={participantsOtpState.isSent}
               timer={participantsOtpState.timer}
               otpValue={participantsOtpState.otp}
               otpError={participantsOtpState.error}
@@ -476,7 +464,8 @@ export function Templates() {
               fullWidth
               mt="md"
               disabled={
-                !authorityOtpState.verified || !participantsOtpState.verified
+                !authorityOtpState.isVerified ||
+                !participantsOtpState.isVerified
               }
             >
               Generate agreement
