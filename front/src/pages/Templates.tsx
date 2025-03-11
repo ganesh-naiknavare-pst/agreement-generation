@@ -70,11 +70,11 @@ export function Templates() {
         setShowAlert(true);
         errors.file = "Please upload a file to proceed";
       }
-      if (values.authoritySignature === null) {
+      if (!values.authoritySignature) {
         setShowAlert(true);
         errors.authoritySignature = "Please upload a signature to proceed";
       }
-      if (values.participantsSignature === null) {
+      if (!values.participantsSignature) {
         setShowAlert(true);
         errors.participantsSignature = "Please upload a signature to proceed";
       }
