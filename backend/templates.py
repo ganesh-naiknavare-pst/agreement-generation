@@ -1,4 +1,4 @@
-from config import BASE_APPROVAL_URL
+from config import BASE_APPROVAL_URL, CORS_ALLOWED_ORIGIN
 from helpers.state_manager import agreement_state, template_agreement_state
 from datetime import datetime
 
@@ -130,13 +130,8 @@ PENDING_APPROVAL_TEMPLATE = """
                             <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td align="center" style="padding: 10px;">
-                                        <a href="{approve_url}" style="background-color: #28a745; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
+                                        <a href="{url}" style="background-color: ##228be6; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
                                             Approve Agreement
-                                        </a>
-                                    </td>
-                                    <td align="center" style="padding: 10px;">
-                                        <a href="{reject_url}" style="background-color: #dc3545; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
-                                            Reject Agreement
                                         </a>
                                     </td>
                                 </tr>
@@ -164,11 +159,18 @@ PENDING_APPROVAL_TEMPLATE = """
 """
 
 
-def generate_email_template(role: str, user_id: str, is_template: bool=False, is_rejection: bool=False, rejected_by: str=None) -> str:
+def generate_email_template(
+    role: str,
+    user_id: str,
+    is_template: bool = False,
+    is_rejection: bool = False,
+    rejected_by: str = None,
+) -> str:
 
-    approve_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/approve"
-    reject_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/reject"
-    
+    # approve_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/approve"
+    # reject_url = f"{BASE_APPROVAL_URL}/sign/{user_id}/reject"
+    url = f"{CORS_ALLOWED_ORIGIN}/review-agreement"
+
     if is_rejection:
         message = f"The agreement has been rejected by {rejected_by}."
         return REJECTION_NOTIFICATION_TEMPLATE.format(message=message)
@@ -188,8 +190,8 @@ def generate_email_template(role: str, user_id: str, is_template: bool=False, is
         return PENDING_APPROVAL_TEMPLATE.format(
             role=role,
             agreement_type=agreement_type,
-            approve_url=approve_url,
-            reject_url=reject_url,
+            url=url,
+            # reject_url=reject_url,
         )
 
 
