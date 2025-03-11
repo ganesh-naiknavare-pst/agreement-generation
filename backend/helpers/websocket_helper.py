@@ -42,7 +42,11 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                         if user_id == template_agreement_state.participant_id:
                             template_agreement_state.participant_approved = data.get("approved", False)
                             if template_agreement_state.participant_approved:
-                                template_agreement_state.participant_signature = (f"APPROVED BY PARTICIPANT - {datetime.now()}")
+                                participant_signature_path = template_agreement_state.participant_signature
+                                if os.path.isfile(participant_signature_path):
+                                    template_agreement_state.participant_signature = participant_signature_path
+                                else:
+                                    template_agreement_state.participant_signature = (f"APPROVED BY PARTICIPANT - {datetime.now()}")
                                 print("Participant has approved!")
                             else:
                                 print("Participant has rejected!")
@@ -51,12 +55,16 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                         elif user_id == template_agreement_state.authority_id:
                             template_agreement_state.authority_approved = data.get("approved", False)
                             if template_agreement_state.authority_approved:
-                                template_agreement_state.authority_signature = (f"APPROVED BY AUTHORITY - {datetime.now()}")
+                                authority_signature_path = template_agreement_state.authority_signature
+                                if os.path.isfile(authority_signature_path):
+                                    template_agreement_state.authority_signature = authority_signature_path
+                                else:
+                                    template_agreement_state.authority_signature = (f"APPROVED BY AUTHORITY - {datetime.now()}")
                                 print("Authority has approved!")
                             else:
                                 print("Authority has rejected!")
                                 return False
-                        
+
                     else:
                         if user_id in agreement_state.tenants:
                             agreement_state.tenants[user_id] = data.get("approved", False)

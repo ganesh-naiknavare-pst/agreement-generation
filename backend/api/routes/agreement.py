@@ -52,12 +52,16 @@ async def create_template_based_agreement(
     authority_email: str = Form(...),
     participant_email: str = Form(...),
     file: UploadFile = File(...),
+    authority_signature: str = Form(...),
+    participant_signature: str = Form(...),
     db: Prisma = Depends(get_db),
 ):
     req = TemplateAgreementRequest(
         user_prompt=user_prompt,
         authority_email=authority_email,
         participant_email=participant_email,
+        authority_signature=authority_signature,
+        participant_signature=participant_signature
     )
     agreements = await db.templateagreement.create(
         data={

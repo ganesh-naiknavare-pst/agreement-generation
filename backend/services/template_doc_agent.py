@@ -1,4 +1,5 @@
 import logging
+from services.doc_agent import save_base64_image
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
 from langchain.agents import initialize_agent, Tool, AgentType
@@ -28,6 +29,8 @@ class TemplateAgreementRequest(BaseModel):
     user_prompt: str
     authority_email: str
     participant_email: str
+    authority_signature: str
+    participant_signature: str
 
 
 def run_agreement_tool(user_input: str) -> str:
@@ -143,6 +146,16 @@ async def template_based_agreement(
                 status_code=500, detail=f"Error generating agreement: {str(e)}"
             )
 
+        template_agreement_state.authority_signature = req.authority_signature
+        template_agreement_state.authority_signature = save_base64_image(
+            req.authority_signature, req.authority_email, is_signature=True
+        )
+
+        template_agreement_state.participant_signature = req.participant_signature
+        template_agreement_state.participant_signature = save_base64_image(
+            req.participant_signature, req.participant_email, is_signature=True
+        )
+
         authority_success, _ = send_email_with_attachment(
             req.authority_email,
             template_agreement_state.pdf_file_path,
@@ -187,6 +200,8 @@ async def template_based_agreement(
                         data={"pdf": pdf_base64, "status": "APPROVED"},
                     )
                     delete_temp_file()
+                    if os.path.exists("./utils"):
+                        shutil.rmtree("./utils")
                     template_agreement_state.reset()
                     return {"message": "Final signed agreement sent to all parties!"}
                 else:
