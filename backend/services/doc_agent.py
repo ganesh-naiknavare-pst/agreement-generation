@@ -25,8 +25,6 @@ logging.basicConfig(level=logging.INFO)
 class AgreementRequest(BaseModel):
     owner_name: str
     owner_email: str
-    owner_signature: str
-    owner_photo: str
     tenant_details: list[dict]
     property_address: str
     city: str
@@ -75,7 +73,7 @@ def save_base64_image(photo_data: str, user_id: str, is_signature: bool = False)
         file_ext = "png"
         photo_data = photo_data.replace("data:image/png;base64,", "")
     else:
-        return ""  
+        return ""
 
     photo_bytes = base64.b64decode(photo_data)
     save_dir = "./utils"
@@ -90,7 +88,6 @@ def save_base64_image(photo_data: str, user_id: str, is_signature: bool = False)
         photo_file.write(photo_bytes)
 
     return photo_path
-
 
 
 # Initialize agent
@@ -136,29 +133,14 @@ async def create_agreement_details(
     try:
         # Reset agreement state for fresh request
         agreement_state.reset()
-        # Store owner information
-        agreement_state.owner_photo = save_base64_image(
-            request.owner_photo, request.owner_name
-        )
         agreement_state.set_owner(request.owner_name, request.owner_email)
 
-        agreement_state.owner_signature = save_base64_image(
-            request.owner_signature, request.owner_name, is_signature=True
-        )
         # Store tenant details
         tenants = []
         for tenant in request.tenant_details:
-            tenant_photo_path = save_base64_image(
-                tenant.get("photo", ""), tenant["name"]
-            )
-            tenant_signature_path = save_base64_image(
-                tenant.get("signature", ""), tenant["name"], is_signature=True
-            )
             tenant_id = agreement_state.add_tenant(
                 tenant["email"],
                 tenant["name"],
-                tenant_signature_path,
-                tenant_photo_path,
             )
             tenants.append((tenant_id, tenant["email"]))
 

@@ -7,19 +7,16 @@ from helpers.email_helper import send_rejection_email
 from helpers.state_manager import agreement_state, template_agreement_state
 from services.doc_agent import delete_temp_file
 from services.template_doc_agent import delete_template_file
-from pydantic import BaseModel
+from services.image_sign_upload import Data, image_and_sign_upload
 
 router = APIRouter()
 approved_users = set()
 rejected_users = set()
 
 
-class Data(BaseModel):
-    user: str
-
-
 @router.post("/approve")
 async def approve_user(data: Data):
+    await image_and_sign_upload(data)
     approved_users.add(data.user)
     response = {"status": "approved", "user_id": data.user, "approved": True}
     await notify_clients(response)
