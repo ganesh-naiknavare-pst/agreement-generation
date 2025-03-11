@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useForm } from "@mantine/form";
-import { IconUpload } from "@tabler/icons-react";
+import { IconAlertTriangle, IconUpload } from "@tabler/icons-react";
 import {
   Center,
   Title,
@@ -12,6 +12,7 @@ import {
   Container,
   Box,
   Image,
+  Alert,
 } from "@mantine/core";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { COLORS } from "../colors";
@@ -29,8 +30,8 @@ const ApprovalPage = () => {
   const param = useParams();
   const [showAlertForSign, setShowAlertForSign] = useState(false);
   const [showAlertForPhoto, setShowAlertForPhoto] = useState(false);
-  const [searchParams] = useSearchParams(); 
-  const agreementType = searchParams.get("type"); 
+  const [searchParams] = useSearchParams();
+  const agreementType = searchParams.get("type");
   const isRentAgreement = agreementType === "rent";
   const { fetchData: approveAgreement } = useApi<ApprovedUser>(
     BackendEndpoints.ApproveURL
@@ -42,6 +43,8 @@ const ApprovalPage = () => {
     "approved" | "rejected" | null
   >(null);
   const processApproval = () => {
+    const { hasErrors } = form.validate();
+    if (hasErrors) return;
     const requestData = {
       user: param.id,
       imageUrl: form.values.imageUrl ?? "",
@@ -70,6 +73,10 @@ const ApprovalPage = () => {
 
     validate: (values) => {
       const errors: Record<string, string> = {};
+      if (values.signature === "") {
+        setShowAlertForSign(true);
+        errors.signature = "Please upload a Signature to proceed";
+      }
       return errors;
     },
   });
@@ -91,6 +98,17 @@ const ApprovalPage = () => {
           Welcome to the AI Agreement Agent
         </Title>
       </Center>
+      {(showAlertForSign || showAlertForPhoto) && (
+        <Alert
+          m="1rem"
+          variant="light"
+          color="yellow"
+          title="Warning"
+          icon={<IconAlertTriangle />}
+        >
+          Please fill in required fields before proceeding.
+        </Alert>
+      )}
       {!messageType && (
         <Container>
           <Group justify="flex-start" mt="xl" mb={5}>
@@ -110,6 +128,11 @@ const ApprovalPage = () => {
               <Text>Drag a file here or click to upload</Text>
             </Group>
           </Dropzone>
+          {(form.errors.signature || form.errors.imageUrl) && (
+            <Text c="red" size="sm">
+              {form.errors.signature}
+            </Text>
+          )}
           {form.values.signature && (
             <Box mt="md">
               <Text size="sm" fw={500}>
@@ -124,23 +147,23 @@ const ApprovalPage = () => {
               />
             </Box>
           )}
-           {isRentAgreement && (
-          <Group justify="flex-star" mt="xl">
-            <Text display="inline" size="sm" fw={500}>
-              Take a Picture to Upload{" "}
-              <Text component="span" c={COLORS.asteric}>
-                *
+          {isRentAgreement && (
+            <Group justify="flex-star" mt="xl">
+              <Text display="inline" size="sm" fw={500}>
+                Take a Picture to Upload{" "}
+                <Text component="span" c={COLORS.asteric}>
+                  *
+                </Text>
               </Text>
-            </Text>
-            <WebcamComponent
-              imageUrl={form.values.imageUrl}
-              setFieldValue={(value: string) => {
-                form.setFieldValue("imageUrl", value as string);
-                setShowAlertForPhoto(false);
-              }}
-            />
-          </Group>
-           )}
+              <WebcamComponent
+                imageUrl={form.values.imageUrl}
+                setFieldValue={(value: string) => {
+                  form.setFieldValue("imageUrl", value as string);
+                  setShowAlertForPhoto(false);
+                }}
+              />
+            </Group>
+          )}
           <Flex justify="flex-end" gap={16} mt={16}>
             <Button color="green" onClick={processApproval}>
               Submit to Approve Agreement
