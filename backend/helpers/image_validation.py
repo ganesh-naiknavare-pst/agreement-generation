@@ -25,11 +25,9 @@ def are_faces_different(image_paths, threshold=0.5):
         if encoding is None:
             return False, "Invalid Image: No face detected"
         encodings.append(encoding)
-    print(f"Encodings------------------->{encoding}")
     for i in range(len(encodings)):
         for j in range(i + 1, len(encodings)):
             distance = np.linalg.norm(encodings[i] - encodings[j])
-            print(f"Distance between image------------------> {i} and {j}: {distance}")
             if distance < threshold:
                 return False, "Invalid Image: Duplicate face detected"
     

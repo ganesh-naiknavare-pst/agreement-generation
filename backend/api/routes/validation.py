@@ -46,8 +46,6 @@ async def validate_image(req: Request):
 
 
     image_paths.append(photo_path)
-    print("Image Path Array------------------------------------>", image_paths)
-    print("Only Photo Path---------------------------->", photo_path)
 
     try:
         is_valid, message = are_faces_different(image_paths)

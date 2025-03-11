@@ -95,10 +95,10 @@ def send_email_with_attachment(recipient_email: str, pdf_path: str, role: str, i
         "Content-Type": "application/json",
     }
 
-    # response = requests.post(SMTP2GO_EMAIL_SEND_URL, headers=headers, json=payload)
-    # if response.status_code == 200:
-    #     print(f"Successfully sent email to {recipient_email}")
-    # else:
-    #     print(f"Failed to send email to {recipient_email}: {response.text}")
-    # return response.status_code == 200, response.text
+    response = requests.post(SMTP2GO_EMAIL_SEND_URL, headers=headers, json=payload)
+    if response.status_code == 200:
+        print(f"Successfully sent email to {recipient_email}")
+    else:
+        print(f"Failed to send email to {recipient_email}: {response.text}")
+    return response.status_code == 200, response.text
     
