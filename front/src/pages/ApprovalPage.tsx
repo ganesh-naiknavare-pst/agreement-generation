@@ -37,13 +37,25 @@ const ApprovalPage = () => {
   const { fetchData: rejectAgreement } = useApi<ApprovedUser>(
     BackendEndpoints.RejectURL
   );
-  const [messageType, setMessageType] = useState<"approved" | "rejected" | null>(null);
+  const [messageType, setMessageType] = useState<
+    "approved" | "rejected" | null
+  >(null);
   const processApproval = () => {
-    approveAgreement({ method: "POST", data: { user: param.id } });
+    const requestData = {
+      user: param.id,
+      imageUrl: form.values.imageUrl ?? "",
+      signature: form.values.signature ?? "",
+    };
+    approveAgreement({ method: "POST", data: requestData });
     setMessageType("approved");
   };
   const processRejection = () => {
-    rejectAgreement({ method: "POST", params: { user: param.id } });
+    const requestData = {
+      user: param.id,
+      imageUrl: "",
+      signature: "",
+    };
+    rejectAgreement({ method: "POST", params: requestData });
     setMessageType("rejected");
   };
 
@@ -72,7 +84,7 @@ const ApprovalPage = () => {
 
   return (
     <>
-      <Center >
+      <Center>
         <Title order={2} c={COLORS.blue}>
           Welcome to the AI Agreement Agent
         </Title>
@@ -88,7 +100,7 @@ const ApprovalPage = () => {
             </Text>
           </Group>
           <Dropzone
-            onDrop={(files) => handleSignatureUpload("ownerSignature", files)}
+            onDrop={(files) => handleSignatureUpload("signature", files)}
             accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
           >
             <Group align="center" gap="md">
@@ -135,9 +147,7 @@ const ApprovalPage = () => {
           </Flex>
         </Container>
       )}
-      {messageType && (
-        <ResponseCard type={messageType} />
-      )}
+      {messageType && <ResponseCard type={messageType} />}
     </>
   );
 };

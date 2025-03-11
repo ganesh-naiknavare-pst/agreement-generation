@@ -15,7 +15,7 @@ class Data(BaseModel):
 
 
 async def image_and_sign_upload(agreement: Data):
-    if agreement.userId == agreement_state.owner_id:
+    if agreement.user == agreement_state.owner_id:
         agreement_state.owner_photo = save_base64_image(
             agreement.imageUrl, agreement_state.owner_name
         )
@@ -23,15 +23,15 @@ async def image_and_sign_upload(agreement: Data):
             agreement.signature, agreement_state.owner_name, is_signature=True
         )
 
-    elif agreement.userId in agreement_state.tenants.keys():
+    elif agreement.user in agreement_state.tenants.keys():
         tenant_photo_path = save_base64_image(
-            agreement.imageUrl, agreement_state.tenant_names[agreement.userId]
+            agreement.imageUrl, agreement_state.tenant_names[agreement.user]
         )
         tenant_signature_path = save_base64_image(
             agreement.signature,
-            agreement_state.tenant_names[agreement.userId],
+            agreement_state.tenant_names[agreement.user],
             is_signature=True,
         )
         agreement_state.update_tenant(
-            tenant_signature_path, tenant_photo_path, agreement.userId
+            tenant_signature_path, tenant_photo_path, agreement.user
         )
