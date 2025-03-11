@@ -72,7 +72,7 @@ export function Templates() {
     setState((prev) => ({
       ...prev,
       isCountdownActive: true,
-      timer: 30,
+      timer: 300,
     }));
 
     const timer = setInterval(() => {
