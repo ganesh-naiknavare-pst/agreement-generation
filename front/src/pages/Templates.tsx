@@ -14,8 +14,10 @@ import {
   Divider,
   Center,
   Alert,
+  Box,
+  Image,
 } from "@mantine/core";
-import { Dropzone, MIME_TYPES } from "@mantine/dropzone";
+import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import {
   IconUpload,
   IconFile,
@@ -99,6 +101,7 @@ export function Templates() {
       console.error("Error processing template:", error);
     }
   };
+
 
   return (
     <>
@@ -223,6 +226,7 @@ export function Templates() {
               withAsterisk
             />
 
+
             <TextInput
               my="md"
               label="Participants Email"
@@ -230,6 +234,7 @@ export function Templates() {
               {...form.getInputProps("participantsEmail")}
               withAsterisk
             />
+
 
             <Textarea
               label="Enter the prompt"

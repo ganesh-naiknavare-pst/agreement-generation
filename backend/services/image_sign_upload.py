@@ -1,9 +1,5 @@
-from helpers.state_manager import agreement_state
+from helpers.state_manager import agreement_state, template_agreement_state
 from services.doc_agent import save_base64_image
-from services.template_doc_agent import (
-    template_based_agreement,
-    TemplateAgreementRequest,
-)
 from pydantic import BaseModel
 from typing import Optional
 
@@ -35,4 +31,17 @@ async def image_and_sign_upload(agreement: Data):
         )
         agreement_state.update_tenant(
             tenant_signature_path, tenant_photo_path, agreement.user
+        )
+
+async def image_and_sign_upload_for_template(agreement: Data):
+    if agreement.user == template_agreement_state.authority_id:
+        template_agreement_state.authority_signature = save_base64_image(
+            agreement.signature, template_agreement_state.authority_email, is_signature=True
+        )
+
+    elif agreement.user == template_agreement_state.participant_id: 
+        template_agreement_state.participant_signature = save_base64_image(
+            agreement.signature,
+            template_agreement_state.participant_email,
+            is_signature=True,
         )
