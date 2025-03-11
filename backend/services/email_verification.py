@@ -5,22 +5,27 @@ import time
 import requests
 from constants import SMTP2GO_EMAIL_SEND_URL, OTP_EXPIRY_SECONDS
 from config import SMTP2GO_API_KEY, SENDER_EMAIL
+
 app = FastAPI()
 
 otp_storage = {}
 
+
 class OTPRequest(BaseModel):
     email: EmailStr
     type: str
+
 
 class OTPVerification(BaseModel):
     email: EmailStr
     otp: str
     type: str
 
+
 # Generate a random OTP
 def generate_otp():
     return str(random.randint(100000, 999999))
+
 
 # Send OTP via SMTP2GO API
 def send_otp(email, otp):
@@ -32,24 +37,32 @@ def send_otp(email, otp):
         "text_body": f"Your OTP is: {otp}. It is valid for {OTP_EXPIRY_SECONDS // 60} minutes.",
     }
     headers = {"Content-Type": "application/json"}
-    
+
     try:
         response = requests.post(SMTP2GO_EMAIL_SEND_URL, json=payload, headers=headers)
         response_data = response.json()
-        return response.status_code == 200 and response_data.get("data", {}).get("succeeded", False)
+        return response.status_code == 200 and response_data.get("data", {}).get(
+            "succeeded", False
+        )
     except requests.exceptions.RequestException:
         return False
+
 
 def send_otp_endpoint(request: OTPRequest):
     email = request.email
     verification_type = request.type
     otp = generate_otp()
-    otp_storage[email] = {"otp": otp, "timestamp": time.time(), "type": verification_type}
-    
+    otp_storage[email] = {
+        "otp": otp,
+        "timestamp": time.time(),
+        "type": verification_type,
+    }
+
     if send_otp(email, otp):
         return {"message": "OTP sent successfully", "type": verification_type}
     else:
         raise HTTPException(status_code=500, detail="Failed to send OTP")
+
 
 def verify_otp_endpoint(request: OTPVerification):
     email = request.email
@@ -72,11 +85,11 @@ def verify_otp_endpoint(request: OTPVerification):
         return {
             "success": True,
             "type": verification_type,
-            "message": "OTP verified successfully"
+            "message": "OTP verified successfully",
         }
     else:
         return {
             "success": False,
             "type": verification_type,
-            "message": "Incorrect OTP. Try again."
+            "message": "Incorrect OTP. Try again.",
         }

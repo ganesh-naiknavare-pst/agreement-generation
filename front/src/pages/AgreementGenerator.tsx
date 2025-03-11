@@ -569,7 +569,9 @@ export function AgreementGenerator() {
                   timer={tenantTimer[index]}
                   otpValue={tenantOtp[index] || ""}
                   otpError={tenantOtpError[index]}
-                  onOtpChange={(value) => setTenantOtp((prev) => ({ ...prev, [index]: value }))}
+                  onOtpChange={(value) =>
+                    setTenantOtp((prev) => ({ ...prev, [index]: value }))
+                  }
                   onSendOtp={() => handleSendTenantOTP(index)}
                   onVerifyOtp={() => handleVerifyTenantOTP(index)}
                   label={`Enter OTP for Tenant ${index + 1}`}

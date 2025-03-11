@@ -22,12 +22,12 @@ export function OTPInput({
   onOtpChange,
   onSendOtp,
   onVerifyOtp,
-  label = "Enter OTP"
+  label = "Enter OTP",
 }: OTPInputProps) {
   if (isVerified) {
     return (
       <Alert color="green" mt="xs">
-        <Text size="sm" >✓ OTP verified successfully</Text>
+        <Text size="sm">✓ OTP verified successfully</Text>
       </Alert>
     );
   }
@@ -67,11 +67,7 @@ export function OTPInput({
             {otpError}
           </Text>
         )}
-        <Button
-          mt="xs"
-          onClick={onVerifyOtp}
-          disabled={timer === 0}
-        >
+        <Button mt="xs" onClick={onVerifyOtp} disabled={timer === 0}>
           Verify OTP
         </Button>
       </Box>
@@ -90,4 +86,4 @@ export function OTPInput({
       </Button>
     </Box>
   );
-} 
+}

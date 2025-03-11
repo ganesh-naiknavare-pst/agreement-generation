@@ -6,7 +6,11 @@ interface OTPTimerProps {
   color?: string;
 }
 
-export function OTPTimer({ timer, size = "sm", color = "dimmed" }: OTPTimerProps) {
+export function OTPTimer({
+  timer,
+  size = "sm",
+  color = "dimmed",
+}: OTPTimerProps) {
   const minutes = Math.floor(timer / 60);
   const seconds = (timer % 60).toString().padStart(2, "0");
 
@@ -15,4 +19,4 @@ export function OTPTimer({ timer, size = "sm", color = "dimmed" }: OTPTimerProps
       Time remaining: {minutes}:{seconds}
     </Text>
   );
-} 
+}
