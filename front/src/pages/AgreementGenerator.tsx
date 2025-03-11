@@ -85,7 +85,7 @@ export function AgreementGenerator() {
       });
     }, 1000);
   };
-  
+
   const startTenantCountdown = (index: number) => {
     if (countdownActive[index]) return;
     setCountdownActive((prev) => ({ ...prev, [index]: true }));
@@ -107,7 +107,7 @@ export function AgreementGenerator() {
       });
     }, 1000);
   };
-  
+
   useEffect(() => {
     if (data) {
       const { success, type } = data;
@@ -150,7 +150,7 @@ export function AgreementGenerator() {
     try {
       await sendOTP({
         method: "POST",
-        data: { email: form.values.ownerEmailAddress, type: "owner" }
+        data: { email: form.values.ownerEmailAddress, type: "owner" },
       });
       setOtpSent(true);
       setOtpError("");
@@ -188,7 +188,7 @@ export function AgreementGenerator() {
     try {
       await sendOTP({
         method: "POST",
-        data: { email: form.values.tenants[index].email, type: "tenant" }
+        data: { email: form.values.tenants[index].email, type: "tenant" },
       });
       setTenantOtpSent((prev) => ({ ...prev, [index]: true }));
       setTenantOtpError((prev) => ({ ...prev, [index]: "" }));
@@ -250,17 +250,22 @@ export function AgreementGenerator() {
       city: "",
       date: new Date(),
       rentAmount: 0,
-      agreementPeriod: [new Date(), new Date(new Date().setMonth(new Date().getMonth() + 6))],
+      agreementPeriod: [
+        new Date(),
+        new Date(new Date().setMonth(new Date().getMonth() + 6)),
+      ],
     },
 
     validate: (values) => {
       const errors: Record<string, string> = {};
       const fullNameRegex = /^[A-Za-z]+(?:[\s-][A-Za-z]+)+$/;
-      const emailRegex = /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/;
+      const emailRegex =
+        /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/;
 
       if (active === 0) {
         if (!fullNameRegex.test(values.ownerFullName.trim())) {
-          errors.ownerFullName = "Full name must include at least a first name and a surname";
+          errors.ownerFullName =
+            "Full name must include at least a first name and a surname";
         }
         if (!emailRegex.test(values.ownerEmailAddress)) {
           errors.ownerEmailAddress = "Please enter a valid email address";
@@ -287,7 +292,8 @@ export function AgreementGenerator() {
               "Tenant full name must include at least a first name and a surname";
           }
           if (!emailRegex.test(tenant.email)) {
-            errors[`tenants.${index}.email`] = "Please enter a valid email address";
+            errors[`tenants.${index}.email`] =
+              "Please enter a valid email address";
           }
           if (tenant.tenantImageUrl === "") {
             setShowAlertForPhoto(true);
@@ -313,13 +319,15 @@ export function AgreementGenerator() {
           errors.rentAmount = "Rent amount must be greater than 0";
         }
         if (values.agreementPeriod.length !== 2) {
-          errors.agreementPeriod = "Agreement period must be a valid date range";
+          errors.agreementPeriod =
+            "Agreement period must be a valid date range";
         } else {
           const [start, end] = values.agreementPeriod;
           const sixMonthLater = new Date(start);
           sixMonthLater.setMonth(sixMonthLater.getMonth() + 6);
           if (end < sixMonthLater) {
-            errors.agreementPeriod = "Agreement period must be at least six months";
+            errors.agreementPeriod =
+              "Agreement period must be at least six months";
           }
         }
       }
@@ -398,7 +406,9 @@ export function AgreementGenerator() {
       property_address: form.values.address,
       city: form.values.city,
       rent_amount: form.values.rentAmount,
-      agreement_period: form.values.agreementPeriod.map(date => date.toISOString()),
+      agreement_period: form.values.agreementPeriod.map((date) =>
+        date.toISOString()
+      ),
     };
     try {
       await fetchData({
@@ -455,8 +465,9 @@ export function AgreementGenerator() {
               style={{ textAlign: "start" }}
               {...form.getInputProps("ownerEmailAddress")}
               withAsterisk
-              disabled={isOtpVerified}
+              disabled={otpSent || isOtpVerified}
             />
+
             {!isOtpVerified ? (
               <>
                 {!otpSent ? (
@@ -605,7 +616,7 @@ export function AgreementGenerator() {
                   style={{ textAlign: "start" }}
                   {...form.getInputProps(`tenants.${index}.email`)}
                   withAsterisk
-                  disabled={tenantOtpVerified[index]}
+                  disabled={tenantOtpSent[index] || tenantOtpVerified[index]}
                 />
 
                 {!tenantOtpVerified[index] ? (
@@ -619,31 +630,30 @@ export function AgreementGenerator() {
                       </Button>
                     ) : (
                       <>
-
                         {tenantTimer[index] > 0 ? (
                           <>
-                          <TextInput
-                            label="Enter OTP"
-                            placeholder="Enter OTP received"
-                            value={tenantOtp[index] || ""}
-                            onChange={(event) => {
-                              const newValue = event.currentTarget.value;
-                              if (/^\d{0,6}$/.test(newValue)) {
-                                setTenantOtp((prev) => ({
-                                  ...prev,
-                                  [index]: newValue,
-                                }));
+                            <TextInput
+                              label="Enter OTP"
+                              placeholder="Enter OTP received"
+                              value={tenantOtp[index] || ""}
+                              onChange={(event) => {
+                                const newValue = event.currentTarget.value;
+                                if (/^\d{0,6}$/.test(newValue)) {
+                                  setTenantOtp((prev) => ({
+                                    ...prev,
+                                    [index]: newValue,
+                                  }));
+                                }
+                              }}
+                              withAsterisk
+                              error={
+                                tenantOtp[index] &&
+                                tenantOtp[index].length > 0 &&
+                                tenantOtp[index].length !== 6
+                                  ? "OTP must be exactly 6 digits"
+                                  : ""
                               }
-                            }}
-                            withAsterisk
-                            error={
-                              tenantOtp[index] &&
-                              tenantOtp[index].length > 0 &&
-                              tenantOtp[index].length !== 6
-                                ? "OTP must be exactly 6 digits"
-                                : ""
-                            }
-                          />
+                            />
                             <Text size="sm" c="dimmed" mt="xs">
                               Time remaining:{" "}
                               {Math.floor(tenantTimer[index] / 60)}:

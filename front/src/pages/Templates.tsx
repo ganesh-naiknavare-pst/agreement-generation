@@ -48,7 +48,9 @@ export function Templates() {
   };
   const { fetchData } = useApi(BackendEndpoints.CreateTemplateBasedAgreement);
   const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
-  const { data, fetchData: verifyOTP } = useApi<OTPVerificationResponse>(BackendEndpoints.VerifyOTP);
+  const { data, fetchData: verifyOTP } = useApi<OTPVerificationResponse>(
+    BackendEndpoints.VerifyOTP
+  );
   const [authorityOtpSent, setAuthorityOtpSent] = useState(false);
   const [authorityOtp, setAuthorityOtp] = useState("");
   const [authorityOtpVerified, setAuthorityOtpVerified] = useState(false);
@@ -152,7 +154,7 @@ export function Templates() {
   useEffect(() => {
     if (data) {
       const { success, type } = data;
-      
+
       if (success === true) {
         if (type === "authority" && authorityOtpSent) {
           setAuthorityOtpVerified(true);
@@ -190,7 +192,8 @@ export function Templates() {
 
     validate: (values) => {
       const errors: Record<string, string> = {};
-      const emailRegex = /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/;
+      const emailRegex =
+        /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/;
 
       if (!emailRegex.test(values.participantsEmail)) {
         errors.participantsEmail = "Please enter a valid email address";
@@ -365,7 +368,7 @@ export function Templates() {
               placeholder="Enter authority's email"
               {...form.getInputProps("authorityEmail")}
               withAsterisk
-              disabled={authorityOtpVerified}
+              disabled={authorityOtpSent || authorityOtpVerified}
             />
             {!authorityOtpVerified ? (
               authorityOtpSent ? (
@@ -439,7 +442,7 @@ export function Templates() {
               placeholder="Enter participants' email"
               {...form.getInputProps("participantsEmail")}
               withAsterisk
-              disabled={participantsOtpVerified}
+              disabled={participantsOtpSent || participantsOtpVerified}
             />
             {!participantsOtpVerified ? (
               participantsOtpSent ? (
