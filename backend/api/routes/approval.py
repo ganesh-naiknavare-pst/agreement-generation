@@ -7,7 +7,7 @@ from helpers.email_helper import send_rejection_email
 from helpers.state_manager import agreement_state, template_agreement_state
 from services.doc_agent import delete_temp_file
 from services.template_doc_agent import delete_template_file
-from services.image_sign_upload import Data, image_and_sign_upload
+from services.image_sign_upload import Data, image_and_sign_upload, image_and_sign_upload_for_template
 
 router = APIRouter()
 approved_users = set()
@@ -17,7 +17,10 @@ rejected_users = set()
 @router.post("/approve")
 async def approve_user(data: Data):
     agreement_type = data.agreement_type
-    await image_and_sign_upload(data)
+    if agreement_type == "template":
+        await image_and_sign_upload_for_template(data)
+    else:
+        await image_and_sign_upload(data)
     approved_users.add(data.user)
     response = {"status": "approved", "user_id": data.user, "approved": True,  "agreement_type": agreement_type}
     await notify_clients(response)

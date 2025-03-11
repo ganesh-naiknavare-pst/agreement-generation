@@ -52,8 +52,6 @@ export function Templates() {
       authorityEmail: "",
       participantsEmail: "",
       file: null,
-      authoritySignature: "",
-      participantsSignature: "",
     },
 
     validate: (values) => {
@@ -69,14 +67,6 @@ export function Templates() {
       if (values.file === null) {
         setShowAlert(true);
         errors.file = "Please upload a file to proceed";
-      }
-      if (!values.authoritySignature) {
-        setShowAlert(true);
-        errors.authoritySignature = "Please upload a signature to proceed";
-      }
-      if (!values.participantsSignature) {
-        setShowAlert(true);
-        errors.participantsSignature = "Please upload a signature to proceed";
       }
       if (values.userPrompt.trim() === "") {
         errors.userPrompt = "This field is mandatory";
@@ -102,16 +92,6 @@ export function Templates() {
       formData.append("authority_email", form.values.authorityEmail);
       formData.append("participant_email", form.values.participantsEmail);
       formData.append("file", form.values.file ? form.values.file : "");
-      formData.append(
-        "authority_signature",
-        form.values.authoritySignature ? form.values.authoritySignature : ""
-      );
-      formData.append(
-        "participant_signature",
-        form.values.participantsSignature
-          ? form.values.participantsSignature
-          : ""
-      );
       await fetchData({
         method: "POST",
         data: formData,
@@ -122,15 +102,6 @@ export function Templates() {
     }
   };
 
-  const handleSignatureUpload = (field: string, files: FileWithPath[]) => {
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      form.setFieldValue(field, reader.result as string);
-      setShowAlert(false);
-    };
-    reader.readAsDataURL(file);
-  };
 
   return (
     <>
@@ -255,39 +226,6 @@ export function Templates() {
               withAsterisk
             />
 
-            <Group justify="flex-start" mt="xl" mb={5}>
-              <Text display="inline" size="sm" fw={500}>
-                Upload Authority Signature{" "}
-                <Text component="span" c={COLORS.asteric}>
-                  *
-                </Text>
-              </Text>
-            </Group>
-            <Dropzone
-              onDrop={(files) =>
-                handleSignatureUpload("authoritySignature", files)
-              }
-              accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
-            >
-              <Group align="center" gap="xl">
-                <IconUpload size={50} />
-                <Text>Drag a file here or click to upload</Text>
-              </Group>
-            </Dropzone>
-            {form.values.authoritySignature && (
-              <Box mt="md">
-                <Text size="sm" fw={500}>
-                  Uploaded Signature:
-                </Text>
-                <Image
-                  src={form.values.authoritySignature}
-                  alt="Authority Signature"
-                  w="auto"
-                  h={100}
-                  fit="contain"
-                />
-              </Box>
-            )}
 
             <TextInput
               my="md"
@@ -297,42 +235,8 @@ export function Templates() {
               withAsterisk
             />
 
-            <Group justify="flex-start" mt="xl" mb={5}>
-              <Text display="inline" size="sm" fw={500}>
-                Upload Participant Signature{" "}
-                <Text component="span" c={COLORS.asteric}>
-                  *
-                </Text>
-              </Text>
-            </Group>
-            <Dropzone
-              onDrop={(files) =>
-                handleSignatureUpload("participantsSignature", files)
-              }
-              accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
-            >
-              <Group align="center" gap="xl">
-                <IconUpload size={50} />
-                <Text>Drag a file here or click to upload</Text>
-              </Group>
-            </Dropzone>
-            {form.values.participantsSignature && (
-              <Box mt="md">
-                <Text size="sm" fw={500}>
-                  Uploaded Signature:
-                </Text>
-                <Image
-                  src={form.values.participantsSignature}
-                  alt="Particpant Signature"
-                  w="auto"
-                  h={100}
-                  fit="contain"
-                />
-              </Box>
-            )}
 
             <Textarea
-              my="md"
               label="Enter the prompt"
               placeholder="Describe the template details"
               autosize
