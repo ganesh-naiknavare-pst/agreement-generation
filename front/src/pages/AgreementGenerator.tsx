@@ -14,17 +14,13 @@ import {
   useMantineColorScheme,
   Title,
   Divider,
-  Alert,
   Container,
-  Image,
 } from "@mantine/core";
-import { IconCheck, IconAlertTriangle, IconUpload } from "@tabler/icons-react";
+import { IconCheck } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { DatePickerInput } from "@mantine/dates";
 import { COLORS } from "../colors";
-import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
-import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { useAgreements } from "../hooks/useAgreements";
 
 export function AgreementGenerator() {
@@ -33,50 +29,40 @@ export function AgreementGenerator() {
   const [showMessage, setShowMessage] = useState(false);
   const { colorScheme } = useMantineColorScheme();
   const { fetchData } = useApi(BackendEndpoints.CreateAgreement);
-  const [showAlertForSign, setShowAlertForSign] = useState(false);
-  const [showAlertForPhoto, setShowAlertForPhoto] = useState(false);
   const { fetchAgreements } = useAgreements();
   const form = useForm({
     mode: "controlled",
     initialValues: {
       ownerFullName: "",
       ownerEmailAddress: "",
-      ownerImageUrl: "",
-      ownerSignature: "",
       tenantNumber: 2,
       tenants: Array.from({ length: 2 }, () => ({
         fullName: "",
         email: "",
-        tenantImageUrl: "",
-        tenantSignature: "",
       })),
       address: "",
       city: "",
       date: new Date(),
       rentAmount: 0,
-      agreementPeriod: [new Date(), new Date(new Date().setMonth(new Date().getMonth() + 6))],
+      agreementPeriod: [
+        new Date(),
+        new Date(new Date().setMonth(new Date().getMonth() + 6)),
+      ],
     },
 
     validate: (values) => {
       const errors: Record<string, string> = {};
       const fullNameRegex = /^[A-Za-z]+(?:[\s-][A-Za-z]+)+$/;
-      const emailRegex = /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/;
+      const emailRegex =
+        /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/;
 
       if (active === 0) {
         if (!fullNameRegex.test(values.ownerFullName.trim())) {
-          errors.ownerFullName = "Full name must include at least a first name and a surname";
+          errors.ownerFullName =
+            "Full name must include at least a first name and a surname";
         }
         if (!emailRegex.test(values.ownerEmailAddress)) {
           errors.ownerEmailAddress = "Please enter a valid email address";
-        }
-        if (values.ownerImageUrl === "") {
-          setShowAlertForPhoto(true);
-          errors.ownerImageUrl = "Please take a owner picture";
-        }
-
-        if (values.ownerSignature === "") {
-          setShowAlertForSign(true);
-          errors.ownerSignature = "Please upload signature";
         }
       }
 
@@ -91,17 +77,8 @@ export function AgreementGenerator() {
               "Tenant full name must include at least a first name and a surname";
           }
           if (!emailRegex.test(tenant.email)) {
-            errors[`tenants.${index}.email`] = "Please enter a valid email address";
-          }
-          if (tenant.tenantImageUrl === "") {
-            setShowAlertForPhoto(true);
-            errors[`tenants.${index}.tenantImageUrl`] =
-              "Please take a tenant picture";
-          }
-          if (tenant.tenantSignature === "") {
-            setShowAlertForSign(true);
-            errors[`tenants.${index}.tenantSignature`] =
-              "Please upload signature";
+            errors[`tenants.${index}.email`] =
+              "Please enter a valid email address";
           }
         });
       }
@@ -117,13 +94,15 @@ export function AgreementGenerator() {
           errors.rentAmount = "Rent amount must be greater than 0";
         }
         if (values.agreementPeriod.length !== 2) {
-          errors.agreementPeriod = "Agreement period must be a valid date range";
+          errors.agreementPeriod =
+            "Agreement period must be a valid date range";
         } else {
           const [start, end] = values.agreementPeriod;
           const sixMonthLater = new Date(start);
           sixMonthLater.setMonth(sixMonthLater.getMonth() + 6);
           if (end < sixMonthLater) {
-            errors.agreementPeriod = "Agreement period must be at least six months";
+            errors.agreementPeriod =
+              "Agreement period must be at least six months";
           }
         }
       }
@@ -141,8 +120,6 @@ export function AgreementGenerator() {
           form.values.tenants[index] || {
             fullName: "",
             email: "",
-            tenantImageUrl: "",
-            tenantSignature: "",
           }
       )
     );
@@ -172,18 +149,16 @@ export function AgreementGenerator() {
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
-      owner_signature: form.values.ownerSignature,
-      owner_photo: form.values.ownerImageUrl,
       tenant_details: form.values.tenants.map((tenant) => ({
         name: tenant.fullName,
         email: tenant.email,
-        signature: tenant.tenantSignature,
-        photo: tenant.tenantImageUrl,
       })),
       property_address: form.values.address,
       city: form.values.city,
       rent_amount: form.values.rentAmount,
-      agreement_period: form.values.agreementPeriod.map(date => date.toISOString()),
+      agreement_period: form.values.agreementPeriod.map((date) =>
+        date.toISOString()
+      ),
     };
     try {
       await fetchData({
@@ -196,30 +171,9 @@ export function AgreementGenerator() {
     }
   };
 
-  const handleSignatureUpload = (field: string, files: FileWithPath[]) => {
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      form.setFieldValue(field, reader.result as string);
-      setShowAlertForSign(false);
-    };
-    reader.readAsDataURL(file);
-  };
   return (
     <>
       <Title order={3}>Generate Rent Agreement</Title>
-      {(showAlertForSign || showAlertForPhoto) && (
-        <Alert
-          m="1rem"
-          variant="light"
-          color="yellow"
-          title="Warning"
-          icon={<IconAlertTriangle />}
-        >
-          Please fill in all required fields before proceeding. All fields are
-          mandatory.
-        </Alert>
-      )}
       <Divider my="2rem" />
       <Container>
         <Stepper active={active} pt="2rem">
@@ -241,52 +195,6 @@ export function AgreementGenerator() {
               {...form.getInputProps("ownerEmailAddress")}
               withAsterisk
             />
-            <Group justify="flex-start" mt="xl" mb={5}>
-              <Text display="inline" size="sm" fw={500}>
-                Upload Your Signature{" "}
-                <Text component="span" c={COLORS.asteric}>
-                  *
-                </Text>
-              </Text>
-            </Group>
-            <Dropzone
-              onDrop={(files) => handleSignatureUpload("ownerSignature", files)}
-              accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
-            >
-              <Group align="center" gap="md">
-                <IconUpload size={20} />
-                <Text>Drag a file here or click to upload</Text>
-              </Group>
-            </Dropzone>
-            {form.values.ownerSignature && (
-              <Box mt="md">
-                <Text size="sm" fw={500}>
-                  Uploaded Signature:
-                </Text>
-                <Image
-                  src={form.values.ownerSignature}
-                  alt="Owner Signature"
-                  w="auto"
-                  h={100}
-                  fit="contain"
-                />
-              </Box>
-            )}
-            <Group justify="flex-start" mt="xl">
-              <Text display="inline" size="sm" fw={500}>
-                Take a Picture to Upload{" "}
-                <Text component="span" c={COLORS.asteric}>
-                  *
-                </Text>
-              </Text>
-              <WebcamComponent
-                imageUrl={form.values.ownerImageUrl}
-                setFieldValue={(value: string) => {
-                  form.setFieldValue("ownerImageUrl", value as string);
-                  setShowAlertForPhoto(false);
-                }}
-              />
-            </Group>
           </Stepper.Step>
 
           <Stepper.Step label="Step 2" description="No. of Tenants">
@@ -323,61 +231,6 @@ export function AgreementGenerator() {
                   {...form.getInputProps(`tenants.${index}.email`)}
                   withAsterisk
                 />
-
-                <Group justify="flex-start" mt="xl" mb={5}>
-                  <Text display="inline" size="sm" fw={500}>
-                    Upload Your Signature{" "}
-                    <Text component="span" c={COLORS.asteric}>
-                      *
-                    </Text>
-                  </Text>
-                </Group>
-                <Dropzone
-                  onDrop={(files) =>
-                    handleSignatureUpload(
-                      `tenants.${index}.tenantSignature`,
-                      files
-                    )
-                  }
-                  accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
-                >
-                  <Group align="center" gap="md">
-                    <IconUpload size={20} />
-                    <Text>Drag a file here or click to upload</Text>
-                  </Group>
-                </Dropzone>
-                {form.values.tenants[index].tenantSignature && (
-                  <Box mt="md">
-                    <Text size="sm" fw={500}>
-                      Uploaded Signature:
-                    </Text>
-                    <Image
-                      src={form.values.tenants[index].tenantSignature}
-                      alt={`Tenant ${index + 1} Signature`}
-                      w="auto"
-                      h={100}
-                      fit="contain"
-                    />
-                  </Box>
-                )}
-                <Group justify="flex-start" mt="xl">
-                  <Text display="inline" size="sm" fw={500}>
-                    Take a Picture to Upload{" "}
-                    <Text component="span" c={COLORS.asteric}>
-                      *
-                    </Text>
-                  </Text>
-                  <WebcamComponent
-                    imageUrl={form.values.tenants[index].tenantImageUrl}
-                    setFieldValue={(value: string) => {
-                      form.setFieldValue(
-                        `tenants.${index}.tenantImageUrl`,
-                        value as string
-                      );
-                      setShowAlertForPhoto(false);
-                    }}
-                  />
-                </Group>
               </Box>
             ))}
           </Stepper.Step>
