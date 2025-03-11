@@ -34,6 +34,19 @@ interface OTPVerificationResponse {
   message: string;
 }
 
+interface OtpState {
+  otp: string;
+  isVerified: boolean;
+  isSent: boolean;
+  error: string;
+  timer: number;
+  isCountdownActive: boolean;
+}
+
+interface TenantsOtpState {
+  [key: number]: OtpState;
+}
+
 export function AgreementGenerator() {
   const [active, setActive] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,68 +56,85 @@ export function AgreementGenerator() {
   const [showAlertForSign, setShowAlertForSign] = useState(false);
   const [showAlertForPhoto, setShowAlertForPhoto] = useState(false);
   const { fetchAgreements } = useAgreements();
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [isOtpVerified, setIsOtpVerified] = useState(false);
-  const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
   const { data, fetchData: verifyOTP } = useApi<OTPVerificationResponse>(
     BackendEndpoints.VerifyOTP
   );
-  const [tenantOtpSent, setTenantOtpSent] = useState<Record<number, boolean>>(
-    {}
-  );
-  const [tenantOtp, setTenantOtp] = useState<Record<number, string>>({});
-  const [tenantOtpVerified, setTenantOtpVerified] = useState<
-    Record<number, boolean>
-  >({});
-  const [tenantOtpError, setTenantOtpError] = useState<Record<number, string>>(
-    {}
-  );
-  const [tenantTimer, setTenantTimer] = useState<Record<number, number>>({});
-  const [countdownActive, setCountdownActive] = useState<
-    Record<number, boolean>
-  >({});
-  const [otpError, setOtpError] = useState("");
-  const [ownerTimer, setOwnerTimer] = useState(0);
-  const [ownerCountdownActive, setOwnerCountdownActive] = useState(false);
+  const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
   const [otpIndex, setOtpIndex] = useState<number | null>(null);
+  const [ownerOtpState, setOwnerOtpState] = useState<OtpState>({
+    otp: "",
+    isVerified: false,
+    isSent: false,
+    error: "",
+    timer: 0,
+    isCountdownActive: false,
+  });
+
+  const [tenantsOtpState, setTenantsOtpState] = useState<TenantsOtpState>({});
+
   const startOwnerCountdown = () => {
-    if (ownerCountdownActive) return;
-    setOwnerCountdownActive(true);
-    setOwnerTimer(300);
+    if (ownerOtpState.isCountdownActive) return;
+
+    setOwnerOtpState((prev) => ({
+      ...prev,
+      isCountdownActive: true,
+      timer: 30,
+    }));
 
     const timer = setInterval(() => {
-      setOwnerTimer((prev) => {
-        if (prev <= 1) {
+      setOwnerOtpState((prev) => {
+        if (prev.timer <= 1) {
           clearInterval(timer);
-          setOwnerCountdownActive(false);
-          setOtp("");
-          setOtpError("OTP expired. Please request a new OTP.");
-          return 0;
+          return {
+            ...prev,
+            isCountdownActive: false,
+            otp: "",
+            error: "OTP expired. Please request a new OTP.",
+            timer: 0,
+          };
         }
-        return prev - 1;
+        return {
+          ...prev,
+          timer: prev.timer - 1,
+        };
       });
     }, 1000);
   };
 
   const startTenantCountdown = (index: number) => {
-    if (countdownActive[index]) return;
-    setCountdownActive((prev) => ({ ...prev, [index]: true }));
-    setTenantTimer((prev) => ({ ...prev, [index]: 300 }));
+    if (tenantsOtpState[index]?.isCountdownActive) return;
+
+    setTenantsOtpState((prev) => ({
+      ...prev,
+      [index]: {
+        ...(prev[index] || {}),
+        isCountdownActive: true,
+        timer: 30,
+      },
+    }));
 
     const timer = setInterval(() => {
-      setTenantTimer((prev) => {
-        if (prev[index] <= 1) {
+      setTenantsOtpState((prev) => {
+        if (prev[index]?.timer <= 1) {
           clearInterval(timer);
-          setCountdownActive((prev) => ({ ...prev, [index]: false }));
-          setTenantOtp((prev) => ({ ...prev, [index]: "" })); // Clear tenant OTP
-          setTenantOtpError((prev) => ({
+          return {
             ...prev,
-            [index]: "OTP expired. Please request a new OTP.",
-          }));
-          return { ...prev, [index]: 0 };
+            [index]: {
+              ...prev[index],
+              isCountdownActive: false,
+              otp: "",
+              error: "OTP expired. Please request a new OTP.",
+              timer: 0,
+            },
+          };
         }
-        return { ...prev, [index]: prev[index] - 1 };
+        return {
+          ...prev,
+          [index]: {
+            ...prev[index],
+            timer: prev[index].timer - 1,
+          },
+        };
       });
     }, 1000);
   };
@@ -115,30 +145,53 @@ export function AgreementGenerator() {
 
       if (success === true) {
         // Owner OTP Verified
-        if (type === "owner" && otpSent) {
-          setIsOtpVerified(true);
-          setOtpSent(false);
-          setOtp("");
-          setOtpError("");
-          setOwnerCountdownActive(false);
+        if (type === "owner" && ownerOtpState.isSent) {
+          setOwnerOtpState((prev) => ({
+            ...prev,
+            isVerified: true,
+            isSent: false,
+            otp: "",
+            error: "",
+            isCountdownActive: false,
+          }));
         }
 
         // Tenant OTP Verified
-        if (type === "tenant" && otpIndex !== null && tenantOtpSent[otpIndex]) {
-          setTenantOtpVerified((prev) => ({ ...prev, [otpIndex]: true }));
-          setTenantOtpSent((prev) => ({ ...prev, [otpIndex]: false }));
-          setTenantOtp((prev) => ({ ...prev, [otpIndex]: "" }));
-          setTenantOtpError((prev) => ({ ...prev, [otpIndex]: "" }));
-          setCountdownActive((prev) => ({ ...prev, [otpIndex]: false }));
+        if (
+          type === "tenant" &&
+          otpIndex !== null &&
+          tenantsOtpState[otpIndex]?.isSent
+        ) {
+          setTenantsOtpState((prev) => ({
+            ...prev,
+            [otpIndex]: {
+              ...prev[otpIndex],
+              isVerified: true,
+              isSent: false,
+              otp: "",
+              error: "",
+              isCountdownActive: false,
+            },
+          }));
         }
       } else {
-        if (type === "owner" && otpSent) {
-          setOtpError("Invalid OTP. Please enter the correct OTP.");
-        }
-        if (type === "tenant" && otpIndex !== null && tenantOtpSent[otpIndex]) {
-          setTenantOtpError((prev) => ({
+        if (type === "owner" && ownerOtpState.isSent) {
+          setOwnerOtpState((prev) => ({
             ...prev,
-            [otpIndex]: "Invalid OTP. Please enter the correct OTP.",
+            error: "Invalid OTP. Please enter the correct OTP.",
+          }));
+        }
+        if (
+          type === "tenant" &&
+          otpIndex !== null &&
+          tenantsOtpState[otpIndex]?.isSent
+        ) {
+          setTenantsOtpState((prev) => ({
+            ...prev,
+            [otpIndex]: {
+              ...prev[otpIndex],
+              error: "Invalid OTP. Please enter the correct OTP.",
+            },
           }));
         }
       }
@@ -153,19 +206,28 @@ export function AgreementGenerator() {
         method: "POST",
         data: { email: form.values.ownerEmailAddress, type: "owner" },
       });
-      setOtpSent(true);
-      setOtpError("");
+      setOwnerOtpState((prev) => ({
+        ...prev,
+        isSent: true,
+        error: "",
+      }));
       startOwnerCountdown();
     } catch (error) {
       console.error("Error sending OTP:", error);
-      setOtpError("Failed to send OTP. Please try again.");
+      setOwnerOtpState((prev) => ({
+        ...prev,
+        error: "Failed to send OTP. Please try again.",
+      }));
     }
   };
 
   const handleVerifyOTP = async () => {
-    console.log("Verifying OTP:", otp);
-    if (!otp) {
-      setOtpError("Please enter the OTP");
+    console.log("Verifying OTP:", ownerOtpState.otp);
+    if (!ownerOtpState.otp) {
+      setOwnerOtpState((prev) => ({
+        ...prev,
+        error: "Please enter the OTP",
+      }));
       return;
     }
 
@@ -174,13 +236,16 @@ export function AgreementGenerator() {
         method: "POST",
         data: {
           email: form.values.ownerEmailAddress,
-          otp,
+          otp: ownerOtpState.otp,
           type: "owner",
         },
       });
     } catch (error: any) {
       console.error("Error verifying OTP:", error);
-      setOtpError("Error verifying OTP. Please try again.");
+      setOwnerOtpState((prev) => ({
+        ...prev,
+        error: "Error verifying OTP. Please try again.",
+      }));
     }
   };
 
@@ -191,25 +256,40 @@ export function AgreementGenerator() {
         method: "POST",
         data: { email: form.values.tenants[index].email, type: "tenant" },
       });
-      setTenantOtpSent((prev) => ({ ...prev, [index]: true }));
-      setTenantOtpError((prev) => ({ ...prev, [index]: "" }));
+      setTenantsOtpState((prev) => ({
+        ...prev,
+        [index]: {
+          ...(prev[index] || {}),
+          isSent: true,
+          error: "",
+        },
+      }));
       startTenantCountdown(index);
     } catch (error) {
       console.error("Error sending OTP:", error);
-      setTenantOtpError((prev) => ({
+      setTenantsOtpState((prev) => ({
         ...prev,
-        [index]: "Failed to send OTP. Please try again.",
+        [index]: {
+          ...(prev[index] || {}),
+          error: "Failed to send OTP. Please try again.",
+        },
       }));
     }
   };
 
   const handleVerifyTenantOTP = async (index: number) => {
-    console.log(`Verifying OTP for Tenant ${index + 1}:`, tenantOtp[index]);
+    console.log(
+      `Verifying OTP for Tenant ${index + 1}:`,
+      tenantsOtpState[index]?.otp
+    );
 
-    if (!tenantOtp[index]) {
-      setTenantOtpError((prev) => ({
+    if (!tenantsOtpState[index]?.otp) {
+      setTenantsOtpState((prev) => ({
         ...prev,
-        [index]: "Please enter the OTP",
+        [index]: {
+          ...(prev[index] || {}),
+          error: "Please enter the OTP",
+        },
       }));
       return;
     }
@@ -220,15 +300,18 @@ export function AgreementGenerator() {
         method: "POST",
         data: {
           email: form.values.tenants[index].email,
-          otp: tenantOtp[index],
+          otp: tenantsOtpState[index].otp,
           type: "tenant",
         },
       });
     } catch (error: any) {
       console.error("Error verifying tenant OTP:", error);
-      setTenantOtpError((prev) => ({
+      setTenantsOtpState((prev) => ({
         ...prev,
-        [index]: "Invalid OTP. Please enter the correct OTP.",
+        [index]: {
+          ...(prev[index] || {}),
+          error: "Invalid OTP. Please enter the correct OTP.",
+        },
       }));
     }
   };
@@ -360,15 +443,18 @@ export function AgreementGenerator() {
     if (hasErrors) return;
 
     // Restrict progress on Step 1 if owner OTP is not verified
-    if (active === 0 && !isOtpVerified) {
-      setOtpError("Please verify your OTP before proceeding.");
+    if (active === 0 && !ownerOtpState.isVerified) {
+      setOwnerOtpState((prev) => ({
+        ...prev,
+        error: "Please verify your OTP before proceeding.",
+      }));
       return;
     }
 
     // Restrict progress on Step 3 if any tenant OTP is not verified
     if (active === 2) {
-      const unverifiedTenant = Object.values(tenantOtpVerified).some(
-        (verified) => !verified
+      const unverifiedTenant = Object.values(tenantsOtpState).some(
+        (state) => !state?.isVerified
       );
       if (unverifiedTenant) {
         alert("All tenants must verify their OTP before proceeding.");
@@ -466,15 +552,17 @@ export function AgreementGenerator() {
               style={{ textAlign: "start" }}
               {...form.getInputProps("ownerEmailAddress")}
               withAsterisk
-              disabled={otpSent || isOtpVerified}
+              disabled={ownerOtpState.isSent || ownerOtpState.isVerified}
             />
             <OTPInput
-              isVerified={isOtpVerified}
-              isOtpSent={otpSent}
-              timer={ownerTimer}
-              otpValue={otp}
-              otpError={otpError}
-              onOtpChange={setOtp}
+              isVerified={ownerOtpState.isVerified}
+              isOtpSent={ownerOtpState.isSent}
+              timer={ownerOtpState.timer}
+              otpValue={ownerOtpState.otp}
+              otpError={ownerOtpState.error}
+              onOtpChange={(value) =>
+                setOwnerOtpState((prev) => ({ ...prev, otp: value }))
+              }
               onSendOtp={handleSendOTP}
               onVerifyOtp={handleVerifyOTP}
               label="Enter Owner OTP"
@@ -561,16 +649,25 @@ export function AgreementGenerator() {
                   style={{ textAlign: "start" }}
                   {...form.getInputProps(`tenants.${index}.email`)}
                   withAsterisk
-                  disabled={tenantOtpSent[index] || tenantOtpVerified[index]}
+                  disabled={
+                    tenantsOtpState[index]?.isSent ||
+                    tenantsOtpState[index]?.isVerified
+                  }
                 />
                 <OTPInput
-                  isVerified={tenantOtpVerified[index]}
-                  isOtpSent={tenantOtpSent[index]}
-                  timer={tenantTimer[index]}
-                  otpValue={tenantOtp[index] || ""}
-                  otpError={tenantOtpError[index]}
+                  isVerified={tenantsOtpState[index]?.isVerified}
+                  isOtpSent={tenantsOtpState[index]?.isSent}
+                  timer={tenantsOtpState[index]?.timer}
+                  otpValue={tenantsOtpState[index]?.otp || ""}
+                  otpError={tenantsOtpState[index]?.error}
                   onOtpChange={(value) =>
-                    setTenantOtp((prev) => ({ ...prev, [index]: value }))
+                    setTenantsOtpState((prev) => ({
+                      ...prev,
+                      [index]: {
+                        ...(prev[index] || {}),
+                        otp: value,
+                      },
+                    }))
                   }
                   onSendOtp={() => handleSendTenantOTP(index)}
                   onVerifyOtp={() => handleVerifyTenantOTP(index)}
@@ -742,12 +839,14 @@ export function AgreementGenerator() {
             <Button
               onClick={active < 3 ? nextStep : handleSubmit}
               disabled={
-                (active === 0 && !isOtpVerified) ||
+                (active === 0 && !ownerOtpState.isVerified) ||
                 (active === 2 &&
-                  Object.values(tenantOtpVerified).length !==
+                  Object.values(tenantsOtpState).length !==
                     form.values.tenants.length) ||
                 (active === 2 &&
-                  Object.values(tenantOtpVerified).some((v) => !v))
+                  Object.values(tenantsOtpState).some(
+                    (state) => !state?.isVerified
+                  ))
               }
             >
               {active < 3 ? "Continue" : "Generate Agreement"}

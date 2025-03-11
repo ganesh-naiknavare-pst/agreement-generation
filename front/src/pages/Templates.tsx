@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Group,
   Button,
@@ -34,6 +34,15 @@ interface OTPVerificationResponse {
   message: string;
 }
 
+interface OtpState {
+  sent: boolean;
+  otp: string;
+  verified: boolean;
+  error: string;
+  timer: number;
+  isCountdownActive: boolean;
+}
+
 export function Templates() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -52,58 +61,57 @@ export function Templates() {
   const { data, fetchData: verifyOTP } = useApi<OTPVerificationResponse>(
     BackendEndpoints.VerifyOTP
   );
-  const [authorityOtpSent, setAuthorityOtpSent] = useState(false);
-  const [authorityOtp, setAuthorityOtp] = useState("");
-  const [authorityOtpVerified, setAuthorityOtpVerified] = useState(false);
-  const [authorityOtpError, setAuthorityOtpError] = useState("");
-  const [authorityTimer, setAuthorityTimer] = useState(300);
 
-  const [participantsOtpSent, setParticipantsOtpSent] = useState(false);
-  const [participantsOtp, setParticipantsOtp] = useState("");
-  const [participantsOtpVerified, setParticipantsOtpVerified] = useState(false);
-  const [participantsOtpError, setParticipantsOtpError] = useState("");
-  const [participantsTimer, setParticipantsTimer] = useState(300);
+  const [authorityOtpState, setAuthorityOtpState] = useState<OtpState>({
+    sent: false,
+    otp: "",
+    verified: false,
+    error: "",
+    timer: 30,
+    isCountdownActive: false,
+  });
 
-  const timerRef = useRef<{
-    authority: number | null;
-    participants: number | null;
-  }>({
-    authority: null,
-    participants: null,
+  const [participantsOtpState, setParticipantsOtpState] = useState<OtpState>({
+    sent: false,
+    otp: "",
+    verified: false,
+    error: "",
+    timer: 30,
+    isCountdownActive: false,
   });
 
   const startCountdown = (type: "authority" | "participants") => {
-    if (timerRef.current[type]) clearInterval(timerRef.current[type]!);
+    const setState =
+      type === "authority" ? setAuthorityOtpState : setParticipantsOtpState;
+    const state =
+      type === "authority" ? authorityOtpState : participantsOtpState;
 
-    if (type === "authority") {
-      setAuthorityTimer(300);
-      timerRef.current[type] = setInterval(() => {
-        setAuthorityTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current[type]!);
-            timerRef.current[type] = null;
-            setAuthorityOtp("");
-            setAuthorityOtpError("OTP expired. Please request a new OTP.");
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      setParticipantsTimer(300);
-      timerRef.current[type] = setInterval(() => {
-        setParticipantsTimer((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current[type]!);
-            timerRef.current[type] = null;
-            setParticipantsOtp("");
-            setParticipantsOtpError("OTP expired. Please request a new OTP.");
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    if (state.isCountdownActive) return;
+
+    setState((prev) => ({
+      ...prev,
+      isCountdownActive: true,
+      timer: 30,
+    }));
+
+    const timer = setInterval(() => {
+      setState((prev) => {
+        if (prev.timer <= 1) {
+          clearInterval(timer);
+          return {
+            ...prev,
+            isCountdownActive: false,
+            timer: 0,
+            otp: "",
+            error: "OTP expired. Please request a new OTP.",
+          };
+        }
+        return {
+          ...prev,
+          timer: prev.timer - 1,
+        };
+      });
+    }, 1000);
   };
 
   const handleSendOTP = async (type: "authority" | "participants") => {
@@ -115,20 +123,33 @@ export function Templates() {
       await sendOTP({ method: "POST", data: { email, type } });
 
       if (type === "authority") {
-        setAuthorityOtpSent(true);
-        setAuthorityOtpError("");
-        setAuthorityTimer(300);
+        setAuthorityOtpState((prev) => ({
+          ...prev,
+          sent: true,
+          error: "",
+        }));
         startCountdown("authority");
       } else {
-        setParticipantsOtpSent(true);
-        setParticipantsOtpError("");
-        setParticipantsTimer(300);
+        setParticipantsOtpState((prev) => ({
+          ...prev,
+          sent: true,
+          error: "",
+        }));
         startCountdown("participants");
       }
     } catch (error) {
       console.error("Error sending OTP:", error);
-      if (type === "authority") setAuthorityOtpError("Failed to send OTP.");
-      else setParticipantsOtpError("Failed to send OTP.");
+      if (type === "authority") {
+        setAuthorityOtpState((prev) => ({
+          ...prev,
+          error: "Failed to send OTP.",
+        }));
+      } else {
+        setParticipantsOtpState((prev) => ({
+          ...prev,
+          error: "Failed to send OTP.",
+        }));
+      }
     }
   };
 
@@ -138,11 +159,21 @@ export function Templates() {
         type === "authority"
           ? form.values.authorityEmail
           : form.values.participantsEmail;
-      const otp = type === "authority" ? authorityOtp : participantsOtp;
+      const otp =
+        type === "authority" ? authorityOtpState.otp : participantsOtpState.otp;
 
       if (!otp) {
-        if (type === "authority") setAuthorityOtpError("Please enter OTP.");
-        else setParticipantsOtpError("Please enter OTP.");
+        if (type === "authority") {
+          setAuthorityOtpState((prev) => ({
+            ...prev,
+            error: "Please enter OTP.",
+          }));
+        } else {
+          setParticipantsOtpState((prev) => ({
+            ...prev,
+            error: "Please enter OTP.",
+          }));
+        }
         return;
       }
 
@@ -157,26 +188,40 @@ export function Templates() {
       const { success, type } = data;
 
       if (success === true) {
-        if (type === "authority" && authorityOtpSent) {
-          setAuthorityOtpVerified(true);
-          setAuthorityOtpSent(false);
-          setAuthorityOtp("");
-          setAuthorityOtpError("");
+        if (type === "authority" && authorityOtpState.sent) {
+          setAuthorityOtpState((prev) => ({
+            ...prev,
+            verified: true,
+            sent: false,
+            otp: "",
+            error: "",
+            isCountdownActive: false,
+          }));
         }
-        if (type === "participants" && participantsOtpSent) {
-          setParticipantsOtpVerified(true);
-          setParticipantsOtpSent(false);
-          setParticipantsOtp("");
-          setParticipantsOtpError("");
+        if (type === "participants" && participantsOtpState.sent) {
+          setParticipantsOtpState((prev) => ({
+            ...prev,
+            verified: true,
+            sent: false,
+            otp: "",
+            error: "",
+            isCountdownActive: false,
+          }));
         }
       }
 
       if (success === false) {
-        if (type === "authority" && authorityOtpSent) {
-          setAuthorityOtpError("Invalid OTP. Please enter the correct OTP.");
+        if (type === "authority" && authorityOtpState.sent) {
+          setAuthorityOtpState((prev) => ({
+            ...prev,
+            error: "Invalid OTP. Please enter the correct OTP.",
+          }));
         }
-        if (type === "participants" && participantsOtpSent) {
-          setParticipantsOtpError("Invalid OTP. Please enter the correct OTP.");
+        if (type === "participants" && participantsOtpState.sent) {
+          setParticipantsOtpState((prev) => ({
+            ...prev,
+            error: "Invalid OTP. Please enter the correct OTP.",
+          }));
         }
       }
     }
@@ -215,7 +260,7 @@ export function Templates() {
     },
   });
   const handleSubmit = async () => {
-    if (!authorityOtpVerified || !participantsOtpVerified) {
+    if (!authorityOtpState.verified || !participantsOtpState.verified) {
       setShowAlert(true);
       return;
     }
@@ -255,17 +300,19 @@ export function Templates() {
           Generate an Agreement by Uploading Templates
         </Title>
       </Group>
-      {showAlert && !authorityOtpVerified && !participantsOtpVerified && (
-        <Alert
-          m="1rem"
-          variant="light"
-          color="red"
-          title="Verification Required"
-          icon={<IconAlertTriangle />}
-        >
-          Both emails must be verified before generating the agreement.
-        </Alert>
-      )}
+      {showAlert &&
+        !authorityOtpState.verified &&
+        !participantsOtpState.verified && (
+          <Alert
+            m="1rem"
+            variant="light"
+            color="red"
+            title="Verification Required"
+            icon={<IconAlertTriangle />}
+          >
+            Both emails must be verified before generating the agreement.
+          </Alert>
+        )}
 
       <Divider my="sm" />
       <Container>
@@ -369,15 +416,20 @@ export function Templates() {
               placeholder="Enter authority's email"
               {...form.getInputProps("authorityEmail")}
               withAsterisk
-              disabled={authorityOtpSent || authorityOtpVerified}
+              disabled={authorityOtpState.sent || authorityOtpState.verified}
             />
             <OTPInput
-              isVerified={authorityOtpVerified}
-              isOtpSent={authorityOtpSent}
-              timer={authorityTimer}
-              otpValue={authorityOtp}
-              otpError={authorityOtpError}
-              onOtpChange={setAuthorityOtp}
+              isVerified={authorityOtpState.verified}
+              isOtpSent={authorityOtpState.sent}
+              timer={authorityOtpState.timer}
+              otpValue={authorityOtpState.otp}
+              otpError={authorityOtpState.error}
+              onOtpChange={(otp) =>
+                setAuthorityOtpState((prev) => ({
+                  ...prev,
+                  otp,
+                }))
+              }
               onSendOtp={() => handleSendOTP("authority")}
               onVerifyOtp={() => handleVerifyOTP("authority")}
               label="Enter Authority OTP"
@@ -389,15 +441,22 @@ export function Templates() {
               placeholder="Enter participants' email"
               {...form.getInputProps("participantsEmail")}
               withAsterisk
-              disabled={participantsOtpSent || participantsOtpVerified}
+              disabled={
+                participantsOtpState.sent || participantsOtpState.verified
+              }
             />
             <OTPInput
-              isVerified={participantsOtpVerified}
-              isOtpSent={participantsOtpSent}
-              timer={participantsTimer}
-              otpValue={participantsOtp}
-              otpError={participantsOtpError}
-              onOtpChange={setParticipantsOtp}
+              isVerified={participantsOtpState.verified}
+              isOtpSent={participantsOtpState.sent}
+              timer={participantsOtpState.timer}
+              otpValue={participantsOtpState.otp}
+              otpError={participantsOtpState.error}
+              onOtpChange={(otp) =>
+                setParticipantsOtpState((prev) => ({
+                  ...prev,
+                  otp,
+                }))
+              }
               onSendOtp={() => handleSendOTP("participants")}
               onVerifyOtp={() => handleVerifyOTP("participants")}
               label="Enter Participants OTP"
@@ -416,7 +475,9 @@ export function Templates() {
               onClick={handleSubmit}
               fullWidth
               mt="md"
-              disabled={!authorityOtpVerified || !participantsOtpVerified}
+              disabled={
+                !authorityOtpState.verified || !participantsOtpState.verified
+              }
             >
               Generate agreement
             </Button>
