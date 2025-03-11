@@ -27,7 +27,13 @@ import { COLORS } from "../colors";
 import { useForm } from "@mantine/form";
 import { useAgreements } from "../hooks/useAgreements";
 import { OTPInput } from "../components/agreements/OTPInput";
-import { OTPVerificationResponse, OtpState } from "../types/otp";
+import {
+  OTPVerificationResponse,
+  OtpState,
+  getSuccessOtpState,
+  getFailureOtpState,
+  getDefaultOtpState,
+} from "../types/otp";
 
 export function Templates() {
   const [file, setFile] = useState<File | null>(null);
@@ -48,23 +54,12 @@ export function Templates() {
     BackendEndpoints.VerifyOTP
   );
 
-  const [authorityOtpState, setAuthorityOtpState] = useState<OtpState>({
-    otp: "",
-    isVerified: false,
-    isSent: false,
-    error: "",
-    timer: 0,
-    isCountdownActive: false,
-  });
-
-  const [participantsOtpState, setParticipantsOtpState] = useState<OtpState>({
-    otp: "",
-    isVerified: false,
-    isSent: false,
-    error: "",
-    timer: 0,
-    isCountdownActive: false,
-  });
+  const [authorityOtpState, setAuthorityOtpState] = useState<OtpState>(
+    getDefaultOtpState()
+  );
+  const [participantsOtpState, setParticipantsOtpState] = useState<OtpState>(
+    getDefaultOtpState()
+  );
 
   const startCountdown = (type: "authority" | "participants") => {
     const setState =
@@ -77,7 +72,7 @@ export function Templates() {
     setState((prev) => ({
       ...prev,
       isCountdownActive: true,
-      timer: 300,
+      timer: 30,
     }));
 
     const timer = setInterval(() => {
@@ -172,42 +167,21 @@ export function Templates() {
   useEffect(() => {
     if (data) {
       const { success, type } = data;
-
       if (success === true) {
         if (type === "authority" && authorityOtpState.isSent) {
-          setAuthorityOtpState((prev) => ({
-            ...prev,
-            isVerified: true,
-            isSent: false,
-            otp: "",
-            error: "",
-            isCountdownActive: false,
-          }));
+          setAuthorityOtpState(getSuccessOtpState);
         }
         if (type === "participants" && participantsOtpState.isSent) {
-          setParticipantsOtpState((prev) => ({
-            ...prev,
-            isVerified: true,
-            isSent: false,
-            otp: "",
-            error: "",
-            isCountdownActive: false,
-          }));
+          setParticipantsOtpState(getSuccessOtpState);
         }
       }
 
       if (success === false) {
         if (type === "authority" && authorityOtpState.isSent) {
-          setAuthorityOtpState((prev) => ({
-            ...prev,
-            error: "Invalid OTP. Please enter the correct OTP.",
-          }));
+          setAuthorityOtpState(getFailureOtpState);
         }
         if (type === "participants" && participantsOtpState.isSent) {
-          setParticipantsOtpState((prev) => ({
-            ...prev,
-            error: "Invalid OTP. Please enter the correct OTP.",
-          }));
+          setParticipantsOtpState(getFailureOtpState);
         }
       }
     }
@@ -286,20 +260,18 @@ export function Templates() {
           Generate an Agreement by Uploading Templates
         </Title>
       </Group>
-      {showAlert &&
-        !authorityOtpState.isVerified &&
-        !participantsOtpState.isVerified && (
-          <Alert
-            m="1rem"
-            variant="light"
-            color="red"
-            title="Verification Required"
-            icon={<IconAlertTriangle />}
-          >
-            Both emails must be verified before generating the agreement.
-          </Alert>
-        )}
-
+      {showAlert && (
+        <Alert
+          m="1rem"
+          variant="light"
+          color="yellow"
+          title="Warning"
+          icon={<IconAlertTriangle />}
+        >
+          Please fill in all required fields before proceeding. All fields are
+          mandatory.
+        </Alert>
+      )}
       <Divider my="sm" />
       <Container>
         {loading ? (
@@ -407,11 +379,7 @@ export function Templates() {
               }
             />
             <OTPInput
-              isVerified={authorityOtpState.isVerified}
-              isOtpSent={authorityOtpState.isSent}
-              timer={authorityOtpState.timer}
-              otpValue={authorityOtpState.otp}
-              otpError={authorityOtpState.error}
+              otpState={authorityOtpState}
               onOtpChange={(otp) =>
                 setAuthorityOtpState((prev) => ({
                   ...prev,
@@ -434,11 +402,7 @@ export function Templates() {
               }
             />
             <OTPInput
-              isVerified={participantsOtpState.isVerified}
-              isOtpSent={participantsOtpState.isSent}
-              timer={participantsOtpState.timer}
-              otpValue={participantsOtpState.otp}
-              otpError={participantsOtpState.error}
+              otpState={participantsOtpState}
               onOtpChange={(otp) =>
                 setParticipantsOtpState((prev) => ({
                   ...prev,

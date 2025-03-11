@@ -3,11 +3,7 @@ import { OTPTimer } from "./OTPTimer";
 import { OTPInputProps } from "../../types/otp";
 
 export function OTPInput({
-  isVerified,
-  isOtpSent,
-  timer,
-  otpValue,
-  otpError,
+  otpState,
   onOtpChange,
   onSendOtp,
   onVerifyOtp,
@@ -15,22 +11,22 @@ export function OTPInput({
 }: OTPInputProps) {
   return (
     <Box mt="xs" mb="xs">
-      {isVerified ? (
+      {otpState.isVerified ? (
         <Alert color="green">
           <Text size="sm">✓ OTP verified successfully</Text>
         </Alert>
       ) : (
         <>
-          {!isOtpSent ? (
+          {!otpState.isSent ? (
             <Button onClick={onSendOtp}>Send OTP</Button>
           ) : (
             <>
-              {timer > 0 ? (
+              {otpState.timer > 0 ? (
                 <>
                   <TextInput
                     label={label}
                     placeholder="Enter OTP received"
-                    value={otpValue}
+                    value={otpState.otp}
                     onChange={(e) => {
                       const value = e.currentTarget.value;
                       if (/^\d{0,6}$/.test(value)) {
@@ -39,26 +35,26 @@ export function OTPInput({
                     }}
                     withAsterisk
                     error={
-                      otpValue.length > 0 && otpValue.length !== 6
+                      otpState.otp.length > 0 && otpState.otp.length !== 6
                         ? "OTP must be exactly 6 digits"
                         : ""
                     }
                   />
-                  <OTPTimer timer={timer} />
-                  {otpError && (
+                  <OTPTimer timer={otpState.timer} />
+                  {otpState.error && (
                     <Text size="sm" c="red" mt="xs">
-                      {otpError}
+                      {otpState.error}
                     </Text>
                   )}
-                  <Button onClick={onVerifyOtp} disabled={timer === 0} mt="xs">
+                  <Button onClick={onVerifyOtp} disabled={otpState.timer === 0} mt="xs">
                     Verify OTP
                   </Button>
                 </>
               ) : (
                 <>
-                  {otpError && (
+                  {otpState.error && (
                     <Text size="sm" c="red">
-                      {otpError}
+                      {otpState.error}
                     </Text>
                   )}
                   <Button mt="xs" onClick={onSendOtp}>

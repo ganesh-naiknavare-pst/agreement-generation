@@ -28,13 +28,35 @@ export interface OTPVerificationResponse {
 }
 
 export interface OTPInputProps {
-  isVerified: boolean;
-  isOtpSent: boolean;
-  timer: number;
-  otpValue: string;
-  otpError: string;
+  otpState: OtpState;
   onOtpChange: (value: string) => void;
   onSendOtp: () => void;
   onVerifyOtp: () => void;
   label?: string;
 }
+
+// Default OTP state
+export const getDefaultOtpState = (): OtpState => ({
+  otp: "",
+  isVerified: false,
+  isSent: false,
+  error: "",
+  timer: 0,
+  isCountdownActive: false,
+});
+
+// Utility function to get updated OTP state on successful verification
+export const getSuccessOtpState = (prevState: OtpState): OtpState => ({
+  ...prevState,
+  isVerified: true,
+  isSent: false,
+  otp: "",
+  error: "",
+  isCountdownActive: false,
+});
+
+// Utility function to get updated OTP state on verification failure
+export const getFailureOtpState = (prevState: OtpState): OtpState => ({
+  ...prevState,
+  error: "Invalid OTP. Please enter the correct OTP.",
+});

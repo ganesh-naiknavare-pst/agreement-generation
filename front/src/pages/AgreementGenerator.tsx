@@ -31,6 +31,9 @@ import {
   OTPVerificationResponse,
   OtpState,
   TenantsOtpState,
+  getSuccessOtpState,
+  getFailureOtpState,
+  getDefaultOtpState,
 } from "../types/otp";
 
 export function AgreementGenerator() {
@@ -47,15 +50,9 @@ export function AgreementGenerator() {
   );
   const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
   const [otpIndex, setOtpIndex] = useState<number | null>(null);
-  const [ownerOtpState, setOwnerOtpState] = useState<OtpState>({
-    otp: "",
-    isVerified: false,
-    isSent: false,
-    error: "",
-    timer: 0,
-    isCountdownActive: false,
-  });
-
+  const [ownerOtpState, setOwnerOtpState] = useState<OtpState>(
+    getDefaultOtpState()
+  );
   const [tenantsOtpState, setTenantsOtpState] = useState<TenantsOtpState>({});
 
   const startOwnerCountdown = () => {
@@ -93,7 +90,7 @@ export function AgreementGenerator() {
     setTenantsOtpState((prev) => ({
       ...prev,
       [index]: {
-        ...(prev[index] || {}),
+        ...(prev[index] || getDefaultOtpState()),
         isCountdownActive: true,
         timer: 300,
       },
@@ -106,7 +103,7 @@ export function AgreementGenerator() {
           return {
             ...prev,
             [index]: {
-              ...prev[index],
+              ...(prev[index] || getDefaultOtpState()),
               isCountdownActive: false,
               otp: "",
               error: "OTP expired. Please request a new OTP.",
@@ -117,8 +114,8 @@ export function AgreementGenerator() {
         return {
           ...prev,
           [index]: {
-            ...prev[index],
-            timer: prev[index].timer - 1,
+            ...(prev[index] || getDefaultOtpState()),
+            timer: prev[index]?.timer - 1,
           },
         };
       });
@@ -128,21 +125,10 @@ export function AgreementGenerator() {
   useEffect(() => {
     if (data) {
       const { success, type } = data;
-
       if (success === true) {
-        // Owner OTP Verified
         if (type === "owner" && ownerOtpState.isSent) {
-          setOwnerOtpState((prev) => ({
-            ...prev,
-            isVerified: true,
-            isSent: false,
-            otp: "",
-            error: "",
-            isCountdownActive: false,
-          }));
+          setOwnerOtpState(getSuccessOtpState);
         }
-
-        // Tenant OTP Verified
         if (
           type === "tenant" &&
           otpIndex !== null &&
@@ -150,22 +136,12 @@ export function AgreementGenerator() {
         ) {
           setTenantsOtpState((prev) => ({
             ...prev,
-            [otpIndex]: {
-              ...prev[otpIndex],
-              isVerified: true,
-              isSent: false,
-              otp: "",
-              error: "",
-              isCountdownActive: false,
-            },
+            [otpIndex]: getSuccessOtpState(prev[otpIndex]),
           }));
         }
       } else {
         if (type === "owner" && ownerOtpState.isSent) {
-          setOwnerOtpState((prev) => ({
-            ...prev,
-            error: "Invalid OTP. Please enter the correct OTP.",
-          }));
+          setOwnerOtpState(getFailureOtpState);
         }
         if (
           type === "tenant" &&
@@ -174,14 +150,10 @@ export function AgreementGenerator() {
         ) {
           setTenantsOtpState((prev) => ({
             ...prev,
-            [otpIndex]: {
-              ...prev[otpIndex],
-              error: "Invalid OTP. Please enter the correct OTP.",
-            },
+            [otpIndex]: getFailureOtpState(prev[otpIndex]),
           }));
         }
       }
-
       setOtpIndex(null);
     }
   }, [data]);
@@ -245,7 +217,7 @@ export function AgreementGenerator() {
       setTenantsOtpState((prev) => ({
         ...prev,
         [index]: {
-          ...(prev[index] || {}),
+          ...(prev[index] || getDefaultOtpState()),
           isSent: true,
           error: "",
         },
@@ -256,7 +228,7 @@ export function AgreementGenerator() {
       setTenantsOtpState((prev) => ({
         ...prev,
         [index]: {
-          ...(prev[index] || {}),
+          ...(prev[index] || getDefaultOtpState()),
           error: "Failed to send OTP. Please try again.",
         },
       }));
@@ -273,7 +245,7 @@ export function AgreementGenerator() {
       setTenantsOtpState((prev) => ({
         ...prev,
         [index]: {
-          ...(prev[index] || {}),
+          ...(prev[index] || getDefaultOtpState()),
           error: "Please enter the OTP",
         },
       }));
@@ -295,7 +267,7 @@ export function AgreementGenerator() {
       setTenantsOtpState((prev) => ({
         ...prev,
         [index]: {
-          ...(prev[index] || {}),
+          ...(prev[index] || getDefaultOtpState()),
           error: "Invalid OTP. Please enter the correct OTP.",
         },
       }));
@@ -541,11 +513,7 @@ export function AgreementGenerator() {
               disabled={ownerOtpState.isSent || ownerOtpState.isVerified}
             />
             <OTPInput
-              isVerified={ownerOtpState.isVerified}
-              isOtpSent={ownerOtpState.isSent}
-              timer={ownerOtpState.timer}
-              otpValue={ownerOtpState.otp}
-              otpError={ownerOtpState.error}
+              otpState={ownerOtpState}
               onOtpChange={(value) =>
                 setOwnerOtpState((prev) => ({ ...prev, otp: value }))
               }
@@ -641,16 +609,12 @@ export function AgreementGenerator() {
                   }
                 />
                 <OTPInput
-                  isVerified={tenantsOtpState[index]?.isVerified}
-                  isOtpSent={tenantsOtpState[index]?.isSent}
-                  timer={tenantsOtpState[index]?.timer}
-                  otpValue={tenantsOtpState[index]?.otp || ""}
-                  otpError={tenantsOtpState[index]?.error}
+                  otpState={tenantsOtpState[index] || getDefaultOtpState()}
                   onOtpChange={(value) =>
                     setTenantsOtpState((prev) => ({
                       ...prev,
                       [index]: {
-                        ...(prev[index] || {}),
+                        ...(prev[index] || getDefaultOtpState()),
                         otp: value,
                       },
                     }))
