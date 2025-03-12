@@ -39,6 +39,8 @@ const ApprovalPage = () => {
     TemplateAgreementUser,
     getRentAgreementUser,
     getTemplateAgreementUser,
+    setStatus,
+    status,
   } = useUserState();
   const { fetchData: approveAgreement } = useApi<ApprovedUser>(
     BackendEndpoints.ApproveURL
@@ -57,14 +59,24 @@ const ApprovalPage = () => {
       agreement_id: param.agreementId,
     };
     await approveAgreement({ method: "POST", data: requestData });
-    const requestDataForUser = {
-      agreement_id: param.agreementId,
-      user_id: param.id,
-    };
+    const agreement_id = param.agreementId;
+    const user_id = param.id;
     if (isRentAgreement) {
-      await getRentAgreementUser({ method: "GET", data: requestDataForUser });
+      await getRentAgreementUser({
+        method: "GET",
+        params: { agreement_id, user_id },
+      });
+      if (rentAgreementUser) {
+        setStatus(rentAgreementUser?.status);
+      }
     } else {
-      await getTemplateAgreementUser({ method: "GET", data: requestDataForUser });
+      await getTemplateAgreementUser({
+        method: "GET",
+        params: { agreement_id, user_id },
+      });
+      if (TemplateAgreementUser) {
+        setStatus(TemplateAgreementUser?.status);
+      }
     }
   };
   const processRejection = async () => {
@@ -83,7 +95,10 @@ const ApprovalPage = () => {
     if (isRentAgreement) {
       await getRentAgreementUser({ method: "GET", data: requestDataForUser });
     } else {
-      await getTemplateAgreementUser({ method: "GET", data: requestDataForUser });
+      await getTemplateAgreementUser({
+        method: "GET",
+        data: requestDataForUser,
+      });
     }
   };
 
@@ -113,13 +128,6 @@ const ApprovalPage = () => {
     };
     reader.readAsDataURL(file);
   };
-  const messageType: string | null = isRentAgreement
-    ? rentAgreementUser
-      ? rentAgreementUser?.status
-      : null
-    : TemplateAgreementUser
-    ? TemplateAgreementUser?.status
-    : null;
 
   return (
     <>
@@ -139,7 +147,7 @@ const ApprovalPage = () => {
           Please fill in required fields before proceeding.
         </Alert>
       )}
-      {!messageType && (
+      {!status && (
         <Container>
           <Group justify="flex-start" mt="xl" mb={5}>
             <Text display="inline" size="sm" fw={500}>
@@ -204,7 +212,7 @@ const ApprovalPage = () => {
           </Flex>
         </Container>
       )}
-      {messageType && <ResponseCard type={messageType} />}
+      {status && <ResponseCard type={status} />}
     </>
   );
 };

@@ -1,4 +1,10 @@
-import { createContext, useContext, ReactNode, useEffect } from "react";
+import {
+  createContext,
+  useContext,
+  ReactNode,
+  useEffect,
+  useState,
+} from "react";
 import useApi, { BackendEndpoints } from "./useApi";
 import { useParams, useSearchParams } from "react-router-dom";
 export type UserData = {
@@ -13,23 +19,17 @@ interface UserContextType {
   getRentAgreementUser: (method: {}) => Promise<void>;
   TemplateAgreementUser: UserData | null;
   getTemplateAgreementUser: (method: {}) => Promise<void>;
+  setStatus: React.Dispatch<React.SetStateAction<string | null>>;
+  status: string | null;
 }
 
 const UserContext = createContext<UserContextType>({
-  rentAgreementUser: {
-    id: 0,
-    userId: "",
-    agreementId: 0,
-    status: "PROCESSING",
-  },
+  rentAgreementUser: null,
   getRentAgreementUser: () => Promise.resolve(),
-  TemplateAgreementUser: {
-    id: 0,
-    userId: "",
-    agreementId: 0,
-    status: "PROCESSING",
-  },
+  TemplateAgreementUser: null,
   getTemplateAgreementUser: () => Promise.resolve(),
+  setStatus: () => {},
+  status: null,
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
@@ -39,6 +39,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     useApi<UserData>(BackendEndpoints.GetTemplateAgreementUSer);
   const param = useParams();
   const [searchParams] = useSearchParams();
+  const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (param.id && param.agreementId) {
@@ -48,8 +49,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       };
       if (searchParams.get("type") === "rent") {
         getRentAgreementUser({ method: "GET", params: requestData });
+        if (rentAgreementUser) {
+          setStatus(rentAgreementUser.status);
+        }
       } else {
         getTemplateAgreementUser({ method: "GET", params: requestData });
+        if (TemplateAgreementUser) {
+          setStatus(TemplateAgreementUser.status);
+        }
       }
     }
   }, []);
@@ -61,6 +68,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         getRentAgreementUser,
         TemplateAgreementUser,
         getTemplateAgreementUser,
+        setStatus,
+        status,
       }}
     >
       {children}
