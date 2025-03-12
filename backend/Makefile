@@ -24,6 +24,8 @@ check-poetry: check-python
 install: check-poetry
 	@echo "Installing dependencies within Poetry shell..."
 	$(POETRY_CMD) install
+	@echo "Adding face_recognition_models dependency..."
+	$(POETRY_CMD) add git+https://github.com/ageitgey/face_recognition_models.git
 
 prisma-generate: install
 	@echo "Generating Prisma client..."
