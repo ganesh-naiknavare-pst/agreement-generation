@@ -9,8 +9,9 @@ from helpers.image_validation import are_faces_different, validate_uploaded_imag
 router = APIRouter()
 
 @router.post("/validate-image")
-async def validate_image(req: Request):
-    data = await req.json()
+@requires_auth
+async def validate_image(request: Request):
+    data = await request.json()
     image_url = data.get("image_url")
     user_id = random.randint(1, 10000)
 

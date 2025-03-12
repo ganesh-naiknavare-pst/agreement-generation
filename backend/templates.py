@@ -190,7 +190,6 @@ def generate_email_template(
             role=role,
             agreement_type=agreement_type,
             url=url,
-            # reject_url=reject_url,
         )
 
 
