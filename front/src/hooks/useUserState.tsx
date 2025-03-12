@@ -21,6 +21,8 @@ interface UserContextType {
   getTemplateAgreementUser: (method: {}) => Promise<void>;
   setStatus: React.Dispatch<React.SetStateAction<string | null>>;
   status: string | null;
+  loadRentAgreemntUser: boolean;
+  loadTemplateAgreemntUser: boolean;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -30,33 +32,39 @@ const UserContext = createContext<UserContextType>({
   getTemplateAgreementUser: () => Promise.resolve(),
   setStatus: () => {},
   status: null,
+  loadRentAgreemntUser: false,
+  loadTemplateAgreemntUser: false,
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const { data: rentAgreementUser, fetchData: getRentAgreementUser } =
-    useApi<UserData>(BackendEndpoints.GetRentAgreementUser);
-  const { data: TemplateAgreementUser, fetchData: getTemplateAgreementUser } =
-    useApi<UserData>(BackendEndpoints.GetTemplateAgreementUSer);
+  const {
+    data: rentAgreementUser,
+    fetchData: getRentAgreementUser,
+    loading: loadRentAgreemntUser,
+  } = useApi<UserData>(BackendEndpoints.GetRentAgreementUser);
+  const {
+    data: TemplateAgreementUser,
+    fetchData: getTemplateAgreementUser,
+    loading: loadTemplateAgreemntUser,
+  } = useApi<UserData>(BackendEndpoints.GetTemplateAgreementUSer);
   const param = useParams();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
     if (param.id && param.agreementId) {
-      const requestData = {
-        agreement_id: param.agreementId,
-        user_id: param.id,
-      };
+      const agreement_id = param.agreementId;
+      const user_id = param.id;
       if (searchParams.get("type") === "rent") {
-        getRentAgreementUser({ method: "GET", params: requestData });
-        if (rentAgreementUser) {
-          setStatus(rentAgreementUser.status);
-        }
+        getRentAgreementUser({
+          method: "GET",
+          params: { agreement_id, user_id },
+        });
       } else {
-        getTemplateAgreementUser({ method: "GET", params: requestData });
-        if (TemplateAgreementUser) {
-          setStatus(TemplateAgreementUser.status);
-        }
+        getTemplateAgreementUser({
+          method: "GET",
+          params: { agreement_id, user_id },
+        });
       }
     }
   }, []);
@@ -70,6 +78,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         getTemplateAgreementUser,
         setStatus,
         status,
+        loadRentAgreemntUser,
+        loadTemplateAgreemntUser,
       }}
     >
       {children}

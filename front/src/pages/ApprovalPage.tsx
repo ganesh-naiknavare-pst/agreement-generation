@@ -13,6 +13,7 @@ import {
   Box,
   Image,
   Alert,
+  Loader,
 } from "@mantine/core";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { COLORS } from "../colors";
@@ -34,20 +35,36 @@ const ApprovalPage = () => {
   const [searchParams] = useSearchParams();
   const agreementType = searchParams.get("type");
   const isRentAgreement = agreementType === "rent";
+
   const {
     rentAgreementUser,
     TemplateAgreementUser,
-    getRentAgreementUser,
-    getTemplateAgreementUser,
     setStatus,
     status,
+    loadRentAgreemntUser,
+    loadTemplateAgreemntUser,
   } = useUserState();
-  const { fetchData: approveAgreement } = useApi<ApprovedUser>(
-    BackendEndpoints.ApproveURL
-  );
-  const { fetchData: rejectAgreement } = useApi<ApprovedUser>(
-    BackendEndpoints.RejectURL
-  );
+
+  const {
+    fetchData: approveAgreement,
+    loading: loadApprovedAgreement,
+    data: approvedAgreement,
+  } = useApi<ApprovedUser>(BackendEndpoints.ApproveURL);
+
+  const {
+    fetchData: rejectAgreement,
+    loading: loadRejectedAgreement,
+    data: rejectedAgreement,
+  } = useApi<ApprovedUser>(BackendEndpoints.RejectURL);
+
+  const loading =
+    loadApprovedAgreement ||
+    loadRejectedAgreement ||
+    loadRentAgreemntUser ||
+    loadTemplateAgreemntUser;
+  const user = rentAgreementUser || TemplateAgreementUser;
+  const agreement = approvedAgreement || rejectedAgreement || user;
+
   const processApproval = async () => {
     const { hasErrors } = form.validate();
     if (hasErrors) return;
@@ -59,25 +76,7 @@ const ApprovalPage = () => {
       agreement_id: param.agreementId,
     };
     await approveAgreement({ method: "POST", data: requestData });
-    const agreement_id = param.agreementId;
-    const user_id = param.id;
-    if (isRentAgreement) {
-      await getRentAgreementUser({
-        method: "GET",
-        params: { agreement_id, user_id },
-      });
-      if (rentAgreementUser) {
-        setStatus(rentAgreementUser?.status);
-      }
-    } else {
-      await getTemplateAgreementUser({
-        method: "GET",
-        params: { agreement_id, user_id },
-      });
-      if (TemplateAgreementUser) {
-        setStatus(TemplateAgreementUser?.status);
-      }
-    }
+    setStatus("APPROVED");
   };
   const processRejection = async () => {
     const requestData = {
@@ -87,19 +86,8 @@ const ApprovalPage = () => {
       agreement_type: agreementType,
       agreement_id: param.agreementId,
     };
-    await rejectAgreement({ method: "POST", params: requestData });
-    const requestDataForUser = {
-      agreement_id: param.agreementId,
-      user_id: param.id,
-    };
-    if (isRentAgreement) {
-      await getRentAgreementUser({ method: "GET", data: requestDataForUser });
-    } else {
-      await getTemplateAgreementUser({
-        method: "GET",
-        data: requestDataForUser,
-      });
-    }
+    await rejectAgreement({ method: "POST", data: requestData });
+    setStatus("REJECTED");
   };
 
   const form = useForm({
@@ -147,7 +135,13 @@ const ApprovalPage = () => {
           Please fill in required fields before proceeding.
         </Alert>
       )}
-      {!status && (
+      {loading ? (
+        <Center>
+          <Loader size="lg" />
+        </Center>
+      ) : agreement ? (
+        <ResponseCard type={status ?? user?.status ?? ""} />
+      ) : (
         <Container>
           <Group justify="flex-start" mt="xl" mb={5}>
             <Text display="inline" size="sm" fw={500}>
@@ -212,7 +206,6 @@ const ApprovalPage = () => {
           </Flex>
         </Container>
       )}
-      {status && <ResponseCard type={status} />}
     </>
   );
 };

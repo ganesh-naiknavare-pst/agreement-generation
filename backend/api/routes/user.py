@@ -17,7 +17,7 @@ class Data(BaseModel):
 async def get_rent_agreement_user(
     agreement_id: int, user_id: str, request: Request, db: Prisma = Depends(get_db)
 ):
-    user = await db.userrentagreementstatus.find_many(
+    user = await db.userrentagreementstatus.find_first(
         where={"agreementId": agreement_id, "userId": user_id},
     )
     return user
@@ -28,7 +28,7 @@ async def get_rent_agreement_user(
 async def get_rent_agreement_user(
     agreement_id: int, user_id: str, request: Request, db: Prisma = Depends(get_db)
 ):
-    user = await db.useragreementstatus.find_many(
+    user = await db.useragreementstatus.find_first(
         where={"agreementId": agreement_id, "userId": user_id},
     )
     return user
