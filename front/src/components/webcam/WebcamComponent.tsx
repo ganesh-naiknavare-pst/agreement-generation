@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, JSX } from "react";
+import { useState, useRef, useCallback, JSX, useEffect } from "react";
 import Webcam from "react-webcam";
 import {
   Button,
@@ -17,12 +17,16 @@ import {
   IconCircleCheck,
 } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
-import * as blazeface from "@tensorflow-models/blazeface";
-import "@tensorflow/tfjs";
+import useApi, { BackendEndpoints } from "../../hooks/useApi";
 
 interface WebcamComponentProps {
   imageUrl: string;
   setFieldValue: (value: string) => void;
+}
+
+interface ValidationData {
+  message: string;
+  status: number;
 }
 
 const videoConstraints = {
@@ -40,28 +44,19 @@ function WebcamComponent({
   const [error, setError] = useState<string>("");
   const [buttonLoading, setButtonLoading] = useState<boolean>(false);
 
-  const detectFaces = async (imageSrc: string) => {
-    const model = await blazeface.load();
+  const { fetchData: validateCapturedImage, data: validationResponce } =
+    useApi<ValidationData>(BackendEndpoints.ValidateImage);
 
-    return new Promise<number>((resolve) => {
-      const img = document.createElement("img");
-      img.src = imageSrc;
-
-      img.onload = async () => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
-
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0, img.width, img.height);
-
-        const predictions = await model.estimateFaces(canvas, false);
-        resolve(predictions.length);
-      };
-
-      img.onerror = () => resolve(0);
-    });
-  };
+  useEffect(() => {
+    if (validationResponce) {
+      if (validationResponce.status === 400) {
+        setError(validationResponce.message);
+      } else {
+        setCapturedImage(webcamRef.current?.getScreenshot() || "");
+      }
+      setButtonLoading(false);
+    }
+  }, [validationResponce]);
 
   const capture = useCallback(async () => {
     setError("");
@@ -71,26 +66,13 @@ function WebcamComponent({
       const imageSrc = webcamRef.current.getScreenshot();
       setIsLoading(false);
       if (imageSrc) {
-        const faceCount = await detectFaces(imageSrc);
-
-        if (faceCount > 1) {
-          setError(
-            "Multiple faces detected! Please ensure only one face is visible."
-          );
-          setButtonLoading(false);
-          return;
-        } else if (faceCount === 0) {
-          setError(
-            "No face detected! Please ensure your face is clearly visible."
-          );
-          setButtonLoading(false);
-          return;
-        }
-        setCapturedImage(imageSrc);
-        setButtonLoading(false);
+        await validateCapturedImage({
+          method: "POST",
+          data: { image_url: imageSrc },
+        });
       }
     }
-  }, [webcamRef]);
+  }, [webcamRef, validateCapturedImage]);
 
   const retakePhoto = useCallback(() => {
     setCapturedImage("");

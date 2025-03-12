@@ -9,6 +9,9 @@ export enum BackendEndpoints {
   GetTemplateAgreements = "template-agreements",
   ApproveURL = "approve",
   RejectURL = "reject",
+  SentOTP = "send-otp",
+  VerifyOTP = "verify-otp",
+  ValidateImage = "validate-image",
   GetRentAgreementUser = "rent-agreement-user",
   GetTemplateAgreementUSer = "template-agreement-user",
 }

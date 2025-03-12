@@ -7,6 +7,12 @@ from services.template_doc_agent import (
     template_based_agreement,
     TemplateAgreementRequest,
 )
+from services.email_verification import (
+    send_otp_endpoint,
+    OTPRequest,
+    OTPVerification,
+    verify_otp_endpoint,
+)
 
 router = APIRouter()
 
@@ -104,3 +110,15 @@ async def get_agreements(request: Request, db: Prisma = Depends(get_db)):
         order={"createdAt": "desc"},
     )
     return agreements
+
+
+@router.post("/send-otp")
+@requires_auth
+async def send_otp(sendotp: OTPRequest, request: Request):
+    return send_otp_endpoint(sendotp)
+
+
+@router.post("/verify-otp")
+@requires_auth
+async def otp_verification(verify_otp: OTPVerification, request: Request):
+    return verify_otp_endpoint(verify_otp)

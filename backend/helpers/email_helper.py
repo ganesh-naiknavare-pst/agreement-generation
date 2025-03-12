@@ -143,3 +143,4 @@ def send_email_with_attachment(
     else:
         print(f"Failed to send email to {recipient_email}: {response.text}")
     return response.status_code == 200, response.text
+    
