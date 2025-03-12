@@ -10,7 +10,7 @@ app = FastAPI()
 
 otp_storage = {}
 
-EMAIL_TEMPLATE="""
+EMAIL_TEMPLATE = """
 <!DOCTYPE html>
 <html>
 <head>
@@ -68,6 +68,8 @@ EMAIL_TEMPLATE="""
 </html>
 
 """
+
+
 class OTPRequest(BaseModel):
     email: EmailStr
     type: str
