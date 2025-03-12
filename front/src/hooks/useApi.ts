@@ -7,8 +7,13 @@ export enum BackendEndpoints {
   CreateTemplateBasedAgreement = "create-template-based-agreement",
   GetAgreements = "agreements",
   GetTemplateAgreements = "template-agreements",
+  ApproveURL = "approve",
+  RejectURL = "reject",
   SentOTP = "send-otp",
   VerifyOTP = "verify-otp",
+  ValidateImage = "validate-image",
+  GetRentAgreementUser = "rent-agreement-user",
+  GetTemplateAgreementUSer = "template-agreement-user",
 }
 
 interface ApiResponse<T> {

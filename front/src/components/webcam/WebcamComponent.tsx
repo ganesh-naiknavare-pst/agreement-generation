@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, JSX } from "react";
+import { useState, useRef, useCallback, JSX, useEffect } from "react";
 import Webcam from "react-webcam";
 import {
   Button,
@@ -17,10 +17,16 @@ import {
   IconCircleCheck,
 } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
+import useApi, { BackendEndpoints } from "../../hooks/useApi";
 
 interface WebcamComponentProps {
   imageUrl: string;
   setFieldValue: (value: string) => void;
+}
+
+interface ValidationData {
+  message: string;
+  status: number;
 }
 
 const videoConstraints = {
@@ -35,17 +41,38 @@ function WebcamComponent({
   const [capturedImage, setCapturedImage] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [rederWebCamm, setRederWebCamm] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+  const [buttonLoading, setButtonLoading] = useState<boolean>(false);
 
-  const capture = useCallback(() => {
+  const { fetchData: validateCapturedImage, data: validationResponce } =
+    useApi<ValidationData>(BackendEndpoints.ValidateImage);
+
+  useEffect(() => {
+    if (validationResponce) {
+      if (validationResponce.status === 400) {
+        setError(validationResponce.message);
+      } else {
+        setCapturedImage(webcamRef.current?.getScreenshot() || "");
+      }
+      setButtonLoading(false);
+    }
+  }, [validationResponce]);
+
+  const capture = useCallback(async () => {
+    setError("");
     if (webcamRef.current) {
       setIsLoading(true);
+      setButtonLoading(true);
       const imageSrc = webcamRef.current.getScreenshot();
       setIsLoading(false);
       if (imageSrc) {
-        setCapturedImage(imageSrc);
+        await validateCapturedImage({
+          method: "POST",
+          data: { image_url: imageSrc },
+        });
       }
     }
-  }, [webcamRef]);
+  }, [webcamRef, validateCapturedImage]);
 
   const retakePhoto = useCallback(() => {
     setCapturedImage("");
@@ -118,7 +145,13 @@ function WebcamComponent({
             </Stack>
           ) : (
             <Stack p="md" align="center">
-              <Paper withBorder p="xs" radius="md" shadow="sm">
+              <Paper
+                withBorder
+                p="xs"
+                radius="md"
+                shadow="sm"
+                style={{ border: error ? "2px solid red" : "none" }}
+              >
                 <Webcam
                   audio={false}
                   height={500}
@@ -132,14 +165,18 @@ function WebcamComponent({
                 />
               </Paper>
 
+              {error && <Text style={{ color: "red" }}>{error}</Text>}
               <Button
-                leftSection={<IconCamera size={18} />}
+                leftSection={
+                  !buttonLoading ? <IconCamera size={18} /> : undefined
+                }
                 color="blue"
                 variant="filled"
                 size="md"
                 onClick={capture}
+                loading={buttonLoading}
               >
-                Capture Photo
+                {buttonLoading ? "Processing..." : "Capture Photo"}
               </Button>
             </Stack>
           )}

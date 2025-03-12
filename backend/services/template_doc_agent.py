@@ -126,6 +126,7 @@ async def template_based_agreement(
     req: TemplateAgreementRequest, file, agreement_id: int, db: object
 ):
     try:
+        template_agreement_state.agreement_id = agreement_id
         template_agreement_state.set_authority(req.authority_email)
         template_agreement_state.set_participant(req.participant_email)
         secure_filename = os.path.basename(file.filename)
@@ -142,6 +143,7 @@ async def template_based_agreement(
             raise HTTPException(
                 status_code=500, detail=f"Error generating agreement: {str(e)}"
             )
+
 
         authority_success, _ = send_email_with_attachment(
             req.authority_email,
@@ -187,6 +189,8 @@ async def template_based_agreement(
                         data={"pdf": pdf_base64, "status": "APPROVED"},
                     )
                     delete_temp_file()
+                    if os.path.exists("./utils"):
+                        shutil.rmtree("./utils")
                     template_agreement_state.reset()
                     return {"message": "Final signed agreement sent to all parties!"}
                 else:

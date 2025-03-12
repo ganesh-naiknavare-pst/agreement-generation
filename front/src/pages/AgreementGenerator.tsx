@@ -14,17 +14,13 @@ import {
   useMantineColorScheme,
   Title,
   Divider,
-  Alert,
   Container,
-  Image,
 } from "@mantine/core";
-import { IconCheck, IconAlertTriangle, IconUpload } from "@tabler/icons-react";
+import { IconCheck } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { DatePickerInput } from "@mantine/dates";
 import { COLORS } from "../colors";
-import WebcamComponent from "../components/webcam/WebcamComponent";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
-import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { useAgreements } from "../hooks/useAgreements";
 import { OTPInput } from "../components/agreements/OTPInput";
 import {
@@ -42,8 +38,6 @@ export function AgreementGenerator() {
   const [showMessage, setShowMessage] = useState(false);
   const { colorScheme } = useMantineColorScheme();
   const { fetchData } = useApi(BackendEndpoints.CreateAgreement);
-  const [showAlertForSign, setShowAlertForSign] = useState(false);
-  const [showAlertForPhoto, setShowAlertForPhoto] = useState(false);
   const { fetchAgreements } = useAgreements();
   const { data, fetchData: verifyOTP } = useApi<OTPVerificationResponse>(
     BackendEndpoints.VerifyOTP
@@ -189,7 +183,7 @@ export function AgreementGenerator() {
           type: "owner",
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error verifying OTP:", error);
       setOwnerOtpState((prev) => ({
         ...prev,
@@ -242,7 +236,7 @@ export function AgreementGenerator() {
           type: "tenant",
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error verifying tenant OTP:", error);
       setTenantsOtpState((prev) => ({
         ...prev,
@@ -259,14 +253,10 @@ export function AgreementGenerator() {
     initialValues: {
       ownerFullName: "",
       ownerEmailAddress: "",
-      ownerImageUrl: "",
-      ownerSignature: "",
       tenantNumber: 2,
       tenants: Array.from({ length: 2 }, () => ({
         fullName: "",
         email: "",
-        tenantImageUrl: "",
-        tenantSignature: "",
       })),
       address: "",
       city: "",
@@ -292,15 +282,6 @@ export function AgreementGenerator() {
         if (!emailRegex.test(values.ownerEmailAddress)) {
           errors.ownerEmailAddress = "Please enter a valid email address";
         }
-        if (values.ownerImageUrl === "") {
-          setShowAlertForPhoto(true);
-          errors.ownerImageUrl = "Please take a owner picture";
-        }
-
-        if (values.ownerSignature === "") {
-          setShowAlertForSign(true);
-          errors.ownerSignature = "Please upload signature";
-        }
       }
 
       if (active === 1 && values.tenantNumber < 1) {
@@ -316,16 +297,6 @@ export function AgreementGenerator() {
           if (!emailRegex.test(tenant.email)) {
             errors[`tenants.${index}.email`] =
               "Please enter a valid email address";
-          }
-          if (tenant.tenantImageUrl === "") {
-            setShowAlertForPhoto(true);
-            errors[`tenants.${index}.tenantImageUrl`] =
-              "Please take a tenant picture";
-          }
-          if (tenant.tenantSignature === "") {
-            setShowAlertForSign(true);
-            errors[`tenants.${index}.tenantSignature`] =
-              "Please upload signature";
           }
         });
       }
@@ -367,8 +338,6 @@ export function AgreementGenerator() {
           form.values.tenants[index] || {
             fullName: "",
             email: "",
-            tenantImageUrl: "",
-            tenantSignature: "",
           }
       )
     );
@@ -420,13 +389,9 @@ export function AgreementGenerator() {
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
-      owner_signature: form.values.ownerSignature,
-      owner_photo: form.values.ownerImageUrl,
       tenant_details: form.values.tenants.map((tenant) => ({
         name: tenant.fullName,
         email: tenant.email,
-        signature: tenant.tenantSignature,
-        photo: tenant.tenantImageUrl,
       })),
       property_address: form.values.address,
       city: form.values.city,
@@ -446,30 +411,9 @@ export function AgreementGenerator() {
     }
   };
 
-  const handleSignatureUpload = (field: string, files: FileWithPath[]) => {
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      form.setFieldValue(field, reader.result as string);
-      setShowAlertForSign(false);
-    };
-    reader.readAsDataURL(file);
-  };
   return (
     <>
       <Title order={3}>Generate Rent Agreement</Title>
-      {(showAlertForSign || showAlertForPhoto) && (
-        <Alert
-          m="1rem"
-          variant="light"
-          color="yellow"
-          title="Warning"
-          icon={<IconAlertTriangle />}
-        >
-          Please fill in all required fields before proceeding. All fields are
-          mandatory.
-        </Alert>
-      )}
       <Divider my="2rem" />
       <Container>
         <Stepper active={active} pt="2rem">
@@ -499,6 +443,7 @@ export function AgreementGenerator() {
                 ) : null
               }
             />
+
             <OTPInput
               otpState={ownerOtpState}
               onOtpChange={(otp) =>
@@ -518,53 +463,6 @@ export function AgreementGenerator() {
                 ownerOtpState.isVerified
               }
             />
-
-            <Group justify="flex-start" mt="xl" mb={5}>
-              <Text display="inline" size="sm" fw={500}>
-                Upload Your Signature{" "}
-                <Text component="span" c={COLORS.asteric}>
-                  *
-                </Text>
-              </Text>
-            </Group>
-            <Dropzone
-              onDrop={(files) => handleSignatureUpload("ownerSignature", files)}
-              accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
-            >
-              <Group align="center" gap="md">
-                <IconUpload size={20} />
-                <Text>Drag a file here or click to upload</Text>
-              </Group>
-            </Dropzone>
-            {form.values.ownerSignature && (
-              <Box mt="md">
-                <Text size="sm" fw={500}>
-                  Uploaded Signature:
-                </Text>
-                <Image
-                  src={form.values.ownerSignature}
-                  alt="Owner Signature"
-                  w="auto"
-                  h={100}
-                  fit="contain"
-                />
-              </Box>
-            )}
-            <Group justify="flex-start" mt="xl">
-              <Text display="inline" size="sm" fw={500}>
-                Take a Picture to Upload{" "}
-                <Text component="span" c={COLORS.asteric}>
-                  *
-                </Text>
-              </Text>
-              <WebcamComponent
-                imageUrl={form.values.ownerImageUrl}
-                setFieldValue={(value: string) => {
-                  form.setFieldValue("ownerImageUrl", value as string);
-                  setShowAlertForPhoto(false);
-                }}
-              />
-            </Group>
           </Stepper.Step>
 
           <Stepper.Step label="Step 2" description="No. of Tenants">
@@ -634,61 +532,6 @@ export function AgreementGenerator() {
                     tenantsOtpState[index]?.isVerified
                   }
                 />
-
-                <Group justify="flex-start" mt="xl" mb={5}>
-                  <Text display="inline" size="sm" fw={500}>
-                    Upload Your Signature{" "}
-                    <Text component="span" c={COLORS.asteric}>
-                      *
-                    </Text>
-                  </Text>
-                </Group>
-                <Dropzone
-                  onDrop={(files) =>
-                    handleSignatureUpload(
-                      `tenants.${index}.tenantSignature`,
-                      files
-                    )
-                  }
-                  accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
-                >
-                  <Group align="center" gap="md">
-                    <IconUpload size={20} />
-                    <Text>Drag a file here or click to upload</Text>
-                  </Group>
-                </Dropzone>
-                {form.values.tenants[index].tenantSignature && (
-                  <Box mt="md">
-                    <Text size="sm" fw={500}>
-                      Uploaded Signature:
-                    </Text>
-                    <Image
-                      src={form.values.tenants[index].tenantSignature}
-                      alt={`Tenant ${index + 1} Signature`}
-                      w="auto"
-                      h={100}
-                      fit="contain"
-                    />
-                  </Box>
-                )}
-                <Group justify="flex-start" mt="xl">
-                  <Text display="inline" size="sm" fw={500}>
-                    Take a Picture to Upload{" "}
-                    <Text component="span" c={COLORS.asteric}>
-                      *
-                    </Text>
-                  </Text>
-                  <WebcamComponent
-                    imageUrl={form.values.tenants[index].tenantImageUrl}
-                    setFieldValue={(value: string) => {
-                      form.setFieldValue(
-                        `tenants.${index}.tenantImageUrl`,
-                        value as string
-                      );
-                      setShowAlertForPhoto(false);
-                    }}
-                  />
-                </Group>
               </Box>
             ))}
           </Stepper.Step>

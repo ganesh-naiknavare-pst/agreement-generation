@@ -1,4 +1,5 @@
 import tempfile
+from helpers.rent_agreement_generator import resize_image
 from constants import Model, CHAT_OPENAI_BASE_URL
 import pypandoc
 from langgraph.graph import StateGraph, START, END
@@ -79,10 +80,33 @@ def create_pdf(state: State):
 def update_pdf_with_signatures():
     """Updates the existing agreement PDF by replacing placeholders with actual signatures."""
     content = template_agreement_state.agreement_text
-
     if template_agreement_state.is_fully_approved():
-        content = content.replace("[AUTHORITY_SIGNATURE]", template_agreement_state.authority_signature)
-        content = content.replace("[PARTICIPANT_SIGNATURE]", template_agreement_state.participant_signature)
+
+        # Replace authority signature with image
+        if os.path.isfile(template_agreement_state.authority_signature):
+            authority_signature_data, _ = resize_image(
+                template_agreement_state.authority_signature, 60, 30
+            )
+            content = content.replace(
+                "[AUTHORITY_SIGNATURE]", f" ![AUTHORITY_SIGNATURE]({authority_signature_data})"
+            )
+        else:
+            content = content.replace(
+                "[AUTHORITY_SIGNATURE]", template_agreement_state.authority_signature
+            )
+
+        # Replace participant signature with image
+        if os.path.isfile(template_agreement_state.participant_signature):
+            participant_signature_data, _ = resize_image(
+                template_agreement_state.participant_signature, 60, 30
+            )
+            content = content.replace(
+                "[PARTICIPANT_SIGNATURE]", f" ![PARTICIPANT_SIGNATURE]({participant_signature_data})"
+            )
+        else:
+            content = content.replace(
+                "[PARTICIPANT_SIGNATURE]", template_agreement_state.participant_signature
+            )
 
     # Convert updated content to PDF
     temp_pdf_path = template_agreement_state.pdf_file_path
