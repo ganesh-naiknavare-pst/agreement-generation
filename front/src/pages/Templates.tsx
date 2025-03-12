@@ -14,10 +14,8 @@ import {
   Divider,
   Center,
   Alert,
-  Box,
-  Image,
 } from "@mantine/core";
-import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
+import { Dropzone, MIME_TYPES } from "@mantine/dropzone";
 import {
   IconUpload,
   IconFile,
@@ -161,7 +159,7 @@ export function Templates() {
       }
 
       await verifyOTP({ method: "POST", data: { email, otp, type } });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error verifying OTP:", error);
     }
   };
@@ -398,7 +396,7 @@ export function Templates() {
             <TextInput
               mt="md"
               label="Participants Email"
-              placeholder="Enter participants' email"
+              placeholder="Enter participant's email"
               {...form.getInputProps("participantsEmail")}
               withAsterisk
               disabled={

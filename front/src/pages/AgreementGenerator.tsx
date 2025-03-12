@@ -192,7 +192,7 @@ export function AgreementGenerator() {
           type: "owner",
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error verifying OTP:", error);
       setOwnerOtpState((prev) => ({
         ...prev,
@@ -256,7 +256,7 @@ export function AgreementGenerator() {
           type: "tenant",
         },
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error verifying tenant OTP:", error);
       setTenantsOtpState((prev) => ({
         ...prev,
