@@ -25,6 +25,7 @@ class AgreementState:
     tenant_photos: Dict[str, Optional[str]] = field(default_factory=dict)
     pdf_file_path: str = ""
     is_pdf_generated: bool = False
+    agreement_id: Optional[int] = None
 
     def reset(self) -> None:
         """Resets the agreement state to its default values."""
@@ -69,6 +70,7 @@ class TemplateAgreementState:
     pdf_file_path: str = ""
     template_file_path: str = ""
     is_pdf_generated: bool = False
+    agreement_id: Optional[int] = None
 
     def reset(self) -> None:
         """Agreement state to its default values."""

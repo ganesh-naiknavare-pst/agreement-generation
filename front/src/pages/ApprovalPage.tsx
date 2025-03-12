@@ -13,17 +13,19 @@ import {
   Box,
   Image,
   Alert,
+  Loader,
 } from "@mantine/core";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { COLORS } from "../colors";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import ResponseCard from "../components/ResponseCard";
-
+import { useUserState } from "../hooks/useUserState";
 export type ApprovedUser = {
   status: string;
   user_id: string;
   approved: boolean;
+  agreement_type: string;
 };
 
 const ApprovalPage = () => {
@@ -33,16 +35,37 @@ const ApprovalPage = () => {
   const [searchParams] = useSearchParams();
   const agreementType = searchParams.get("type");
   const isRentAgreement = agreementType === "rent";
-  const { fetchData: approveAgreement } = useApi<ApprovedUser>(
-    BackendEndpoints.ApproveURL
-  );
-  const { fetchData: rejectAgreement } = useApi<ApprovedUser>(
-    BackendEndpoints.RejectURL
-  );
-  const [messageType, setMessageType] = useState<
-    "approved" | "rejected" | null
-  >(null);
-  const processApproval = () => {
+
+  const {
+    rentAgreementUser,
+    TemplateAgreementUser,
+    setStatus,
+    status,
+    loadRentAgreemntUser,
+    loadTemplateAgreemntUser,
+  } = useUserState();
+
+  const {
+    fetchData: approveAgreement,
+    loading: loadApprovedAgreement,
+    data: approvedAgreement,
+  } = useApi<ApprovedUser>(BackendEndpoints.ApproveURL);
+
+  const {
+    fetchData: rejectAgreement,
+    loading: loadRejectedAgreement,
+    data: rejectedAgreement,
+  } = useApi<ApprovedUser>(BackendEndpoints.RejectURL);
+
+  const loading =
+    loadApprovedAgreement ||
+    loadRejectedAgreement ||
+    loadRentAgreemntUser ||
+    loadTemplateAgreemntUser;
+  const user = rentAgreementUser || TemplateAgreementUser;
+  const agreement = approvedAgreement || rejectedAgreement || user;
+
+  const processApproval = async () => {
     const { hasErrors } = form.validate();
     if (hasErrors) return;
     const requestData = {
@@ -50,18 +73,21 @@ const ApprovalPage = () => {
       imageUrl: form.values.imageUrl ?? "",
       signature: form.values.signature ?? "",
       agreement_type: agreementType,
+      agreement_id: param.agreementId,
     };
-    approveAgreement({ method: "POST", data: requestData });
-    setMessageType("approved");
+    await approveAgreement({ method: "POST", data: requestData });
+    setStatus("APPROVED");
   };
-  const processRejection = () => {
+  const processRejection = async () => {
     const requestData = {
       user: param.id,
       imageUrl: "",
       signature: "",
+      agreement_type: agreementType,
+      agreement_id: param.agreementId,
     };
-    rejectAgreement({ method: "POST", params: requestData });
-    setMessageType("rejected");
+    await rejectAgreement({ method: "POST", data: requestData });
+    setStatus("REJECTED");
   };
 
   const form = useForm({
@@ -109,7 +135,13 @@ const ApprovalPage = () => {
           Please fill in required fields before proceeding.
         </Alert>
       )}
-      {!messageType && (
+      {loading ? (
+        <Center>
+          <Loader size="lg" />
+        </Center>
+      ) : agreement ? (
+        <ResponseCard type={status ?? user?.status ?? ""} />
+      ) : (
         <Container>
           <Group justify="flex-start" mt="xl" mb={5}>
             <Text display="inline" size="sm" fw={500}>
@@ -174,7 +206,6 @@ const ApprovalPage = () => {
           </Flex>
         </Container>
       )}
-      {messageType && <ResponseCard type={messageType} />}
     </>
   );
 };

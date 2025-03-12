@@ -11,6 +11,7 @@ import { HomePage } from "./pages/HomePage";
 import { AgreementGenerator } from "./pages/AgreementGenerator";
 import { AgreementsProvider } from "./hooks/useAgreements";
 import ApprovalPage from "./pages/ApprovalPage";
+import { UserProvider } from "./hooks/useUserState";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -23,7 +24,14 @@ export const router = createBrowserRouter(
         }
       >
         <Route index element={<Navigate to="home" replace />} />
-        <Route path="review-agreement/:id" element={<ApprovalPage />} />
+        <Route
+          path="review-agreement/:id/:agreementId"
+          element={
+            <UserProvider>
+              <ApprovalPage />
+            </UserProvider>
+          }
+        />
         <Route path="home" element={<HomePage />} />
         <Route path="templates" element={<Templates />} />
         <Route path="agreement-generator" element={<AgreementGenerator />} />
