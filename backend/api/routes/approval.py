@@ -22,6 +22,7 @@ rejected_users = set()
 
 
 @router.post("/approve")
+@requires_auth
 async def approve_user(data: Data, request: Request, db: Prisma = Depends(get_db)):
     agreement_type = data.agreement_type
     if agreement_type == "template":

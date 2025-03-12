@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, Request
 from database.connection import get_db
 from prisma import Prisma
 from auth.clerk_auth import requires_auth
-from pydantic import BaseModel
 
 router = APIRouter()
 
