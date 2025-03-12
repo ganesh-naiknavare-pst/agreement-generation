@@ -19,7 +19,7 @@ async def get_rent_agreement_user(
 
 @router.get("/template-agreement-user")
 @requires_auth
-async def get_rent_agreement_user(
+async def get_template_agreement_user(
     agreement_id: int, user_id: str, request: Request, db: Prisma = Depends(get_db)
 ):
     user = await db.useragreementstatus.find_first(
