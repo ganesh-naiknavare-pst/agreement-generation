@@ -336,6 +336,8 @@ export function Templates() {
                   form.reset();
                   setFile(null);
                   setDisplayBanner(false);
+                  setAuthorityOtpState(getDefaultOtpState());
+                  setParticipantsOtpState(getDefaultOtpState());
                 }}
               >
                 Finish
@@ -377,13 +379,22 @@ export function Templates() {
               disabled={
                 authorityOtpState.isSent || authorityOtpState.isVerified
               }
+              rightSection={
+                authorityOtpState.isVerified ? (
+                  <ThemeIcon color="green" radius="xl" size="sm">
+                    <IconCheck size={16} />
+                  </ThemeIcon>
+                ) : null
+              }
             />
+
             <OTPInput
               otpState={authorityOtpState}
               onOtpChange={(otp) =>
                 setAuthorityOtpState((prev) => ({
                   ...prev,
                   otp,
+                  error: otp ? "" : prev.error,
                 }))
               }
               onSendOtp={() => handleSendOTP("authority")}
@@ -400,6 +411,13 @@ export function Templates() {
               disabled={
                 participantsOtpState.isSent || participantsOtpState.isVerified
               }
+              rightSection={
+                participantsOtpState.isVerified ? (
+                  <ThemeIcon color="green" radius="xl" size="sm">
+                    <IconCheck size={16} />
+                  </ThemeIcon>
+                ) : null
+              }
             />
             <OTPInput
               otpState={participantsOtpState}
@@ -407,6 +425,7 @@ export function Templates() {
                 setParticipantsOtpState((prev) => ({
                   ...prev,
                   otp,
+                  error: otp ? "" : prev.error,
                 }))
               }
               onSendOtp={() => handleSendOTP("participants")}

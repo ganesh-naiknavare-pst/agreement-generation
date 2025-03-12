@@ -1,4 +1,4 @@
-import { TextInput, Button, Box, Text, Alert } from "@mantine/core";
+import { TextInput, Button, Box, Text } from "@mantine/core";
 import { OTPTimer } from "./OTPTimer";
 import { OTPInputProps } from "../../types/otp";
 
@@ -11,11 +11,7 @@ export function OTPInput({
 }: OTPInputProps) {
   return (
     <Box mt="xs" mb="xs">
-      {otpState.isVerified ? (
-        <Alert color="green">
-          <Text size="sm">✓ OTP verified successfully</Text>
-        </Alert>
-      ) : (
+      {!otpState.isVerified ? (
         <>
           {!otpState.isSent ? (
             <Button onClick={onSendOtp}>Send OTP</Button>
@@ -46,7 +42,11 @@ export function OTPInput({
                       {otpState.error}
                     </Text>
                   )}
-                  <Button onClick={onVerifyOtp} disabled={otpState.timer === 0} mt="xs">
+                  <Button
+                    onClick={onVerifyOtp}
+                    disabled={otpState.timer === 0}
+                    mt="xs"
+                  >
                     Verify OTP
                   </Button>
                 </>
@@ -58,7 +58,6 @@ export function OTPInput({
                     </Text>
                   )}
                   <Button mt="xs" onClick={onSendOtp}>
-                    {" "}
                     Resend OTP
                   </Button>
                 </>
@@ -66,7 +65,7 @@ export function OTPInput({
             </>
           )}
         </>
-      )}
+      ) : null}
     </Box>
   );
 }

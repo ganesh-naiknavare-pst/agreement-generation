@@ -511,11 +511,22 @@ export function AgreementGenerator() {
               {...form.getInputProps("ownerEmailAddress")}
               withAsterisk
               disabled={ownerOtpState.isSent || ownerOtpState.isVerified}
+              rightSection={
+                ownerOtpState.isVerified ? (
+                  <ThemeIcon color="green" radius="xl" size="sm">
+                    <IconCheck size={16} />
+                  </ThemeIcon>
+                ) : null
+              }
             />
             <OTPInput
               otpState={ownerOtpState}
               onOtpChange={(value) =>
-                setOwnerOtpState((prev) => ({ ...prev, otp: value }))
+                setOwnerOtpState((prev) => ({
+                  ...prev,
+                  otp: value,
+                  error: value ? "" : prev.error,
+                }))
               }
               onSendOtp={handleSendOTP}
               onVerifyOtp={handleVerifyOTP}
@@ -606,6 +617,13 @@ export function AgreementGenerator() {
                   disabled={
                     tenantsOtpState[index]?.isSent ||
                     tenantsOtpState[index]?.isVerified
+                  }
+                  rightSection={
+                    tenantsOtpState[index]?.isVerified ? (
+                      <ThemeIcon color="green" radius="xl" size="sm">
+                        <IconCheck size={16} />
+                      </ThemeIcon>
+                    ) : null
                   }
                 />
                 <OTPInput
@@ -773,6 +791,20 @@ export function AgreementGenerator() {
                     Confirm the agreement to move forward ✅ <br />
                     Receive the digitally signed document 📄
                   </Text>
+                  <Group justify="flex-end" mt="xl">
+                    <Button
+                      onClick={() => {
+                        form.reset();
+                        setActive(0);
+                        setShowMessage(false);
+                        setIsSubmitting(false);
+                        setOwnerOtpState(getDefaultOtpState());
+                        setTenantsOtpState({});
+                      }}
+                    >
+                      Finish
+                    </Button>
+                  </Group>
                 </Card>
               )
             )}
