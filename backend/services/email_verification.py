@@ -10,7 +10,64 @@ app = FastAPI()
 
 otp_storage = {}
 
+EMAIL_TEMPLATE="""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your OTP for Verification</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center;">
 
+    <table role="presentation" width="100%" bgcolor="#f4f4f4" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td align="center" style="padding: 20px;">
+                <table role="presentation" width="600" bgcolor="#ffffff" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+
+                    <!-- Header -->
+                    <tr>
+                        <td bgcolor="#007bff" style="padding: 15px; font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; border-radius: 8px 8px 0 0;">
+                            OTP Verification Code
+                        </td>
+                    </tr>
+
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 20px; font-size: 16px; color: #333333; text-align: left; line-height: 1.5;">
+                            <p>Hello,</p>
+                            <p>Your One-Time Password (OTP) for verification is:</p>
+
+                            <!-- OTP Box -->
+                            <div style="text-align: center; margin: 10px 0;">
+                                <input type="text" value="{otp}" id="otpInput" 
+                                       style="font-size: 20px; text-align: center; font-weight: bold; border: 2px solid #007bff; border-radius: 5px; padding: 5px; width: 150px; background-color: #f8f9fa; color: #007bff;" 
+                                       readonly>
+                            </div>
+
+                            <p>This OTP is valid for {expiry} minutes.</p>
+                            <p>If you did not request this OTP, please ignore this email.</p>
+                            <p>Best regards,</p>
+                            <p><strong>Agreement Agent Team</strong></p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 15px; font-size: 14px; color: #666666; text-align: center; border-top: 1px solid #dddddd;">
+                            This email was generated automatically for security purposes. Please do not respond to this email.
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>
+
+"""
 class OTPRequest(BaseModel):
     email: EmailStr
     type: str
@@ -29,12 +86,14 @@ def generate_otp():
 
 # Send OTP via SMTP2GO API
 def send_otp(email, otp):
+    email_template = EMAIL_TEMPLATE.format(otp=otp, expiry=OTP_EXPIRY_SECONDS // 60)
+
     payload = {
         "api_key": SMTP2GO_API_KEY,
         "to": [email],
         "sender": SENDER_EMAIL,
         "subject": "Your OTP for Verification",
-        "text_body": f"Your OTP is: {otp}. It is valid for {OTP_EXPIRY_SECONDS // 60} minutes.",
+        "html_body": email_template,
     }
     headers = {"Content-Type": "application/json"}
 
