@@ -126,6 +126,7 @@ async def template_based_agreement(
     req: TemplateAgreementRequest, file, agreement_id: int, db: object
 ):
     try:
+        template_agreement_state.agreement_id = agreement_id
         template_agreement_state.set_authority(req.authority_email)
         template_agreement_state.set_participant(req.participant_email)
         secure_filename = os.path.basename(file.filename)

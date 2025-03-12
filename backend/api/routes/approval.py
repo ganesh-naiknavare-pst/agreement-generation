@@ -7,7 +7,11 @@ from helpers.email_helper import send_rejection_email
 from helpers.state_manager import agreement_state, template_agreement_state
 from services.doc_agent import delete_temp_file
 from services.template_doc_agent import delete_template_file
-from services.image_sign_upload import Data, image_and_sign_upload, image_and_sign_upload_for_template
+from services.image_sign_upload import (
+    Data,
+    image_and_sign_upload,
+    image_and_sign_upload_for_template,
+)
 from database.connection import get_db
 from prisma import Prisma
 from auth.clerk_auth import requires_auth
@@ -22,11 +26,15 @@ async def approve_user(data: Data, request: Request, db: Prisma = Depends(get_db
     agreement_type = data.agreement_type
     if agreement_type == "template":
         await image_and_sign_upload_for_template(data)
+        await db.useragreementstatus.create(
+            data={
+                "status": "APPROVED",
+                "agreementId": data.agreement_id,
+                "userId": data.user,
+            }
+        )
     else:
         await image_and_sign_upload(data)
-    approved_users.add(data.user)
-    agreement_type = data.agreement_type
-    if agreement_type == "rent":
         await db.userrentagreementstatus.create(
             data={
                 "status": "APPROVED",
@@ -34,6 +42,8 @@ async def approve_user(data: Data, request: Request, db: Prisma = Depends(get_db
                 "userId": data.user,
             }
         )
+
+    approved_users.add(data.user)
     response = {
         "status": "approved",
         "user_id": data.user,
@@ -51,6 +61,14 @@ async def reject_user(data: Data, request: Request, db: Prisma = Depends(get_db)
     agreement_type = data.agreement_type
     if agreement_type == "rent":
         await db.userrentagreementstatus.create(
+            data={
+                "status": "REJECTED",
+                "agreementId": data.agreement_id,
+                "userId": data.user,
+            }
+        )
+    else:
+        await db.useragreementstatus.create(
             data={
                 "status": "REJECTED",
                 "agreementId": data.agreement_id,

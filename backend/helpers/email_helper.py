@@ -51,11 +51,17 @@ def send_rejection_email(
     success_list = []
     failed_list = {}
 
+    agreement_id = (
+        template_agreement_state.agreement_id
+        if is_template
+        else agreement_state.agreement_id
+    )
+
     for email, role, user_id in emails_to_notify:
         email_body = generate_email_template(
             role=role,
             user_id=user_id,
-            agreement_id=agreement_state.agreement_id,
+            agreement_id=agreement_id,
             is_rejection=True,
             rejected_by=(
                 f"{rejected_by_name} ({rejected_by_role})"
@@ -111,9 +117,12 @@ def send_email_with_attachment(
         if role == "owner" or user_id is None:
             user_id = agreement_state.owner_id
 
-    email_body = generate_email_template(
-        role, user_id, agreement_state.agreement_id, is_template
+    agreement_id = (
+        template_agreement_state.agreement_id
+        if is_template
+        else agreement_state.agreement_id
     )
+    email_body = generate_email_template(role, user_id, agreement_id, is_template)
 
     payload = {
         "sender": SENDER_EMAIL,
@@ -143,4 +152,3 @@ def send_email_with_attachment(
     else:
         print(f"Failed to send email to {recipient_email}: {response.text}")
     return response.status_code == 200, response.text
-    

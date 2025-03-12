@@ -80,8 +80,9 @@ model Participant {
 }
 
 model UserAgreementStatus {
-  id            Int                 @id @default(autoincrement())
-  userId        String
-  agreementId   Int
-  status        AgreementStatus     @default(PROCESSING)
+  id                                Int                 @id @default(autoincrement())
+  userId                            String
+  agreementId                       Int
+  status                            AgreementStatus     @default(PROCESSING)
+  @@unique([agreementId, userId])
 }

@@ -7,11 +7,6 @@ from pydantic import BaseModel
 router = APIRouter()
 
 
-class Data(BaseModel):
-    agreement_id: int
-    user_id: int
-
-
 @router.get("/rent-agreement-user")
 @requires_auth
 async def get_rent_agreement_user(
