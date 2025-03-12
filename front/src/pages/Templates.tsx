@@ -143,21 +143,6 @@ export function Templates() {
       const otp =
         type === "authority" ? authorityOtpState.otp : participantsOtpState.otp;
 
-      if (!otp) {
-        if (type === "authority") {
-          setAuthorityOtpState((prev) => ({
-            ...prev,
-            error: "Please enter OTP.",
-          }));
-        } else {
-          setParticipantsOtpState((prev) => ({
-            ...prev,
-            error: "Please enter OTP.",
-          }));
-        }
-        return;
-      }
-
       await verifyOTP({ method: "POST", data: { email, otp, type } });
     } catch (error: any) {
       console.error("Error verifying OTP:", error);
@@ -400,6 +385,12 @@ export function Templates() {
               onSendOtp={() => handleSendOTP("authority")}
               onVerifyOtp={() => handleVerifyOTP("authority")}
               label="Enter Authority OTP"
+              disabledSendOtp={
+                !form.values.authorityEmail ||
+                !/^\S+@\S+\.\S+$/.test(form.values.authorityEmail) ||
+                authorityOtpState.isSent ||
+                authorityOtpState.isVerified
+              }
             />
 
             <TextInput
@@ -431,6 +422,12 @@ export function Templates() {
               onSendOtp={() => handleSendOTP("participants")}
               onVerifyOtp={() => handleVerifyOTP("participants")}
               label="Enter Participants OTP"
+              disabledSendOtp={
+                !form.values.participantsEmail ||
+                !/^\S+@\S+\.\S+$/.test(form.values.participantsEmail) ||
+                participantsOtpState.isSent ||
+                participantsOtpState.isVerified
+              }
             />
 
             <Textarea

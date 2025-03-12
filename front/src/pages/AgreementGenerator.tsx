@@ -180,15 +180,6 @@ export function AgreementGenerator() {
   };
 
   const handleVerifyOTP = async () => {
-    console.log("Verifying OTP:", ownerOtpState.otp);
-    if (!ownerOtpState.otp) {
-      setOwnerOtpState((prev) => ({
-        ...prev,
-        error: "Please enter the OTP",
-      }));
-      return;
-    }
-
     try {
       await verifyOTP({
         method: "POST",
@@ -240,17 +231,6 @@ export function AgreementGenerator() {
       `Verifying OTP for Tenant ${index + 1}:`,
       tenantsOtpState[index]?.otp
     );
-
-    if (!tenantsOtpState[index]?.otp) {
-      setTenantsOtpState((prev) => ({
-        ...prev,
-        [index]: {
-          ...(prev[index] || getDefaultOtpState()),
-          error: "Please enter the OTP",
-        },
-      }));
-      return;
-    }
 
     try {
       setOtpIndex(index);
@@ -521,16 +501,22 @@ export function AgreementGenerator() {
             />
             <OTPInput
               otpState={ownerOtpState}
-              onOtpChange={(value) =>
+              onOtpChange={(otp) =>
                 setOwnerOtpState((prev) => ({
                   ...prev,
-                  otp: value,
-                  error: value ? "" : prev.error,
+                  otp,
+                  error: otp ? "" : prev.error,
                 }))
               }
               onSendOtp={handleSendOTP}
               onVerifyOtp={handleVerifyOTP}
               label="Enter Owner OTP"
+              disabledSendOtp={
+                !form.values.ownerEmailAddress ||
+                !/^\S+@\S+\.\S+$/.test(form.values.ownerEmailAddress) ||
+                ownerOtpState.isSent ||
+                ownerOtpState.isVerified
+              }
             />
 
             <Group justify="flex-start" mt="xl" mb={5}>
@@ -634,12 +620,19 @@ export function AgreementGenerator() {
                       [index]: {
                         ...(prev[index] || getDefaultOtpState()),
                         otp: value,
+                        error: value ? "" : prev[index]?.error,
                       },
                     }))
                   }
                   onSendOtp={() => handleSendTenantOTP(index)}
                   onVerifyOtp={() => handleVerifyTenantOTP(index)}
                   label={`Enter OTP for Tenant ${index + 1}`}
+                  disabledSendOtp={
+                    !form.values.tenants[index].email ||
+                    !/^\S+@\S+\.\S+$/.test(form.values.tenants[index].email) ||
+                    tenantsOtpState[index]?.isSent ||
+                    tenantsOtpState[index]?.isVerified
+                  }
                 />
 
                 <Group justify="flex-start" mt="xl" mb={5}>

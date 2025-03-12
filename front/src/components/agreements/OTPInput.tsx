@@ -8,13 +8,16 @@ export function OTPInput({
   onSendOtp,
   onVerifyOtp,
   label = "Enter OTP",
+  disabledSendOtp = false,
 }: OTPInputProps) {
   return (
     <Box mt="xs" mb="xs">
-      {!otpState.isVerified ? (
+      {!otpState.isVerified && (
         <>
           {!otpState.isSent ? (
-            <Button onClick={onSendOtp}>Send OTP</Button>
+            <Button onClick={onSendOtp} disabled={disabledSendOtp}>
+              Send OTP
+            </Button>
           ) : (
             <>
               {otpState.timer > 0 ? (
@@ -44,7 +47,7 @@ export function OTPInput({
                   )}
                   <Button
                     onClick={onVerifyOtp}
-                    disabled={otpState.timer === 0}
+                    disabled={otpState.otp.length !== 6}
                     mt="xs"
                   >
                     Verify OTP
@@ -65,7 +68,7 @@ export function OTPInput({
             </>
           )}
         </>
-      ) : null}
+      )}
     </Box>
   );
 }
