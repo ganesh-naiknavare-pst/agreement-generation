@@ -174,15 +174,6 @@ export function AgreementGenerator() {
   };
 
   const handleVerifyOTP = async () => {
-    console.log("Verifying OTP:", ownerOtpState.otp);
-    if (!ownerOtpState.otp) {
-      setOwnerOtpState((prev) => ({
-        ...prev,
-        error: "Please enter the OTP",
-      }));
-      return;
-    }
-
     try {
       await verifyOTP({
         method: "POST",
@@ -234,17 +225,6 @@ export function AgreementGenerator() {
       `Verifying OTP for Tenant ${index + 1}:`,
       tenantsOtpState[index]?.otp
     );
-
-    if (!tenantsOtpState[index]?.otp) {
-      setTenantsOtpState((prev) => ({
-        ...prev,
-        [index]: {
-          ...(prev[index] || getDefaultOtpState()),
-          error: "Please enter the OTP",
-        },
-      }));
-      return;
-    }
 
     try {
       setOtpIndex(index);
@@ -455,16 +435,33 @@ export function AgreementGenerator() {
               {...form.getInputProps("ownerEmailAddress")}
               withAsterisk
               disabled={ownerOtpState.isSent || ownerOtpState.isVerified}
+              rightSection={
+                ownerOtpState.isVerified ? (
+                  <ThemeIcon color="green" radius="xl" size="sm">
+                    <IconCheck size={16} />
+                  </ThemeIcon>
+                ) : null
+              }
             />
 
             <OTPInput
               otpState={ownerOtpState}
-              onOtpChange={(value) =>
-                setOwnerOtpState((prev) => ({ ...prev, otp: value }))
+              onOtpChange={(otp) =>
+                setOwnerOtpState((prev) => ({
+                  ...prev,
+                  otp,
+                  error: otp ? "" : prev.error,
+                }))
               }
               onSendOtp={handleSendOTP}
               onVerifyOtp={handleVerifyOTP}
               label="Enter Owner OTP"
+              disabledSendOtp={
+                !form.values.ownerEmailAddress ||
+                !/^\S+@\S+\.\S+$/.test(form.values.ownerEmailAddress) ||
+                ownerOtpState.isSent ||
+                ownerOtpState.isVerified
+              }
             />
           </Stepper.Step>
 
@@ -505,6 +502,13 @@ export function AgreementGenerator() {
                     tenantsOtpState[index]?.isSent ||
                     tenantsOtpState[index]?.isVerified
                   }
+                  rightSection={
+                    tenantsOtpState[index]?.isVerified ? (
+                      <ThemeIcon color="green" radius="xl" size="sm">
+                        <IconCheck size={16} />
+                      </ThemeIcon>
+                    ) : null
+                  }
                 />
                 <OTPInput
                   otpState={tenantsOtpState[index] || getDefaultOtpState()}
@@ -514,12 +518,19 @@ export function AgreementGenerator() {
                       [index]: {
                         ...(prev[index] || getDefaultOtpState()),
                         otp: value,
+                        error: value ? "" : prev[index]?.error,
                       },
                     }))
                   }
                   onSendOtp={() => handleSendTenantOTP(index)}
                   onVerifyOtp={() => handleVerifyTenantOTP(index)}
                   label={`Enter OTP for Tenant ${index + 1}`}
+                  disabledSendOtp={
+                    !form.values.tenants[index].email ||
+                    !/^\S+@\S+\.\S+$/.test(form.values.tenants[index].email) ||
+                    tenantsOtpState[index]?.isSent ||
+                    tenantsOtpState[index]?.isVerified
+                  }
                 />
               </Box>
             ))}
@@ -616,6 +627,20 @@ export function AgreementGenerator() {
                     Confirm the agreement to move forward ✅ <br />
                     Receive the digitally signed document 📄
                   </Text>
+                  <Group justify="flex-end" mt="xl">
+                    <Button
+                      onClick={() => {
+                        form.reset();
+                        setActive(0);
+                        setShowMessage(false);
+                        setIsSubmitting(false);
+                        setOwnerOtpState(getDefaultOtpState());
+                        setTenantsOtpState({});
+                      }}
+                    >
+                      Finish
+                    </Button>
+                  </Group>
                 </Card>
               )
             )}
