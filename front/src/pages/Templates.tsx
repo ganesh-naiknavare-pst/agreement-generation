@@ -143,21 +143,6 @@ export function Templates() {
       const otp =
         type === "authority" ? authorityOtpState.otp : participantsOtpState.otp;
 
-      if (!otp) {
-        if (type === "authority") {
-          setAuthorityOtpState((prev) => ({
-            ...prev,
-            error: "Please enter OTP.",
-          }));
-        } else {
-          setParticipantsOtpState((prev) => ({
-            ...prev,
-            error: "Please enter OTP.",
-          }));
-        }
-        return;
-      }
-
       await verifyOTP({ method: "POST", data: { email, otp, type } });
     } catch (error) {
       console.error("Error verifying OTP:", error);
@@ -337,6 +322,8 @@ export function Templates() {
                   form.reset();
                   setFile(null);
                   setDisplayBanner(false);
+                  setAuthorityOtpState(getDefaultOtpState());
+                  setParticipantsOtpState(getDefaultOtpState());
                 }}
               >
                 Finish
@@ -378,18 +365,33 @@ export function Templates() {
               disabled={
                 authorityOtpState.isSent || authorityOtpState.isVerified
               }
+              rightSection={
+                authorityOtpState.isVerified ? (
+                  <ThemeIcon color="green" radius="xl" size="sm">
+                    <IconCheck size={16} />
+                  </ThemeIcon>
+                ) : null
+              }
             />
+
             <OTPInput
               otpState={authorityOtpState}
               onOtpChange={(otp) =>
                 setAuthorityOtpState((prev) => ({
                   ...prev,
                   otp,
+                  error: otp ? "" : prev.error,
                 }))
               }
               onSendOtp={() => handleSendOTP("authority")}
               onVerifyOtp={() => handleVerifyOTP("authority")}
               label="Enter Authority OTP"
+              disabledSendOtp={
+                !form.values.authorityEmail ||
+                !/^\S+@\S+\.\S+$/.test(form.values.authorityEmail) ||
+                authorityOtpState.isSent ||
+                authorityOtpState.isVerified
+              }
             />
 
 
@@ -402,6 +404,13 @@ export function Templates() {
               disabled={
                 participantsOtpState.isSent || participantsOtpState.isVerified
               }
+              rightSection={
+                participantsOtpState.isVerified ? (
+                  <ThemeIcon color="green" radius="xl" size="sm">
+                    <IconCheck size={16} />
+                  </ThemeIcon>
+                ) : null
+              }
             />
             <OTPInput
               otpState={participantsOtpState}
@@ -409,11 +418,18 @@ export function Templates() {
                 setParticipantsOtpState((prev) => ({
                   ...prev,
                   otp,
+                  error: otp ? "" : prev.error,
                 }))
               }
               onSendOtp={() => handleSendOTP("participants")}
               onVerifyOtp={() => handleVerifyOTP("participants")}
               label="Enter Participants OTP"
+              disabledSendOtp={
+                !form.values.participantsEmail ||
+                !/^\S+@\S+\.\S+$/.test(form.values.participantsEmail) ||
+                participantsOtpState.isSent ||
+                participantsOtpState.isVerified
+              }
             />
 
 

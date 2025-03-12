@@ -44,7 +44,15 @@ Ensure you have the following installed:
   curl -sSL https://install.python-poetry.org | python3 -
   ```
 - **Prisma**: Prisma ORM will be used for interacting with the PostgreSQL database. Ensure **PostgreSQL** is installed and running.
-
+- **CMake**: Required for `face-recognition` dependencies. Install it using:  
+  - **Ubuntu/Debian**:  
+    ```bash
+    sudo apt update && sudo apt install cmake -y
+    ```
+  - **macOS (Homebrew)**:  
+    ```bash
+    brew install cmake
+    ```
 ### Installation Steps
 
 1. **Clone the repository**:

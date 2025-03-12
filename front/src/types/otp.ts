@@ -33,6 +33,7 @@ export interface OTPInputProps {
   onSendOtp: () => void;
   onVerifyOtp: () => void;
   label?: string;
+  disabledSendOtp?: boolean; 
 }
 
 // Default OTP state
