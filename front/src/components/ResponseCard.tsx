@@ -11,7 +11,7 @@ const ResponseCard: React.FC<ResponseCardProps> = ({ type }) => {
     APPROVED: {
       color: COLORS.green,
       icon: <IconCheck size="1.5rem" />,
-      title: "Agreement approved Successfully!",
+      title: "Agreement approved successfully !",
       message:
         "📨 You will receive an email shortly with the approved agreement attached as a PDF.",
       footer: "Please review and keep a copy for your records.",
@@ -19,14 +19,14 @@ const ResponseCard: React.FC<ResponseCardProps> = ({ type }) => {
     REJECTED: {
       color: COLORS.red,
       icon: <IconX size="1.5rem" />,
-      title: "Agreement has been Rejected!",
+      title: "Agreement has been rejected !",
       message:
         "❌ Your rejection has been recorded. If this was a mistake, please contact support.",
       footer: "Thank you for your response.",
     },
     FAILED: {
       color: COLORS.yellow,
-      title: "Agreement Link expired!",
+      title: "Agreement link expired !",
       icon: <IconClockExclamation size="1.5rem" />,
       message:
         "⏳ The agreement link has expired as no action was taken within 5 minutes.",
