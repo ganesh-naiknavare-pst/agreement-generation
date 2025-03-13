@@ -15,15 +15,22 @@ import { UserProvider } from "./hooks/useUserState";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route element={<AuthGuard />}>
-      <Route
-        element={
-          <AgreementsProvider>
-            <AppLayout />
-          </AgreementsProvider>
-        }
-      >
-        <Route index element={<Navigate to="home" replace />} />
+    <Route>
+      <Route element={<AuthGuard />}>
+        <Route
+          element={
+            <AgreementsProvider>
+              <AppLayout />
+            </AgreementsProvider>
+          }
+        >
+          <Route index element={<Navigate to="home" replace />} />
+          <Route path="home" element={<HomePage />} />
+          <Route path="templates" element={<Templates />} />
+          <Route path="agreement-generator" element={<AgreementGenerator />} />
+        </Route>
+      </Route>
+      <Route>
         <Route
           path="review-agreement/:id/:agreementId"
           element={
@@ -32,9 +39,6 @@ export const router = createBrowserRouter(
             </UserProvider>
           }
         />
-        <Route path="home" element={<HomePage />} />
-        <Route path="templates" element={<Templates />} />
-        <Route path="agreement-generator" element={<AgreementGenerator />} />
       </Route>
     </Route>
   )
