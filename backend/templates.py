@@ -132,7 +132,7 @@ PENDING_APPROVAL_TEMPLATE = """
                                 <tr>
                                     <td align="center" style="padding: 10px;">
                                         <a href="{url}" style="background-color: #228be6; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
-                                            Review Agreement
+                                            Click to Proceed
                                         </a>
                                     </td>
                                 </tr>
