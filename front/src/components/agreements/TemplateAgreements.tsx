@@ -1,4 +1,3 @@
-// templateagreement.tsx
 import {
   ActionIcon,
   Table,

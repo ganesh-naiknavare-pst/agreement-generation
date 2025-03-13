@@ -1,4 +1,3 @@
-# websocket_helper.py
 import asyncio
 from datetime import datetime
 import websockets
@@ -142,19 +141,18 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                         return ApprovalResult.APPROVED
 
                 except asyncio.TimeoutError:
-                    raise ApprovalTimeoutError(
-                        f"Approval process timed out after {timeout_seconds} seconds"
-                    )
+                    logging.error("Approval process timed out")
+                    return ApprovalResult.CONNECTION_CLOSED
                 except json.JSONDecodeError as e:
                     logging.error(f"Invalid JSON received: {e}")
                     continue
     except websockets.exceptions.ConnectionClosed:
         logging.error("WebSocket connection closed unexpectedly")
-        raise ConnectionClosedError("WebSocket connection closed unexpectedly")
+        return ApprovalResult.CONNECTION_CLOSED
     except websockets.exceptions.WebSocketException as e:
         logging.error(f"WebSocket error: {str(e)}")
-        raise ConnectionClosedError(f"WebSocket error: {str(e)}")
+        return ApprovalResult.CONNECTION_CLOSED
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
-        raise ConnectionClosedError(f"Unexpected error: {str(e)}")
+        return ApprovalResult.CONNECTION_CLOSED
 

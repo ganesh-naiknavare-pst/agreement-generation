@@ -229,6 +229,10 @@ async def create_agreement_details(
                         where={"id": agreement_id},
                         data={"status": AgreementStatus.REJECTED},
                     )
+                    delete_temp_file()
+                    if os.path.exists("./utils"):
+                        shutil.rmtree("./utils")
+                    agreement_state.reset()
                     return {
                         "message": "Agreement was rejected by one or more parties."
                     }
@@ -237,26 +241,25 @@ async def create_agreement_details(
                         where={"id": agreement_id},
                         data={"status": AgreementStatus.FAILED},
                     )
+                    delete_temp_file()
+                    if os.path.exists("./utils"):
+                        shutil.rmtree("./utils")
+                    agreement_state.reset()
                     return {
                         "message": "Agreement process failed due to connection issues."
                     }
-            except ApprovalTimeoutError:
-                # If timeout occurs (no response within time limit)
-                await db.agreement.update(
-                    where={"id": agreement_id},
-                    data={"status": AgreementStatus.FAILED},
-                )
-                return {
-                    "message": "Agreement approval process timed out. No response received within the time limit."
-                }
             except ConnectionClosedError as e:
-                # If connection was closed unexpectedly
+                # Update status to FAILED on connection closed
                 await db.agreement.update(
                     where={"id": agreement_id},
                     data={"status": AgreementStatus.FAILED},
                 )
+                delete_temp_file()
+                if os.path.exists("./utils"):
+                    shutil.rmtree("./utils")
+                agreement_state.reset()
                 return {
-                    "message": f"Agreement process failed: {str(e)}"
+                    "message": f"Agreement process failed: Connection closed unexpectedly"
                 }
         else:
             await db.agreement.update(

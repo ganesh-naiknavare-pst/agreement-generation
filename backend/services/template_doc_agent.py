@@ -1,4 +1,3 @@
-# template_doc_agent.py
 import logging
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import (
@@ -201,6 +200,7 @@ async def template_based_agreement(
                         data={"pdf": pdf_base64, "status": AgreementStatus.APPROVED},
                     )
                     delete_temp_file()
+                    delete_template_file()
                     template_agreement_state.reset()
                     return {"message": "Final signed agreement sent to all parties!"}
                 elif approval_result == ApprovalResult.REJECTED:
@@ -209,6 +209,9 @@ async def template_based_agreement(
                         where={"id": agreement_id},
                         data={"status": AgreementStatus.REJECTED},
                     )
+                    delete_temp_file()
+                    delete_template_file()
+                    template_agreement_state.reset()
                     return {
                         "message": "Agreement was rejected by one or more parties."
                     }
@@ -217,26 +220,23 @@ async def template_based_agreement(
                         where={"id": agreement_id},
                         data={"status": AgreementStatus.FAILED},
                     )
+                    delete_temp_file()
+                    delete_template_file()
+                    template_agreement_state.reset()
                     return {
                         "message": "Agreement process failed due to connection issues."
                     }
-            except ApprovalTimeoutError:
-                # If timeout occurs (no response within time limit)
-                await db.templateagreement.update(
-                    where={"id": agreement_id},
-                    data={"status": AgreementStatus.FAILED},
-                )
-                return {
-                    "message": "Agreement approval process timed out. No response received within the time limit."
-                }
             except ConnectionClosedError as e:
                 # If connection was closed unexpectedly
                 await db.templateagreement.update(
                     where={"id": agreement_id},
                     data={"status": AgreementStatus.FAILED},
                 )
+                delete_temp_file()
+                delete_template_file()
+                template_agreement_state.reset()
                 return {
-                    "message": f"Agreement process failed: {str(e)}"
+                    "message": f"Agreement process failed: Connection closed unexpectedly"
                 }
         else:
             await db.templateagreement.update(

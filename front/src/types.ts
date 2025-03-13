@@ -10,4 +10,3 @@ export enum AgreementStatus {
   REJECTED = "REJECTED",
   FAILED = "FAILED"
 }
-  

@@ -1,4 +1,3 @@
-// rentagreement.tsx
 import {
   ActionIcon,
   Table,
