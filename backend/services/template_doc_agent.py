@@ -154,7 +154,6 @@ async def template_based_agreement(
                 status_code=500, detail=f"Error generating agreement: {str(e)}"
             )
 
-
         authority_success, _ = send_email_with_attachment(
             req.authority_email,
             template_agreement_state.pdf_file_path,
@@ -177,7 +176,7 @@ async def template_based_agreement(
                 approval_result = await listen_for_approval(
                     timeout_seconds=300, is_template=True
                 )
-                
+
                 if approval_result == ApprovalResult.APPROVED:
                     update_pdf_with_signatures()
                     # Send final agreement emails
@@ -200,6 +199,8 @@ async def template_based_agreement(
                         data={"pdf": pdf_base64, "status": AgreementStatus.APPROVED},
                     )
                     delete_temp_file()
+                    if os.path.exists("./utils"):
+                        shutil.rmtree("./utils")
                     delete_template_file()
                     template_agreement_state.reset()
                     return {"message": "Final signed agreement sent to all parties!"}
@@ -212,10 +213,9 @@ async def template_based_agreement(
                     delete_temp_file()
                     delete_template_file()
                     template_agreement_state.reset()
-                    return {
-                        "message": "Agreement was rejected by one or more parties."
-                    }
-                else:  # ApprovalResult.CONNECTION_CLOSED
+                    return {"message": "Agreement was rejected by one or more parties."}
+                else:
+                    # ApprovalResult.CONNECTION_CLOSED
                     await db.templateagreement.update(
                         where={"id": agreement_id},
                         data={"status": AgreementStatus.FAILED},

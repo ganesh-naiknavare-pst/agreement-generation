@@ -192,7 +192,7 @@ async def create_agreement_details(
                 approval_result = await listen_for_approval(
                     timeout_seconds=300, is_template=False
                 )
-                
+
                 if approval_result == ApprovalResult.APPROVED:
                     # Mark as approved and generate final PDF with signatures
                     agreement_state.owner_approved = True
@@ -233,10 +233,9 @@ async def create_agreement_details(
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")
                     agreement_state.reset()
-                    return {
-                        "message": "Agreement was rejected by one or more parties."
-                    }
-                else:  # ApprovalResult.CONNECTION_CLOSED
+                    return {"message": "Agreement was rejected by one or more parties."}
+                else:
+                    # ApprovalResult.CONNECTION_CLOSED
                     await db.agreement.update(
                         where={"id": agreement_id},
                         data={"status": AgreementStatus.FAILED},
