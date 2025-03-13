@@ -29,8 +29,8 @@ const ResponseCard: React.FC<ResponseCardProps> = ({ type }) => {
       title: "Agreement link expired !",
       icon: <IconClockExclamation size="1.5rem" />,
       message:
-        "⏳ The agreement link has expired as no action was taken within 5 minutes.",
-      footer: " Please contact support",
+        "⏳ Unfortunately, the agreement link has expired as the required action was not completed within the 5-minutes.",
+      footer: "If you need further assistance or have any questions, please contact support.",
     },
   };
 
