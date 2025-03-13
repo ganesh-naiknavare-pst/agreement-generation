@@ -10,8 +10,8 @@ import { Templates } from "./pages/Templates";
 import { HomePage } from "./pages/HomePage";
 import { AgreementGenerator } from "./pages/AgreementGenerator";
 import { AgreementsProvider } from "./hooks/useAgreements";
-import ApprovalPage from "./pages/ApprovalPage";
 import { UserProvider } from "./hooks/useUserState";
+import { ApprovalAppLayout } from "./layout/ApprovalLayout";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -35,7 +35,7 @@ export const router = createBrowserRouter(
           path="review-agreement/:id/:agreementId"
           element={
             <UserProvider>
-              <ApprovalPage />
+              <ApprovalAppLayout />
             </UserProvider>
           }
         />
