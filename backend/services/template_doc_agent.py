@@ -1,6 +1,12 @@
+# template_doc_agent.py
 import logging
 from helpers.email_helper import send_email_with_attachment
-from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
+from helpers.websocket_helper import (
+    listen_for_approval,
+    ApprovalTimeoutError,
+    ConnectionClosedError,
+    ApprovalResult,
+)
 from langchain.agents import initialize_agent, Tool, AgentType
 from helpers.template_based_agreement_generator import (
     llm,
@@ -19,6 +25,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_t
 from constants import MAX_RETRIES, RETRY_DELAY
 from langchain_core.prompts.prompt import PromptTemplate
 from prisma import Base64
+from prisma.enums import AgreementStatus
 
 
 logging.basicConfig(level=logging.INFO)
@@ -140,6 +147,10 @@ async def template_based_agreement(
         try:
             response = generate_agreement_with_retry(req.user_prompt)
         except Exception as e:
+            await db.templateagreement.update(
+                where={"id": agreement_id},
+                data={"status": AgreementStatus.FAILED},
+            )
             raise HTTPException(
                 status_code=500, detail=f"Error generating agreement: {str(e)}"
             )
@@ -164,10 +175,11 @@ async def template_based_agreement(
             delete_template_file()
             try:
                 # Wait for approvals
-                approved = await listen_for_approval(
+                approval_result = await listen_for_approval(
                     timeout_seconds=300, is_template=True
                 )
-                if approved:
+                
+                if approval_result == ApprovalResult.APPROVED:
                     update_pdf_with_signatures()
                     # Send final agreement emails
                     authority_success, _ = send_email_with_attachment(
@@ -186,30 +198,55 @@ async def template_based_agreement(
                         pdf_base64 = Base64.encode(pdf_file.read())
                     await db.templateagreement.update(
                         where={"id": agreement_id},
-                        data={"pdf": pdf_base64, "status": "APPROVED"},
+                        data={"pdf": pdf_base64, "status": AgreementStatus.APPROVED},
                     )
                     delete_temp_file()
-                    if os.path.exists("./utils"):
-                        shutil.rmtree("./utils")
                     template_agreement_state.reset()
                     return {"message": "Final signed agreement sent to all parties!"}
-                else:
+                elif approval_result == ApprovalResult.REJECTED:
+                    # If explicitly rejected
                     await db.templateagreement.update(
                         where={"id": agreement_id},
-                        data={"status": "REJECTED"},
+                        data={"status": AgreementStatus.REJECTED},
                     )
                     return {
-                        "message": "Agreement was rejected or approval process failed."
+                        "message": "Agreement was rejected by one or more parties."
+                    }
+                else:  # ApprovalResult.CONNECTION_CLOSED
+                    await db.templateagreement.update(
+                        where={"id": agreement_id},
+                        data={"status": AgreementStatus.FAILED},
+                    )
+                    return {
+                        "message": "Agreement process failed due to connection issues."
                     }
             except ApprovalTimeoutError:
+                # If timeout occurs (no response within time limit)
                 await db.templateagreement.update(
                     where={"id": agreement_id},
-                    data={"status": "REJECTED"},
+                    data={"status": AgreementStatus.FAILED},
                 )
                 return {
-                    "message": "Approval process timed out. Please try again later."
+                    "message": "Agreement approval process timed out. No response received within the time limit."
+                }
+            except ConnectionClosedError as e:
+                # If connection was closed unexpectedly
+                await db.templateagreement.update(
+                    where={"id": agreement_id},
+                    data={"status": AgreementStatus.FAILED},
+                )
+                return {
+                    "message": f"Agreement process failed: {str(e)}"
                 }
         else:
+            await db.templateagreement.update(
+                where={"id": agreement_id},
+                data={"status": AgreementStatus.FAILED},
+            )
             return {"message": "Error sending initial agreement emails."}
     except Exception as e:
+        await db.templateagreement.update(
+            where={"id": agreement_id},
+            data={"status": AgreementStatus.FAILED},
+        )
         raise HTTPException(status_code=500, detail=str(e))

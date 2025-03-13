@@ -1,3 +1,4 @@
+# websocket_helper.py
 import asyncio
 from datetime import datetime
 import websockets
@@ -6,22 +7,34 @@ import os
 import logging
 from helpers.state_manager import agreement_state, template_agreement_state
 from config import WEBSOCKET_URL
+from enum import Enum
 
 
 class ApprovalTimeoutError(Exception):
     pass
 
 
+class ConnectionClosedError(Exception):
+    pass
+
+
+class ApprovalResult(Enum):
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    CONNECTION_CLOSED = "connection_closed"
+
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
-async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=False) -> bool:
+async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=False) -> ApprovalResult:
     """
     Listen for approval messages with a timeout.
     Args:
         timeout_seconds: Maximum time to wait for approvals (default 5 minutes)
     Returns:
-        bool: True if both parties approved, False if rejected or timeout
+        ApprovalResult: APPROVED if all parties approved, REJECTED if explicitly rejected,
+                       CONNECTION_CLOSED if connection issues occurred
     Raises:
         ApprovalTimeoutError: If no response received within timeout period
     """
@@ -50,7 +63,7 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                                 print("Participant has approved!")
                             else:
                                 print("Participant has rejected!")
-                                return False
+                                return ApprovalResult.REJECTED
 
                         elif user_id == template_agreement_state.authority_id:
                             template_agreement_state.authority_approved = data.get("approved", False)
@@ -63,8 +76,7 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                                 print("Authority has approved!")
                             else:
                                 print("Authority has rejected!")
-                                return False
-
+                                return ApprovalResult.REJECTED                     
                     else:
                         if user_id in agreement_state.tenants:
                             agreement_state.tenants[user_id] = data.get("approved", False)
@@ -94,7 +106,7 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                                     )
                             else:
                                 logging.warning(f"Tenant {user_id} has rejected!")
-                                return False
+                                return ApprovalResult.REJECTED
 
                         elif user_id == agreement_state.owner_id:
                             agreement_state.owner_approved = data.get("approved", False)
@@ -117,7 +129,7 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                                     )
                             else:
                                 logging.warning("Owner has rejected!")
-                                return False
+                                return ApprovalResult.REJECTED
 
                     # Check if both parties have responded
                     if agreement_state.is_fully_approved() or template_agreement_state.is_fully_approved():
@@ -127,7 +139,7 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                             else "Agreement successfully approved by Owner and Tenants."
                         )
                         logging.info(message)
-                        return True
+                        return ApprovalResult.APPROVED
 
                 except asyncio.TimeoutError:
                     raise ApprovalTimeoutError(
@@ -138,10 +150,11 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
                     continue
     except websockets.exceptions.ConnectionClosed:
         logging.error("WebSocket connection closed unexpectedly")
-        return False
+        raise ConnectionClosedError("WebSocket connection closed unexpectedly")
     except websockets.exceptions.WebSocketException as e:
         logging.error(f"WebSocket error: {str(e)}")
-        return False
+        raise ConnectionClosedError(f"WebSocket error: {str(e)}")
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
-        return False
+        raise ConnectionClosedError(f"Unexpected error: {str(e)}")
+

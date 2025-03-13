@@ -1,3 +1,4 @@
+// rentagreement.tsx
 import {
   ActionIcon,
   Table,
@@ -41,11 +42,18 @@ export function RentAgreements() {
   };
 
   const getStatusColor = (status: string) => {
-    return status === "APPROVED"
-      ? COLORS.approval
-      : status === "PROCESSING"
-      ? COLORS.blue
-      : COLORS.red;
+    switch (status) {
+      case "APPROVED":
+        return COLORS.approval;
+      case "PROCESSING":
+        return COLORS.blue;
+      case "REJECTED":
+        return COLORS.red;
+      case "FAILED":
+        return COLORS.yellow;
+      default:
+        return COLORS.grayDark;
+    }
   };
 
   const paginatedData = agreements

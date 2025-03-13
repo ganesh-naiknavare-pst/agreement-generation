@@ -15,6 +15,7 @@ from services.image_sign_upload import (
 from database.connection import get_db
 from prisma import Prisma
 from auth.clerk_auth import requires_auth
+from prisma.enums import AgreementStatus
 
 router = APIRouter()
 approved_users = set()
@@ -29,7 +30,7 @@ async def approve_user(data: Data, request: Request, db: Prisma = Depends(get_db
         await image_and_sign_upload_for_template(data)
         await db.useragreementstatus.create(
             data={
-                "status": "APPROVED",
+                "status": AgreementStatus.APPROVED,
                 "agreementId": data.agreement_id,
                 "userId": data.user,
             }
@@ -38,7 +39,7 @@ async def approve_user(data: Data, request: Request, db: Prisma = Depends(get_db
         await image_and_sign_upload(data)
         await db.userrentagreementstatus.create(
             data={
-                "status": "APPROVED",
+                "status": AgreementStatus.APPROVED,
                 "agreementId": data.agreement_id,
                 "userId": data.user,
             }
@@ -46,7 +47,7 @@ async def approve_user(data: Data, request: Request, db: Prisma = Depends(get_db
 
     approved_users.add(data.user)
     response = {
-        "status": "approved",
+        "status": AgreementStatus.APPROVED,
         "user_id": data.user,
         "approved": True,
         "agreement_type": agreement_type,
@@ -63,7 +64,7 @@ async def reject_user(data: Data, request: Request, db: Prisma = Depends(get_db)
     if agreement_type == "rent":
         await db.userrentagreementstatus.create(
             data={
-                "status": "REJECTED",
+                "status": AgreementStatus.REJECTED,
                 "agreementId": data.agreement_id,
                 "userId": data.user,
             }
@@ -71,7 +72,7 @@ async def reject_user(data: Data, request: Request, db: Prisma = Depends(get_db)
     else:
         await db.useragreementstatus.create(
             data={
-                "status": "REJECTED",
+                "status": AgreementStatus.REJECTED,
                 "agreementId": data.agreement_id,
                 "userId": data.user,
             }
@@ -108,7 +109,7 @@ async def reject_user(data: Data, request: Request, db: Prisma = Depends(get_db)
         delete_template_file()
 
     response = {
-        "status": "rejected",
+        "status": AgreementStatus.REJECTED,
         "user_id": data.user,
         "approved": False,
         "agreement_type": agreement_type,

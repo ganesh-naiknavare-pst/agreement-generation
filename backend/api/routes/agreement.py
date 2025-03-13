@@ -3,6 +3,7 @@ from services.doc_agent import create_agreement_details, AgreementRequest
 from auth.clerk_auth import requires_auth
 from database.connection import get_db
 from prisma import Prisma
+from prisma.enums import AgreementStatus
 from services.template_doc_agent import (
     template_based_agreement,
     TemplateAgreementRequest,
@@ -28,6 +29,7 @@ async def create_agreement(
             "city": agreement.city,
             "rentAmount": agreement.rent_amount,
             "agreementPeriod": agreement.agreement_period,
+            "status": AgreementStatus.PROCESSING
         }
     )
 
@@ -67,7 +69,7 @@ async def create_template_based_agreement(
     )
     agreements = await db.templateagreement.create(
         data={
-            "status": "PROCESSING",
+            "status": AgreementStatus.PROCESSING,
         }
     )
 

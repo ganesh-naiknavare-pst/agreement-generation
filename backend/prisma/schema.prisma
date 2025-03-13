@@ -52,6 +52,7 @@ enum AgreementStatus {
   APPROVED
   PROCESSING
   REJECTED
+  FAILED
 }
 
 model TemplateAgreement {
