@@ -123,15 +123,16 @@ PENDING_APPROVAL_TEMPLATE = """
                     <tr>
                         <td style="padding: 20px; font-size: 16px; color: #333333; text-align: left; line-height: 1.5;">
                             <p>Hello,</p>
-                            <p>Please review and sign the attached {agreement_type} document.</p>
-                            <p>Click on one of the following links to approve or reject the agreement:</p>
-
-                            <!-- Button Section -->
+                            <p>Please proceed with the agreement.</p>
+                            <p>To proceed, please verify your identity by uploading your signature and photo.</p>
+                            <p>After uploading your signature and photo, you will be able to approve or reject the agreement.</p>
+                            
+                            <!-- Review Agreement Button -->
                             <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td align="center" style="padding: 10px;">
                                         <a href="{url}" style="background-color: #228be6; color: #ffffff; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
-                                            Approve Agreement
+                                            Click to Proceed
                                         </a>
                                     </td>
                                 </tr>
@@ -204,7 +205,11 @@ def format_agreement_details(
     start_date, end_date = agreement_period
     start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S.%f%z")
     end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S.%f%z")
-    num_months = (end_date_obj.year - start_date_obj.year) * 12 + end_date_obj.month - start_date_obj.month
+    num_months = (
+        (end_date_obj.year - start_date_obj.year) * 12
+        + end_date_obj.month
+        - start_date_obj.month
+    )
     return f"""
 Create a rental agreement with the following details:
 
