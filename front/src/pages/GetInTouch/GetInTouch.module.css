@@ -75,7 +75,6 @@
   }
   
   .control {
-    background-color: maroon;
     @media (max-width: $mantine-breakpoint-sm) {
       flex: 1;
     }
