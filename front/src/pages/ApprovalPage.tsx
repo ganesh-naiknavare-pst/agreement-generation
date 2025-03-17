@@ -19,7 +19,7 @@ import {
 } from "@mantine/core";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { COLORS } from "../colors";
-import useApprovalApi, { BackendEndpoints } from "../hooks/useAprrovalApi";
+import useApi, { BackendEndpoints } from "../hooks/useApi";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import ResponseCard from "../components/ResponseCard";
 import { useUserState } from "../hooks/useUserState";
@@ -51,13 +51,13 @@ const ApprovalPage = () => {
     fetchData: approveAgreement,
     loading: loadApprovedAgreement,
     data: approvedAgreement,
-  } = useApprovalApi<ApprovedUser>(BackendEndpoints.ApproveURL);
+  } = useApi<ApprovedUser>(BackendEndpoints.ApproveURL);
 
   const {
     fetchData: rejectAgreement,
     loading: loadRejectedAgreement,
     data: rejectedAgreement,
-  } = useApprovalApi<ApprovedUser>(BackendEndpoints.RejectURL);
+  } = useApi<ApprovedUser>(BackendEndpoints.RejectURL);
 
   const loading =
     loadApprovedAgreement ||
@@ -123,7 +123,7 @@ const ApprovalPage = () => {
     <>
       <Center>
         <Title order={2} c={COLORS.blue} mt={100} mb={40}>
-          Welcome to Agreement Agent
+          Approve or Reject Your Agreement
         </Title>
       </Center>
 
@@ -148,14 +148,10 @@ const ApprovalPage = () => {
           <Card shadow="md" p="lg" radius="md" withBorder>
             <Title order={3} mb="lg" >
               Agreement Approval Form
-              <Text size="md" c="dimmed" mb={5} mt={10}>
-                Please complete all the required fields in the form to submit the agreement.
-                You can approve or reject agreements based on your review.
-              </Text>
             </Title>
 
             <Divider my="sm" />
-            <Group justify="flex-start" mt="lg" mb={5}>
+            <Group justify="flex-start" mt="md" mb={5}>
               <Text size="sm" fw={500}>
                 Upload Your Signature{" "}
                 <Text component="span" c={COLORS.asteric}>*</Text>
