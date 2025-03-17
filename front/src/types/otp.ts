@@ -10,6 +10,7 @@ export interface BaseOtpState {
 export interface OtpState extends BaseOtpState {
   isVerified: boolean;
   isSent: boolean;
+  showResendButton: boolean;
 }
 
 // OTP state interface for tenant verification
@@ -33,7 +34,7 @@ export interface OTPInputProps {
   onSendOtp: () => void;
   onVerifyOtp: () => void;
   label?: string;
-  disabledSendOtp?: boolean; 
+  disabledSendOtp?: boolean;
 }
 
 // Default OTP state
@@ -44,6 +45,7 @@ export const getDefaultOtpState = (): OtpState => ({
   error: "",
   timer: 0,
   isCountdownActive: false,
+  showResendButton: false,
 });
 
 // Utility function to get updated OTP state on successful verification
