@@ -7,15 +7,17 @@ import {
   Textarea,
   TextInput,
   Center,
-  Box
+  Box,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { ContactIconsList } from "./ContactIcons";
 import classes from "./GetInTouch.module.css";
 import { COLORS } from "../../colors";
+import useApi, { BackendEndpoints } from "../../hooks/useApi";
 
 export function GetInTouch() {
   const fullNameRegex = /^[A-Za-z]+(?:[\s-][A-Za-z]+)+$/;
+  const { fetchData: sendMail } = useApi(BackendEndpoints.ContactUs);
 
   const form = useForm({
     mode: "controlled",
@@ -42,6 +44,18 @@ export function GetInTouch() {
     },
   });
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const requestData = {
+      email: form.values.email,
+      name: form.values.name,
+      subject: form.values.subject,
+      email_body: form.values.message,
+    };
+    await sendMail({ method: "POST", data: requestData });
+    form.reset();
+  };
+
   return (
     <Center style={{ height: "80vh" }}>
       <Paper radius="lg">
@@ -56,10 +70,7 @@ export function GetInTouch() {
             <ContactIconsList />
           </Box>
 
-          <form
-            className={classes.form}
-            onSubmit={form.onSubmit((values) => console.log(values))}
-          >
+          <form className={classes.form} onSubmit={handleSubmit}>
             <Text fz="lg" fw={700} className={classes.title}>
               Get in touch
             </Text>

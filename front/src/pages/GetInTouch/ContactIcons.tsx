@@ -9,6 +9,8 @@ interface ContactIconProps
   description: React.ReactNode;
 }
 
+const mailId = import.meta.env.VITE_CONTACT_MAIL;
+
 function ContactIcon({
   icon: Icon,
   title,
@@ -32,7 +34,7 @@ function ContactIcon({
 }
 
 const MOCKDATA = [
-  { title: "Email", description: "contact@positsource.com", icon: IconAt },
+  { title: "Email", description: mailId, icon: IconAt },
   { title: "Phone", description: "+91 (800) 335 35 35", icon: IconPhone },
   { title: "Address", description: "Baner, Pune", icon: IconMapPin },
   { title: "Working hours", description: "8 A.M. – 11 P.M.", icon: IconSun },
