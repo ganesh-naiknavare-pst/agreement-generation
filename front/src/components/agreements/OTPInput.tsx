@@ -1,6 +1,7 @@
 import { TextInput, Button, Box, Text, Loader } from "@mantine/core";
 import { OTPTimer } from "./OTPTimer";
 import { OTPInputProps } from "../../types/otp";
+import { COLORS } from "../../colors";
 
 export function OTPInput({
   otpState,
@@ -15,24 +16,24 @@ export function OTPInput({
     <Box mt="xs" mb="xs">
       {!otpState.isVerified && (
         <>
-          {!otpState.isSent && !otpState.showResendButton ? ( // Show "Send OTP" only if OTP not sent
+          {!otpState.isSent && !otpState.showResendButton ? (
             <Button onClick={onSendOtp} disabled={disabledSendOtp}>
               {loading ? (
-                <Loader color="rgba(255, 255, 255, 1)" size="xs" />
+                <Loader color={COLORS.otploadingcolor} size="xs" />
               ) : (
                 "Send OTP"
               )}
             </Button>
-          ) : otpState.showResendButton ? ( // Show "Resend OTP" after expiration
+          ) : otpState.showResendButton ? (
             <>
               {otpState.error && (
-                <Text size="sm" c="red" mt="xs">
+                <Text size="sm" c={COLORS.red} mt="xs">
                   {otpState.error}
                 </Text>
               )}
               <Button mt="xs" onClick={onSendOtp}>
                 {loading ? (
-                  <Loader color="rgba(255, 255, 255, 1)" size="xs" />
+                  <Loader color={COLORS.otploadingcolor} size="xs" />
                 ) : (
                   "Resend OTP"
                 )}
@@ -59,7 +60,7 @@ export function OTPInput({
               />
               <OTPTimer timer={otpState.timer} />
               {otpState.error && (
-                <Text size="sm" c="red" mt="xs">
+                <Text size="sm" c={COLORS.red} mt="xs">
                   {otpState.error}
                 </Text>
               )}
@@ -69,7 +70,7 @@ export function OTPInput({
                 mt="xs"
               >
                 {loading ? (
-                  <Loader color="rgba(255, 255, 255, 1)" size="xs" />
+                  <Loader color={COLORS.otploadingcolor} size="xs" />
                 ) : (
                   "Verify OTP"
                 )}
