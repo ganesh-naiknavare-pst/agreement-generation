@@ -49,6 +49,12 @@ export function AgreementGenerator() {
   );
   const [tenantsOtpState, setTenantsOtpState] = useState<TenantsOtpState>({});
 
+  const [loadingStates, setLoadingStates] = useState({
+    sendOwner: false,
+    verifyOwner: false,
+    tenants: {} as Record<number, { send: boolean; verify: boolean }>,
+  });
+
   const startOwnerCountdown = () => {
     if (ownerOtpState.isCountdownActive) return;
 
@@ -56,6 +62,9 @@ export function AgreementGenerator() {
       ...prev,
       isCountdownActive: true,
       timer: 300,
+      isSent: true,
+      showResendButton: false,
+      error: "",
     }));
 
     const timer = setInterval(() => {
@@ -67,6 +76,8 @@ export function AgreementGenerator() {
             isCountdownActive: false,
             otp: "",
             error: "OTP expired. Please request a new OTP.",
+            isSent: false,
+            showResendButton: true,
             timer: 0,
           };
         }
@@ -87,6 +98,9 @@ export function AgreementGenerator() {
         ...(prev[index] || getDefaultOtpState()),
         isCountdownActive: true,
         timer: 300,
+        isSent: true,
+        showResendButton: false,
+        error: "",
       },
     }));
 
@@ -99,6 +113,8 @@ export function AgreementGenerator() {
             [index]: {
               ...(prev[index] || getDefaultOtpState()),
               isCountdownActive: false,
+              isSent: false,
+              showResendButton: true,
               otp: "",
               error: "OTP expired. Please request a new OTP.",
               timer: 0,
@@ -153,6 +169,7 @@ export function AgreementGenerator() {
   }, [data]);
 
   const handleSendOTP = async () => {
+    setLoadingStates((prev) => ({ ...prev, sendOwner: true }));
     try {
       await sendOTP({
         method: "POST",
@@ -162,6 +179,7 @@ export function AgreementGenerator() {
         ...prev,
         isSent: true,
         error: "",
+        isCountdownActive: true,
       }));
       startOwnerCountdown();
     } catch (error) {
@@ -170,10 +188,13 @@ export function AgreementGenerator() {
         ...prev,
         error: "Failed to send OTP. Please try again.",
       }));
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, sendOwner: false }));
     }
   };
 
   const handleVerifyOTP = async () => {
+    setLoadingStates((prev) => ({ ...prev, verifyOwner: true }));
     try {
       await verifyOTP({
         method: "POST",
@@ -189,11 +210,19 @@ export function AgreementGenerator() {
         ...prev,
         error: "Error verifying OTP. Please try again.",
       }));
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, verifyOwner: false }));
     }
   };
 
   const handleSendTenantOTP = async (index: number) => {
-    console.log("Sending OTP to tenant:", form.values.tenants[index].email);
+    setLoadingStates((prev) => ({
+      ...prev,
+      tenants: {
+        ...prev.tenants,
+        [index]: { send: true, verify: prev.tenants[index]?.verify || false },
+      },
+    }));
     try {
       await sendOTP({
         method: "POST",
@@ -217,15 +246,28 @@ export function AgreementGenerator() {
           error: "Failed to send OTP. Please try again.",
         },
       }));
+    } finally {
+      setLoadingStates((prev) => ({
+        ...prev,
+        tenants: {
+          ...prev.tenants,
+          [index]: {
+            send: false,
+            verify: prev.tenants[index]?.verify || false,
+          },
+        },
+      }));
     }
   };
 
   const handleVerifyTenantOTP = async (index: number) => {
-    console.log(
-      `Verifying OTP for Tenant ${index + 1}:`,
-      tenantsOtpState[index]?.otp
-    );
-
+    setLoadingStates((prev) => ({
+      ...prev,
+      tenants: {
+        ...prev.tenants,
+        [index]: { send: prev.tenants[index]?.send || false, verify: true },
+      },
+    }));
     try {
       setOtpIndex(index);
       await verifyOTP({
@@ -243,6 +285,14 @@ export function AgreementGenerator() {
         [index]: {
           ...(prev[index] || getDefaultOtpState()),
           error: "Invalid OTP. Please enter the correct OTP.",
+        },
+      }));
+    } finally {
+      setLoadingStates((prev) => ({
+        ...prev,
+        tenants: {
+          ...prev.tenants,
+          [index]: { send: prev.tenants[index]?.send || false, verify: false },
         },
       }));
     }
@@ -434,7 +484,10 @@ export function AgreementGenerator() {
               style={{ textAlign: "start" }}
               {...form.getInputProps("ownerEmailAddress")}
               withAsterisk
-              disabled={ownerOtpState.isSent || ownerOtpState.isVerified}
+              disabled={
+                (ownerOtpState.isSent && ownerOtpState.isCountdownActive) ||
+                ownerOtpState.isVerified
+              }
               rightSection={
                 ownerOtpState.isVerified ? (
                   <ThemeIcon color="green" radius="xl" size="sm">
@@ -459,9 +512,10 @@ export function AgreementGenerator() {
               disabledSendOtp={
                 !form.values.ownerEmailAddress ||
                 !/^\S+@\S+\.\S+$/.test(form.values.ownerEmailAddress) ||
-                ownerOtpState.isSent ||
+                (ownerOtpState.isSent && ownerOtpState.isCountdownActive) || // Disable if OTP is active
                 ownerOtpState.isVerified
               }
+              loading={loadingStates.sendOwner || loadingStates.verifyOwner}
             />
           </Stepper.Step>
 
@@ -499,7 +553,8 @@ export function AgreementGenerator() {
                   {...form.getInputProps(`tenants.${index}.email`)}
                   withAsterisk
                   disabled={
-                    tenantsOtpState[index]?.isSent ||
+                    (tenantsOtpState[index]?.isSent &&
+                      tenantsOtpState[index]?.isCountdownActive) ||
                     tenantsOtpState[index]?.isVerified
                   }
                   rightSection={
@@ -528,8 +583,13 @@ export function AgreementGenerator() {
                   disabledSendOtp={
                     !form.values.tenants[index].email ||
                     !/^\S+@\S+\.\S+$/.test(form.values.tenants[index].email) ||
-                    tenantsOtpState[index]?.isSent ||
+                    (tenantsOtpState[index]?.isSent &&
+                      tenantsOtpState[index]?.isCountdownActive) ||
                     tenantsOtpState[index]?.isVerified
+                  }
+                  loading={
+                    loadingStates.tenants[index]?.send ||
+                    loadingStates.tenants[index]?.verify
                   }
                 />
               </Box>
