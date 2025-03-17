@@ -11,12 +11,12 @@ import { HomePage } from "./pages/HomePage";
 import { GetInTouch } from "./pages/GetInTouch/GetInTouch";
 import { AgreementGenerator } from "./pages/AgreementGenerator";
 import { AgreementsProvider } from "./hooks/useAgreements";
-import ApprovalPage from "./pages/ApprovalPage";
 import { UserProvider } from "./hooks/useUserState";
+import { ApprovalAppLayout } from "./layout/ApprovalLayout";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
-    <>
+    <Route>
       <Route element={<AuthGuard />}>
         <Route
           element={
@@ -26,20 +26,22 @@ export const router = createBrowserRouter(
           }
         >
           <Route index element={<Navigate to="home" replace />} />
+          <Route path="home" element={<HomePage />} />
+          <Route path="templates" element={<Templates />} />
+          <Route path="agreement-generator" element={<AgreementGenerator />} />
+          <Route path="contact-us" element={<GetInTouch />} />
+        </Route>
+        <Route>
           <Route
             path="review-agreement/:id/:agreementId"
             element={
               <UserProvider>
-                <ApprovalPage />
+                <ApprovalAppLayout />
               </UserProvider>
             }
           />
-          <Route path="home" element={<HomePage />} />
-          <Route path="templates" element={<Templates />} />
-          <Route path="agreement-generator" element={<AgreementGenerator />} />
         </Route>
       </Route>
-      <Route path="contact-us" element={<GetInTouch />} />
-    </>
+    </Route>
   )
 );

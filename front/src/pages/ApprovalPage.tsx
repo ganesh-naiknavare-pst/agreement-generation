@@ -14,6 +14,8 @@ import {
   Image,
   Alert,
   Loader,
+  Card,
+  Divider,
 } from "@mantine/core";
 import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { COLORS } from "../colors";
@@ -119,95 +121,85 @@ const ApprovalPage = () => {
 
   return (
     <>
-      <Center>
-        <Title order={2} c={COLORS.blue}>
-          Welcome to the AI Agreement Agent
-        </Title>
-      </Center>
+      {status !== "APPROVED" && status !== "REJECTED" && (
+        <Center>
+          <Title order={2} c={COLORS.blue} mt={100} mb={40}>
+            Welcome to Agreement Agent
+          </Title>
+        </Center>
+      )}
+
       {(showAlertForSign || showAlertForPhoto) && (
-        <Alert
-          m="1rem"
-          variant="light"
-          color="yellow"
-          title="Warning"
-          icon={<IconAlertTriangle />}
-        >
-          Please fill in required fields before proceeding.
+        <Alert mt="1rem" mx="auto" w="90%" maw={930} variant="light" color="yellow"
+          title="Action Required" icon={<IconAlertTriangle />}>
+          Please complete all required fields before proceeding.
+          <Text size="sm" variant="light" c="yellow">
+            Please upload your signature {isRentAgreement && "and a photo"} to proceed.
+          </Text>
         </Alert>
       )}
+
       {loading ? (
-        <Center>
+        <Center mt={50}>
           <Loader size="lg" />
         </Center>
       ) : agreement ? (
         <ResponseCard type={status ?? user?.status ?? ""} />
       ) : (
-        <Container>
-          <Group justify="flex-start" mt="xl" mb={5}>
-            <Text display="inline" size="sm" fw={500}>
-              Upload Your Signature{" "}
-              <Text component="span" c={COLORS.asteric}>
-                *
+        <Container size="md" mt={10} >
+          <Card shadow="md" p="lg" radius="md" withBorder>
+            <Title order={3} mb="lg" >
+              Agreement Approval Form
+              <Text size="md" c="dimmed" mb={5} mt={10}>
+                Please complete all the required fields in the form to submit the agreement.
+                You can approve or reject agreements based on your review.
               </Text>
-            </Text>
-          </Group>
-          <Dropzone
-            onDrop={(files) => handleSignatureUpload("signature", files)}
-            accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
-          >
-            <Group align="center" gap="md">
-              <IconUpload size={20} />
-              <Text>Drag a file here or click to upload</Text>
-            </Group>
-          </Dropzone>
-          {(form.errors.signature || form.errors.imageUrl) && (
-            <Text c="red" size="sm">
-              {form.errors.signature}
-            </Text>
-          )}
-          {form.values.signature && (
-            <Box mt="md">
+            </Title>
+
+            <Divider my="sm" />
+            <Group justify="flex-start" mt="md" mb={5}>
               <Text size="sm" fw={500}>
-                Uploaded Signature:
+                Upload Your Signature{" "}
+                <Text component="span" c={COLORS.asteric}>*</Text>
               </Text>
-              <Image
-                src={form.values.signature}
-                alt="Signature"
-                w="auto"
-                h={100}
-                fit="contain"
-              />
-            </Box>
-          )}
-          {isRentAgreement && (
-            <Group justify="flex-star" mt="xl">
-              <Text display="inline" size="sm" fw={500}>
-                Take a Picture to Upload{" "}
-                <Text component="span" c={COLORS.asteric}>
-                  *
-                </Text>
-              </Text>
-              <WebcamComponent
-                imageUrl={form.values.imageUrl}
-                setFieldValue={(value: string) => {
-                  form.setFieldValue("imageUrl", value as string);
-                  setShowAlertForPhoto(false);
-                }}
-              />
             </Group>
-          )}
-          <Flex justify="flex-end" gap={16} mt={16}>
-            <Button color="green" onClick={processApproval}>
-              Submit to Approve Agreement
-            </Button>
-            <Button color="red" onClick={processRejection}>
-              Reject Agreement
-            </Button>
-          </Flex>
+            <Dropzone onDrop={(files) => handleSignatureUpload("signature", files)}
+              accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}>
+              <Group align="center" gap="md">
+                <IconUpload size={20} />
+                <Text>Drag & drop or click to upload your signature.</Text>
+              </Group>
+            </Dropzone>
+            {form.values.signature && (
+              <Box mt="md">
+                <Text size="sm" fw={500}>Signature Preview:</Text>
+                <Image src={form.values.signature} alt="Signature" w="auto" h={100} fit="contain" />
+              </Box>
+            )}
+
+            {isRentAgreement && (
+              <Group justify="flex-start" mt="lg">
+                <Text size="sm" fw={500}>
+                  Capture a Photo for Verification{" "}
+                  <Text component="span" c={COLORS.asteric}>*</Text>
+                </Text>
+                <WebcamComponent imageUrl={form.values.imageUrl}
+                  setFieldValue={(value) => {
+                    form.setFieldValue("imageUrl", value);
+                    setShowAlertForPhoto(false);
+                  }}
+                />
+              </Group>
+            )}
+
+            <Flex justify="flex-end" gap="md" mt="xl">
+              <Button color="green" onClick={processApproval}>Approve Agreement</Button>
+              <Button color="red" onClick={processRejection}>Reject Agreement</Button>
+            </Flex>
+          </Card>
         </Container>
       )}
-    </>
-  );
+    </>);
 };
 
 export default ApprovalPage;
