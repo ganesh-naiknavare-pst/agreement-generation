@@ -10,31 +10,35 @@ import { Templates } from "./pages/Templates";
 import { HomePage } from "./pages/HomePage";
 import { AgreementGenerator } from "./pages/AgreementGenerator";
 import { AgreementsProvider } from "./hooks/useAgreements";
-import ApprovalPage from "./pages/ApprovalPage";
 import { UserProvider } from "./hooks/useUserState";
+import { ApprovalAppLayout } from "./layout/ApprovalLayout";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route element={<AuthGuard />}>
-      <Route
-        element={
-          <AgreementsProvider>
-            <AppLayout />
-          </AgreementsProvider>
-        }
-      >
-        <Route index element={<Navigate to="home" replace />} />
+    <Route>
+      <Route element={<AuthGuard />}>
         <Route
-          path="review-agreement/:id/:agreementId"
           element={
-            <UserProvider>
-              <ApprovalPage />
-            </UserProvider>
+            <AgreementsProvider>
+              <AppLayout />
+            </AgreementsProvider>
           }
-        />
-        <Route path="home" element={<HomePage />} />
-        <Route path="templates" element={<Templates />} />
-        <Route path="agreement-generator" element={<AgreementGenerator />} />
+        >
+          <Route index element={<Navigate to="home" replace />} />
+          <Route path="home" element={<HomePage />} />
+          <Route path="templates" element={<Templates />} />
+          <Route path="agreement-generator" element={<AgreementGenerator />} />
+        </Route>
+        <Route>
+          <Route
+            path="review-agreement/:id/:agreementId"
+            element={
+              <UserProvider>
+                <ApprovalAppLayout />
+              </UserProvider>
+            }
+          />
+        </Route>
       </Route>
     </Route>
   )
