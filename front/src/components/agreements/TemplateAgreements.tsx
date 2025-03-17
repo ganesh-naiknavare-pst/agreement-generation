@@ -46,8 +46,14 @@ export function TemplateAgreements() {
     switch (status) {
       case "APPROVED":
         return COLORS.approval;
+      case "PROCESSING":
+        return COLORS.blue;
       case "REJECTED":
         return COLORS.red;
+      case "FAILED":
+        return COLORS.yellow;
+      default:
+        return COLORS.grayDark;
     }
   };
 

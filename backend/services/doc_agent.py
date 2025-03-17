@@ -2,7 +2,12 @@ import logging
 import shutil
 import os
 from helpers.email_helper import send_email_with_attachment
-from helpers.websocket_helper import listen_for_approval, ApprovalTimeoutError
+from helpers.websocket_helper import (
+    listen_for_approval,
+    ApprovalTimeoutError,
+    ConnectionClosedError,
+    ApprovalResult,
+)
 from langchain.agents import initialize_agent, Tool, AgentType
 from helpers.rent_agreement_generator import create_pdf, agreement_state
 from helpers.rent_agreement_generator import llm, memory, graph
@@ -18,6 +23,7 @@ import base64
 from prisma import Base64
 from langchain_core.prompts.prompt import PromptTemplate
 from prompts import template
+from prisma.enums import AgreementStatus
 
 logging.basicConfig(level=logging.INFO)
 
@@ -159,6 +165,10 @@ async def create_agreement_details(
         try:
             response = generate_agreement_with_retry(agreement_details)
         except Exception as e:
+            await db.agreement.update(
+                where={"id": agreement_id},
+                data={"status": AgreementStatus.FAILED},
+            )
             raise HTTPException(
                 status_code=500,
                 detail=f"Error generating agreement after {MAX_RETRIES} attempts: {str(e)}",
@@ -179,10 +189,11 @@ async def create_agreement_details(
             delete_temp_file()
             try:
                 # Wait for approvals
-                approved = await listen_for_approval(
+                approval_result = await listen_for_approval(
                     timeout_seconds=300, is_template=False
                 )
-                if approved:
+
+                if approval_result == ApprovalResult.APPROVED:
                     # Mark as approved and generate final PDF with signatures
                     agreement_state.owner_approved = True
                     for tenant_id in agreement_state.tenants:
@@ -203,7 +214,7 @@ async def create_agreement_details(
                         pdf_base64 = Base64.encode(pdf_file.read())
                     await db.agreement.update(
                         where={"id": agreement_id},
-                        data={"pdf": pdf_base64, "status": "APPROVED"},
+                        data={"pdf": pdf_base64, "status": AgreementStatus.APPROVED},
                     )
                     delete_temp_file()
                     if os.path.exists("./utils"):
@@ -212,21 +223,54 @@ async def create_agreement_details(
                     return {
                         "message": "Final signed agreement with signatures sent to all parties!"
                     }
-                else:
+                elif approval_result == ApprovalResult.REJECTED:
+                    # If explicitly rejected
                     await db.agreement.update(
                         where={"id": agreement_id},
-                        data={"status": "REJECTED"},
+                        data={"status": AgreementStatus.REJECTED},
                     )
+                    delete_temp_file()
+                    if os.path.exists("./utils"):
+                        shutil.rmtree("./utils")
+                    agreement_state.reset()
+                    return {"message": "Agreement was rejected by one or more parties."}
+                else:
+                    # ApprovalResult.CONNECTION_CLOSED
+                    await db.agreement.update(
+                        where={"id": agreement_id},
+                        data={"status": AgreementStatus.FAILED},
+                    )
+                    delete_temp_file()
+                    if os.path.exists("./utils"):
+                        shutil.rmtree("./utils")
+                    agreement_state.reset()
                     return {
-                        "message": "Agreement was rejected or approval process failed."
+                        "message": "Agreement process failed due to connection issues."
                     }
-            except ApprovalTimeoutError:
+            except ConnectionClosedError as e:
+                # Update status to FAILED on connection closed
+                await db.agreement.update(
+                    where={"id": agreement_id},
+                    data={"status": AgreementStatus.FAILED},
+                )
+                delete_temp_file()
+                if os.path.exists("./utils"):
+                    shutil.rmtree("./utils")
+                agreement_state.reset()
                 return {
-                    "message": "Approval process timed out. Please try again later."
+                    "message": f"Agreement process failed: Connection closed unexpectedly"
                 }
         else:
+            await db.agreement.update(
+                where={"id": agreement_id},
+                data={"status": AgreementStatus.FAILED},
+            )
             return {"message": "Error sending initial agreement emails."}
     except Exception as e:
+        await db.agreement.update(
+            where={"id": agreement_id},
+            data={"status": AgreementStatus.FAILED},
+        )
         raise HTTPException(
             status_code=500, detail=f"An unexpected error occurred: {str(e)}"
         )
