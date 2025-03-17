@@ -3,3 +3,10 @@ export enum PageTitle {
   Templates = "Templates",
   AgreementGenerator = "Agreement Generator",
 }
+
+export enum AgreementStatus {
+  APPROVED = "APPROVED",
+  PROCESSING = "PROCESSING",
+  REJECTED = "REJECTED",
+  FAILED = "FAILED"
+}
