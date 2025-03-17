@@ -9,7 +9,7 @@ EMAIL_TEMPLATE = """
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>New Message from {name}</title>
+        <title>New Issue/Feedback From {name}</title>
     </head>
     <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4; text-align: center;">
         <table role="presentation" width="100%" bgcolor="#f4f4f4" cellpadding="0" cellspacing="0" border="0">
@@ -20,7 +20,7 @@ EMAIL_TEMPLATE = """
                         <!-- Header -->
                         <tr>
                             <td bgcolor="#007bff" style="padding: 15px; font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; border-radius: 8px 8px 0 0;">
-                                New Message from {name}
+                            New Issue/Feedback from {name}
                             </td>
                         </tr>
 
@@ -28,10 +28,10 @@ EMAIL_TEMPLATE = """
                         <tr>
                             <td style="padding: 20px; font-size: 16px; color: #333333; text-align: left; line-height: 1.5;">
                                 <p>Hello,</p>
-                                <p>You have received a new message from:</p>
-                                <p><strong>Sender's Name:</strong> {name}</p>
-                                <p><strong>Sender's Email:</strong> {email}</p>
-                                <p><strong>Message:</strong><br>{email_body}</p>
+                                <p>You have received a new issue/feedback from:</p>
+                                <p><strong>Requestor Name:</strong> {name}</p>
+                                <p><strong>Requestor Email:</strong> {email}</p>
+                                <p><strong>Issue/Feedback Details:</strong><br>{email_body}</p>
                                 <p>Best regards,</p>
                                 <p><strong>Agreement Agent Team</strong></p>
                             </td>
