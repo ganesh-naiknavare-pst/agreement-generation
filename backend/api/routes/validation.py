@@ -2,14 +2,13 @@ from fastapi import APIRouter, HTTPException, Request
 import base64
 import os
 import random
-from auth.clerk_auth import requires_auth
 from helpers.state_manager import agreement_state
 from helpers.image_validation import are_faces_different, validate_uploaded_image
 
 router = APIRouter()
 
+
 @router.post("/validate-image")
-@requires_auth
 async def validate_image(request: Request):
     data = await request.json()
     image_url = data.get("image_url")
@@ -25,7 +24,10 @@ async def validate_image(request: Request):
         file_ext = "png"
         image_url = image_url.replace("data:image/png;base64,", "")
     else:
-        raise HTTPException(status_code=400, detail="Invalid image format. Only JPEG and PNG are supported.")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid image format. Only JPEG and PNG are supported.",
+        )
 
     save_dir = "./utils"
     os.makedirs(save_dir, exist_ok=True)
@@ -43,8 +45,9 @@ async def validate_image(request: Request):
     if agreement_state.owner_photo:
         image_paths.append(agreement_state.owner_photo)
     if agreement_state.tenant_photos:
-        image_paths.extend(photo for photo in agreement_state.tenant_photos.values() if photo)
-
+        image_paths.extend(
+            photo for photo in agreement_state.tenant_photos.values() if photo
+        )
 
     image_paths.append(photo_path)
 

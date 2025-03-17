@@ -17,7 +17,7 @@ import {
   IconCircleCheck,
 } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
-import useApi, { BackendEndpoints } from "../../hooks/useApi";
+import useApprovalApi, { BackendEndpoints } from "../../hooks/useAprrovalApi";
 
 interface WebcamComponentProps {
   imageUrl: string;
@@ -45,7 +45,7 @@ function WebcamComponent({
   const [buttonLoading, setButtonLoading] = useState<boolean>(false);
 
   const { fetchData: validateCapturedImage, data: validationResponce } =
-    useApi<ValidationData>(BackendEndpoints.ValidateImage);
+    useApprovalApi<ValidationData>(BackendEndpoints.ValidateImage);
 
   useEffect(() => {
     if (validationResponce) {

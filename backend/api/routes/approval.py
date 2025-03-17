@@ -14,7 +14,6 @@ from services.image_sign_upload import (
 )
 from database.connection import get_db
 from prisma import Prisma
-from auth.clerk_auth import requires_auth
 
 router = APIRouter()
 approved_users = set()
@@ -22,7 +21,6 @@ rejected_users = set()
 
 
 @router.post("/approve")
-@requires_auth
 async def approve_user(data: Data, request: Request, db: Prisma = Depends(get_db)):
     agreement_type = data.agreement_type
     if agreement_type == "template":
@@ -56,7 +54,6 @@ async def approve_user(data: Data, request: Request, db: Prisma = Depends(get_db
 
 
 @router.post("/reject")
-@requires_auth
 async def reject_user(data: Data, request: Request, db: Prisma = Depends(get_db)):
     rejected_users.add(data.user)
     agreement_type = data.agreement_type
