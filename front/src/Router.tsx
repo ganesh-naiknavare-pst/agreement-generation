@@ -29,16 +29,16 @@ export const router = createBrowserRouter(
           <Route path="templates" element={<Templates />} />
           <Route path="agreement-generator" element={<AgreementGenerator />} />
         </Route>
-      </Route>
-      <Route>
-        <Route
-          path="review-agreement/:id/:agreementId"
-          element={
-            <UserProvider>
-              <ApprovalAppLayout />
-            </UserProvider>
-          }
-        />
+        <Route>
+          <Route
+            path="review-agreement/:id/:agreementId"
+            element={
+              <UserProvider>
+                <ApprovalAppLayout />
+              </UserProvider>
+            }
+          />
+        </Route>
       </Route>
     </Route>
   )

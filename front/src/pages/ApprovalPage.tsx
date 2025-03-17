@@ -121,11 +121,13 @@ const ApprovalPage = () => {
 
   return (
     <>
-      <Center>
-        <Title order={2} c={COLORS.blue} mt={100} mb={40}>
-          Approve or Reject Your Agreement
-        </Title>
-      </Center>
+      {status !== "APPROVED" && status !== "REJECTED" && (
+        <Center>
+          <Title order={2} c={COLORS.blue} mt={100} mb={40}>
+            Welcome to Agreement Agent
+          </Title>
+        </Center>
+      )}
 
       {(showAlertForSign || showAlertForPhoto) && (
         <Alert mt="1rem" mx="auto" w="90%" maw={930} variant="light" color="yellow"
@@ -148,6 +150,10 @@ const ApprovalPage = () => {
           <Card shadow="md" p="lg" radius="md" withBorder>
             <Title order={3} mb="lg" >
               Agreement Approval Form
+              <Text size="md" c="dimmed" mb={5} mt={10}>
+                Please complete all the required fields in the form to submit the agreement.
+                You can approve or reject agreements based on your review.
+              </Text>
             </Title>
 
             <Divider my="sm" />
