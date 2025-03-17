@@ -6,7 +6,7 @@ from langgraph.graph import StateGraph, START, END
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from helpers.state_manager import State, template_agreement_state
-from helpers.agreement_generator_helper import extract_text_from_pdf
+from helpers.agreement_generator_helper import extract_text_from_pdf, extract_fonts, create_pdf_file
 from prompts import SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER, USER_PROMPT_FOR_SIGNATURE_PLACEHOLDER, SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION
 import os
 
@@ -42,6 +42,9 @@ def generate_agreement(state: State):
         return {"messages": template_agreement_state.agreement_text}
 
     template_chunks = extract_text_from_pdf(template_agreement_state.template_file_path)
+    font_name, font_file = extract_fonts(template_agreement_state.template_file_path)
+    template_agreement_state.pdf_font_name = font_name
+    template_agreement_state.pdf_font_file = font_file
 
     generated_text = ""
     for chunk in template_chunks:
@@ -70,10 +73,8 @@ def create_pdf(state: State):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
     temp_pdf_path = temp_pdf.name
+    create_pdf_file(content, template_agreement_state.pdf_font_name, template_agreement_state.pdf_font_file, temp_pdf_path)
 
-    pypandoc.convert_text(
-        content, "pdf", "md", encoding="utf-8", outputfile=temp_pdf_path
-    )
     template_agreement_state.pdf_file_path = temp_pdf_path
     return {"messages": content}
 
@@ -110,7 +111,7 @@ def update_pdf_with_signatures():
 
     # Convert updated content to PDF
     temp_pdf_path = template_agreement_state.pdf_file_path
-    pypandoc.convert_text(content, "pdf", format="md", outputfile=temp_pdf_path)
+    create_pdf_file(content, template_agreement_state.pdf_font_name, template_agreement_state.pdf_font_file, temp_pdf_path)
 
 # Build graph
 graph_builder = StateGraph(State)
