@@ -16,27 +16,15 @@ def extract_text_from_pdf(pdf_path, chunk_size=1000):
 
     return chunks
 
-def find_font_file(font_name):
-    font_extensions = (".ttf", ".otf")  # Common font file extensions
-
-    # Define common font directories per OS
-    common_paths = {
-        "Linux": ["/usr/share/fonts", "/usr/local/share/fonts", os.path.expanduser("~/.fonts")],
-        "Darwin": ["/System/Library/Fonts", os.path.expanduser("~/Library/Fonts")],
-        "Windows": [r"C:\Windows\Fonts"]
-    }
-
-    system_platform = platform.system()
-    search_paths = common_paths.get(system_platform, [])
-
-    # Search for the font in each directory
-    for path in search_paths:
-        if os.path.exists(path):
-            for root, _, files in os.walk(path):
-                for file in files:
-                    if file.lower().startswith(font_name.lower()) and file.lower().endswith(font_extensions):
-                        return os.path.join(root, file)
-
+def find_font_file(font_name, fonts_dir="fonts"):
+    """Searches for a font file in the project-specific fonts directory."""
+    font_extensions = (".ttf", ".otf")
+    
+    for root, _, files in os.walk(fonts_dir):
+        for file in files:
+            if file.lower().startswith(font_name.lower()) and file.lower().endswith(font_extensions):
+                return os.path.join(root, file)
+    
     return None
 
 def extract_fonts(pdf_path):
@@ -58,7 +46,7 @@ def extract_fonts(pdf_path):
         font_file = find_font_file(font_name)
         return font_name, font_file
     else:
-        return "helv", None
+        return "Helvetica", None
 
 def create_pdf_file(content, font_name="Helvetica", font_file=None, output_pdf_path="output.pdf"):
     doc = SimpleDocTemplate(output_pdf_path, pagesize=A4)
