@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Stepper,
   Button,
@@ -54,6 +54,7 @@ export function AgreementGenerator() {
     verifyOwner: false,
     tenants: {} as Record<number, { send: boolean; verify: boolean }>,
   });
+  const ownerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const startOwnerCountdown = () => {
     if (ownerOtpState.isCountdownActive) return;
@@ -66,11 +67,10 @@ export function AgreementGenerator() {
       showResendButton: false,
       error: "",
     }));
-
-    const timer = setInterval(() => {
+    ownerTimerRef.current = setInterval(() => {
       setOwnerOtpState((prev) => {
         if (prev.timer <= 1) {
-          clearInterval(timer);
+          clearInterval(ownerTimerRef.current!);
           return {
             ...prev,
             isCountdownActive: false,
@@ -88,6 +88,9 @@ export function AgreementGenerator() {
       });
     }, 1000);
   };
+  const tenantTimersRef = useRef<
+    Record<number, ReturnType<typeof setInterval> | null>
+  >({});
 
   const startTenantCountdown = (index: number) => {
     if (tenantsOtpState[index]?.isCountdownActive) return;
@@ -104,10 +107,10 @@ export function AgreementGenerator() {
       },
     }));
 
-    const timer = setInterval(() => {
+    tenantTimersRef.current[index] = setInterval(() => {
       setTenantsOtpState((prev) => {
         if (prev[index]?.timer <= 1) {
-          clearInterval(timer);
+          clearInterval(tenantTimersRef.current[index]!);
           return {
             ...prev,
             [index]: {
@@ -485,7 +488,10 @@ export function AgreementGenerator() {
               {...form.getInputProps("ownerEmailAddress")}
               withAsterisk
               onChange={(event) => {
-                form.setFieldValue("ownerEmailAddress", event.currentTarget.value);
+                form.setFieldValue(
+                  "ownerEmailAddress",
+                  event.currentTarget.value
+                );
                 setOwnerOtpState(getDefaultOtpState());
               }}
               disabled={
@@ -556,7 +562,10 @@ export function AgreementGenerator() {
                   style={{ textAlign: "start" }}
                   {...form.getInputProps(`tenants.${index}.email`)}
                   onChange={(event) => {
-                    form.setFieldValue(`tenants.${index}.email`, event.currentTarget.value);
+                    form.setFieldValue(
+                      `tenants.${index}.email`,
+                      event.currentTarget.value
+                    );
                     setTenantsOtpState((prev) => ({
                       ...prev,
                       [index]: getDefaultOtpState(),
@@ -705,6 +714,13 @@ export function AgreementGenerator() {
                         setActive(0);
                         setShowMessage(false);
                         setIsSubmitting(false);
+
+                        if (ownerTimerRef.current)
+                          clearInterval(ownerTimerRef.current);
+                        Object.values(tenantTimersRef.current).forEach(
+                          (timer) => (timer ? clearInterval(timer) : null)
+                        );
+
                         setOwnerOtpState(getDefaultOtpState());
                         setTenantsOtpState({});
                       }}

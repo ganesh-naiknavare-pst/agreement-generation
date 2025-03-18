@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Group,
   Button,
@@ -67,6 +67,10 @@ export function Templates() {
   const [participantsOtpState, setParticipantsOtpState] = useState<OtpState>(
     getDefaultOtpState()
   );
+  const countdownTimers = useRef<{
+    authority?: ReturnType<typeof setInterval>;
+    participants?: ReturnType<typeof setInterval>;
+  }>({});
 
   const startCountdown = (type: "authority" | "participants") => {
     const setState =
@@ -85,10 +89,10 @@ export function Templates() {
       error: "",
     }));
 
-    const timer = setInterval(() => {
+    countdownTimers.current[type] = setInterval(() => {
       setState((prev) => {
         if (prev.timer <= 1) {
-          clearInterval(timer);
+          clearInterval(countdownTimers.current[type]);
           return {
             ...prev,
             isCountdownActive: false,
@@ -354,6 +358,8 @@ export function Templates() {
                   form.reset();
                   setFile(null);
                   setDisplayBanner(false);
+                  clearInterval(countdownTimers.current["authority"]);
+                  clearInterval(countdownTimers.current["participants"]);
                   setAuthorityOtpState(getDefaultOtpState());
                   setParticipantsOtpState(getDefaultOtpState());
                 }}
@@ -443,7 +449,10 @@ export function Templates() {
               {...form.getInputProps("participantsEmail")}
               withAsterisk
               onChange={(event) => {
-                form.setFieldValue("participantsEmail", event.currentTarget.value);
+                form.setFieldValue(
+                  "participantsEmail",
+                  event.currentTarget.value
+                );
                 setParticipantsOtpState(getDefaultOtpState());
               }}
               disabled={

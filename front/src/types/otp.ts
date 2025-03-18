@@ -56,6 +56,7 @@ export const getSuccessOtpState = (prevState: OtpState): OtpState => ({
   otp: "",
   error: "",
   isCountdownActive: false,
+  showResendButton: false,
 });
 
 // Utility function to get updated OTP state on verification failure
