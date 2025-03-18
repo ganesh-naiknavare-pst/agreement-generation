@@ -8,6 +8,7 @@ import { AuthGuard } from "./components/authentication/authGuard";
 import { AppLayout } from "./layout/AppLayout";
 import { Templates } from "./pages/Templates";
 import { HomePage } from "./pages/HomePage";
+import { GetInTouch } from "./pages/GetInTouch/GetInTouch";
 import { AgreementGenerator } from "./pages/AgreementGenerator";
 import { AgreementsProvider } from "./hooks/useAgreements";
 import { UserProvider } from "./hooks/useUserState";
@@ -28,6 +29,7 @@ export const router = createBrowserRouter(
           <Route path="home" element={<HomePage />} />
           <Route path="templates" element={<Templates />} />
           <Route path="agreement-generator" element={<AgreementGenerator />} />
+          <Route path="contact-us" element={<GetInTouch />} />
         </Route>
         <Route>
           <Route

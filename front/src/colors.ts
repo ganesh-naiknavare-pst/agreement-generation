@@ -11,5 +11,6 @@ export const COLORS = {
   loadingColor: "#228be6",
   yellow: "#de9351",
   asteric: "#e03130",
-  otploadingcolor:"rgba(255, 255, 255, 1)",
+  otploadingcolor: "rgba(255, 255, 255, 1)",
+  white: "#fff",
 };
