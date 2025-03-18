@@ -72,6 +72,6 @@ def send_email(email: str, email_body: str, subject: str, name: str):
     response = requests.post(SMTP2GO_EMAIL_SEND_URL, headers=headers, json=payload)
 
     if response.status_code == 200:
-        logging.info(f"Email sent successfully to {email}")
+        logging.info(f"Email sent successfully to {CONTACT_MAIL}")
     else:
-        logging.info(f"Failed to send email to {email}: {response.text}")
+        logging.info(f"Failed to send email to {CONTACT_MAIL}: {response.text}")

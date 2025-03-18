@@ -36,7 +36,11 @@ export function GetInTouch() {
           ? "Full name must include at least a first name and a surname"
           : null,
       email: (value) =>
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? null : "Invalid email",
+        /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/.test(
+          value
+        )
+          ? null
+          : "Invalid email",
       subject: (value) =>
         value.trim().length === 0 ? "Subject is required" : null,
       message: (value) =>
@@ -75,7 +79,7 @@ export function GetInTouch() {
               className={classes.contacts}
               style={{ backgroundColor: COLORS.blue }}
             >
-              <Text fz="lg" fw={700} className={classes.title} c="#fff">
+              <Text fz="lg" fw={700} className={classes.title} c={COLORS.white}>
                 Contact Information
               </Text>
               <ContactIconsList />
