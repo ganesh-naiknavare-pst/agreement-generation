@@ -1,11 +1,11 @@
 import platform
 import fitz
 import os
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import Paragraph, SimpleDocTemplate
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 def extract_text_from_pdf(pdf_path, chunk_size=1000):
     """Extracts text from a PDF file and returns it in manageable chunks."""
@@ -59,13 +59,6 @@ def extract_fonts(pdf_path):
         return font_name, font_file
     else:
         return "helv", None
-
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
-import os
 
 def create_pdf_file(content, font_name="Helvetica", font_file=None, output_pdf_path="output.pdf"):
     doc = SimpleDocTemplate(output_pdf_path, pagesize=A4)
