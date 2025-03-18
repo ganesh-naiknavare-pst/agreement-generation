@@ -3,7 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import cx from "clsx";
 import classes from "./TableOfContents.module.css";
 import { PageTitle } from "../../types";
-import { IconHome, IconTemplate, IconFileSettings } from "@tabler/icons-react";
+import { IconHome, IconTemplate, IconFileSettings, IconMail } from "@tabler/icons-react";
 import { useState } from "react";
 
 export type SidebarItem = {
@@ -42,6 +42,13 @@ export const SIDEBAR_ITEMS: SidebarItem[] = [
     position: "top",
     icon: IconFileSettings,
     order: 3,
+  },
+  {
+    path: "contact-us",
+    name: PageTitle.Contact,
+    position: "top",
+    icon: IconMail,
+    order: 4,
   },
 ];
 

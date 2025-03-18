@@ -14,6 +14,7 @@ export enum BackendEndpoints {
   ValidateImage = "validate-image",
   GetRentAgreementUser = "rent-agreement-user",
   GetTemplateAgreementUSer = "template-agreement-user",
+  ContactUs = "contact-us",
 }
 
 interface ApiResponse<T> {

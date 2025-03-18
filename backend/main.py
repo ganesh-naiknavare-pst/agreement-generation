@@ -5,6 +5,7 @@ from api.routes.approval import router as approval_router
 from api.routes.agreement import router as agreement_router
 from api.routes.user import router as user_router
 from api.routes.validation import router as image_validation_router
+from api.routes.contact_us import router as contact_router
 import uvicorn
 import os
 from contextlib import asynccontextmanager
@@ -39,6 +40,7 @@ app.include_router(approval_router)
 app.include_router(agreement_router)
 app.include_router(user_router)
 app.include_router(image_validation_router)
+app.include_router(contact_router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
