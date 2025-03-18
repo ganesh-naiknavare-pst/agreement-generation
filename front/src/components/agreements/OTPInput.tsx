@@ -1,6 +1,7 @@
-import { TextInput, Button, Box, Text } from "@mantine/core";
+import { TextInput, Button, Box, Text, Loader } from "@mantine/core";
 import { OTPTimer } from "./OTPTimer";
 import { OTPInputProps } from "../../types/otp";
+import { COLORS } from "../../colors";
 
 export function OTPInput({
   otpState,
@@ -9,62 +10,71 @@ export function OTPInput({
   onVerifyOtp,
   label = "Enter OTP",
   disabledSendOtp = false,
-}: OTPInputProps) {
+  loading = false,
+}: OTPInputProps & { loading?: boolean }) {
   return (
     <Box mt="xs" mb="xs">
       {!otpState.isVerified && (
         <>
-          {!otpState.isSent ? (
+          {!otpState.isSent && !otpState.showResendButton ? (
             <Button onClick={onSendOtp} disabled={disabledSendOtp}>
-              Send OTP
+              {loading ? (
+                <Loader color={COLORS.otploadingcolor} size="xs" />
+              ) : (
+                "Send OTP"
+              )}
             </Button>
+          ) : otpState.showResendButton ? (
+            <>
+              {otpState.error && (
+                <Text size="sm" c={COLORS.red} mt="xs">
+                  {otpState.error}
+                </Text>
+              )}
+              <Button mt="xs" onClick={onSendOtp}>
+                {loading ? (
+                  <Loader color={COLORS.otploadingcolor} size="xs" />
+                ) : (
+                  "Resend OTP"
+                )}
+              </Button>
+            </>
           ) : (
             <>
-              {otpState.timer > 0 ? (
-                <>
-                  <TextInput
-                    label={label}
-                    placeholder="Enter OTP received"
-                    value={otpState.otp}
-                    onChange={(e) => {
-                      const value = e.currentTarget.value;
-                      if (/^\d{0,6}$/.test(value)) {
-                        onOtpChange(value);
-                      }
-                    }}
-                    withAsterisk
-                    error={
-                      otpState.otp.length > 0 && otpState.otp.length !== 6
-                        ? "OTP must be exactly 6 digits"
-                        : ""
-                    }
-                  />
-                  <OTPTimer timer={otpState.timer} />
-                  {otpState.error && (
-                    <Text size="sm" c="red" mt="xs">
-                      {otpState.error}
-                    </Text>
-                  )}
-                  <Button
-                    onClick={onVerifyOtp}
-                    disabled={otpState.otp.length !== 6}
-                    mt="xs"
-                  >
-                    Verify OTP
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {otpState.error && (
-                    <Text size="sm" c="red">
-                      {otpState.error}
-                    </Text>
-                  )}
-                  <Button mt="xs" onClick={onSendOtp}>
-                    Resend OTP
-                  </Button>
-                </>
+              <TextInput
+                label={label}
+                placeholder="Enter OTP received"
+                value={otpState.otp}
+                onChange={(e) => {
+                  const value = e.currentTarget.value;
+                  if (/^\d{0,6}$/.test(value)) {
+                    onOtpChange(value);
+                  }
+                }}
+                withAsterisk
+                error={
+                  otpState.otp.length > 0 && otpState.otp.length !== 6
+                    ? "OTP must be exactly 6 digits"
+                    : ""
+                }
+              />
+              <OTPTimer timer={otpState.timer} />
+              {otpState.error && (
+                <Text size="sm" c={COLORS.red} mt="xs">
+                  {otpState.error}
+                </Text>
               )}
+              <Button
+                onClick={onVerifyOtp}
+                disabled={otpState.otp.length !== 6}
+                mt="xs"
+              >
+                {loading ? (
+                  <Loader color={COLORS.otploadingcolor} size="xs" />
+                ) : (
+                  "Verify OTP"
+                )}
+              </Button>
             </>
           )}
         </>

@@ -43,6 +43,13 @@ export function Templates() {
   const [showAlert, setShowAlert] = useState(false);
   const { fetchTemplateAgreements } = useAgreements();
 
+  const [loadingStates, setLoadingStates] = useState({
+    sendAuthority: false,
+    sendParticipants: false,
+    verifyAuthority: false,
+    verifyParticipants: false,
+  });
+
   const handleDrop = (field: string, files: File[]) => {
     setFile(files[0]);
     form.setFieldValue(field, files[0]);
@@ -73,6 +80,9 @@ export function Templates() {
       ...prev,
       isCountdownActive: true,
       timer: 300,
+      isSent: true,
+      showResendButton: false,
+      error: "",
     }));
 
     const timer = setInterval(() => {
@@ -83,6 +93,8 @@ export function Templates() {
             ...prev,
             isCountdownActive: false,
             timer: 0,
+            isSent: false,
+            showResendButton: true,
             otp: "",
             error: "OTP expired. Please request a new OTP.",
           };
@@ -96,6 +108,11 @@ export function Templates() {
   };
 
   const handleSendOTP = async (type: "authority" | "participants") => {
+    setLoadingStates((prev) => ({
+      ...prev,
+      [type === "authority" ? "sendAuthority" : "sendParticipants"]: true,
+    }));
+
     try {
       const email =
         type === "authority"
@@ -131,10 +148,20 @@ export function Templates() {
           error: "Failed to send OTP.",
         }));
       }
+    } finally {
+      setLoadingStates((prev) => ({
+        ...prev,
+        [type === "authority" ? "sendAuthority" : "sendParticipants"]: false,
+      }));
     }
   };
 
   const handleVerifyOTP = async (type: "authority" | "participants") => {
+    setLoadingStates((prev) => ({
+      ...prev,
+      [type === "authority" ? "verifyAuthority" : "verifyParticipants"]: true,
+    }));
+
     try {
       const email =
         type === "authority"
@@ -146,6 +173,12 @@ export function Templates() {
       await verifyOTP({ method: "POST", data: { email, otp, type } });
     } catch (error) {
       console.error("Error verifying OTP:", error);
+    } finally {
+      setLoadingStates((prev) => ({
+        ...prev,
+        [type === "authority" ? "verifyAuthority" : "verifyParticipants"]:
+          false,
+      }));
     }
   };
 
@@ -237,7 +270,6 @@ export function Templates() {
       console.error("Error processing template:", error);
     }
   };
-
 
   return (
     <>
@@ -363,7 +395,9 @@ export function Templates() {
               {...form.getInputProps("authorityEmail")}
               withAsterisk
               disabled={
-                authorityOtpState.isSent || authorityOtpState.isVerified
+                (authorityOtpState.isSent &&
+                  authorityOtpState.isCountdownActive) ||
+                authorityOtpState.isVerified
               }
               rightSection={
                 authorityOtpState.isVerified ? (
@@ -389,11 +423,14 @@ export function Templates() {
               disabledSendOtp={
                 !form.values.authorityEmail ||
                 !/^\S+@\S+\.\S+$/.test(form.values.authorityEmail) ||
-                authorityOtpState.isSent ||
+                (authorityOtpState.isSent &&
+                  authorityOtpState.isCountdownActive) ||
                 authorityOtpState.isVerified
               }
+              loading={
+                loadingStates.sendAuthority || loadingStates.verifyAuthority
+              }
             />
-
 
             <TextInput
               mt="md"
@@ -402,7 +439,9 @@ export function Templates() {
               {...form.getInputProps("participantsEmail")}
               withAsterisk
               disabled={
-                participantsOtpState.isSent || participantsOtpState.isVerified
+                (participantsOtpState.isSent &&
+                  participantsOtpState.isCountdownActive) ||
+                participantsOtpState.isVerified
               }
               rightSection={
                 participantsOtpState.isVerified ? (
@@ -427,11 +466,15 @@ export function Templates() {
               disabledSendOtp={
                 !form.values.participantsEmail ||
                 !/^\S+@\S+\.\S+$/.test(form.values.participantsEmail) ||
-                participantsOtpState.isSent ||
+                (participantsOtpState.isSent &&
+                  participantsOtpState.isCountdownActive) ||
                 participantsOtpState.isVerified
               }
+              loading={
+                loadingStates.sendParticipants ||
+                loadingStates.verifyParticipants
+              }
             />
-
 
             <Textarea
               label="Enter the prompt"
