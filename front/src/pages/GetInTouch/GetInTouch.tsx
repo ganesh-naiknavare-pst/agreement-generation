@@ -71,7 +71,7 @@ export function GetInTouch() {
   return (
     <Center style={{ height: "80vh" }}>
       {loading ? (
-        <Loader size="lg" />
+        <Loader />
       ) : (
         <Paper radius="lg">
           <Box className={classes.wrapper}>
