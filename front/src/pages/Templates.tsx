@@ -394,6 +394,10 @@ export function Templates() {
               placeholder="Enter authority's email"
               {...form.getInputProps("authorityEmail")}
               withAsterisk
+              onChange={(event) => {
+                form.setFieldValue("authorityEmail", event.currentTarget.value);
+                setAuthorityOtpState(getDefaultOtpState());
+              }}
               disabled={
                 (authorityOtpState.isSent &&
                   authorityOtpState.isCountdownActive) ||
@@ -438,6 +442,10 @@ export function Templates() {
               placeholder="Enter participant's email"
               {...form.getInputProps("participantsEmail")}
               withAsterisk
+              onChange={(event) => {
+                form.setFieldValue("participantsEmail", event.currentTarget.value);
+                setParticipantsOtpState(getDefaultOtpState());
+              }}
               disabled={
                 (participantsOtpState.isSent &&
                   participantsOtpState.isCountdownActive) ||

@@ -484,6 +484,10 @@ export function AgreementGenerator() {
               style={{ textAlign: "start" }}
               {...form.getInputProps("ownerEmailAddress")}
               withAsterisk
+              onChange={(event) => {
+                form.setFieldValue("ownerEmailAddress", event.currentTarget.value);
+                setOwnerOtpState(getDefaultOtpState());
+              }}
               disabled={
                 (ownerOtpState.isSent && ownerOtpState.isCountdownActive) ||
                 ownerOtpState.isVerified
@@ -551,6 +555,13 @@ export function AgreementGenerator() {
                   key={form.key(`tenants.${index}.email`)}
                   style={{ textAlign: "start" }}
                   {...form.getInputProps(`tenants.${index}.email`)}
+                  onChange={(event) => {
+                    form.setFieldValue(`tenants.${index}.email`, event.currentTarget.value);
+                    setTenantsOtpState((prev) => ({
+                      ...prev,
+                      [index]: getDefaultOtpState(),
+                    }));
+                  }}
                   withAsterisk
                   disabled={
                     (tenantsOtpState[index]?.isSent &&
