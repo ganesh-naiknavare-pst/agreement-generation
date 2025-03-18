@@ -298,7 +298,7 @@ export function Templates() {
       <Container>
         {loading ? (
           <Center>
-            <Loader size="lg" mt={100} />
+            <Loader mt={100} />
           </Center>
         ) : displayBanner ? (
           <>

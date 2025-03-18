@@ -90,6 +90,8 @@ const ApprovalPage = () => {
     };
     await rejectAgreement({ method: "POST", data: requestData });
     setStatus("REJECTED");
+    setShowAlertForPhoto(false);
+    setShowAlertForSign(false);
   };
 
   const form = useForm({
@@ -121,38 +123,45 @@ const ApprovalPage = () => {
 
   return (
     <>
-      {status !== "APPROVED" && status !== "REJECTED" && (
-        <Center>
-          <Title order={2} c={COLORS.blue} mt={100} mb={40}>
-            Welcome to Agreement Agent
-          </Title>
-        </Center>
-      )}
-
+      <Center>
+        <Title order={2} c={COLORS.blue} my={20}>
+          Welcome to Agreement Agent
+        </Title>
+      </Center>
       {(showAlertForSign || showAlertForPhoto) && (
-        <Alert mt="1rem" mx="auto" w="90%" maw={930} variant="light" color="yellow"
-          title="Action Required" icon={<IconAlertTriangle />}>
+        <Alert
+          mt="1rem"
+          mx="auto"
+          w="90%"
+          maw={930}
+          variant="light"
+          color="yellow"
+          title="Action Required"
+          icon={<IconAlertTriangle />}
+        >
           Please complete all required fields before proceeding.
           <Text size="sm" variant="light" c="yellow">
-            Please upload your signature {isRentAgreement && "and a photo"} to proceed.
+            Please upload your signature {isRentAgreement && "and a photo"} to
+            proceed.
           </Text>
         </Alert>
       )}
 
       {loading ? (
         <Center mt={50}>
-          <Loader size="lg" />
+          <Loader />
         </Center>
       ) : agreement ? (
-        <ResponseCard type={status ?? user?.status ?? ""} />
+        <ResponseCard type={user?.status ?? status} />
       ) : (
-        <Container size="md" mt={10} >
+        <Container mt={10}>
           <Card shadow="md" p="lg" radius="md" withBorder>
-            <Title order={3} mb="lg" >
+            <Title order={3} mb="lg">
               Agreement Approval Form
               <Text size="md" c="dimmed" mb={5} mt={10}>
-                Please complete all the required fields in the form to submit the agreement.
-                You can approve or reject agreements based on your review.
+                Please complete all the required fields in the form to submit
+                the agreement. You can approve or reject agreements based on
+                your review.
               </Text>
             </Title>
 
@@ -160,11 +169,15 @@ const ApprovalPage = () => {
             <Group justify="flex-start" mt="md" mb={5}>
               <Text size="sm" fw={500}>
                 Upload Your Signature{" "}
-                <Text component="span" c={COLORS.asteric}>*</Text>
+                <Text component="span" c={COLORS.asteric}>
+                  *
+                </Text>
               </Text>
             </Group>
-            <Dropzone onDrop={(files) => handleSignatureUpload("signature", files)}
-              accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}>
+            <Dropzone
+              onDrop={(files) => handleSignatureUpload("signature", files)}
+              accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
+            >
               <Group align="center" gap="md">
                 <IconUpload size={20} />
                 <Text>Drag & drop or click to upload your signature.</Text>
@@ -172,8 +185,16 @@ const ApprovalPage = () => {
             </Dropzone>
             {form.values.signature && (
               <Box mt="md">
-                <Text size="sm" fw={500}>Signature Preview:</Text>
-                <Image src={form.values.signature} alt="Signature" w="auto" h={100} fit="contain" />
+                <Text size="sm" fw={500}>
+                  Signature Preview:
+                </Text>
+                <Image
+                  src={form.values.signature}
+                  alt="Signature"
+                  w="auto"
+                  h={100}
+                  fit="contain"
+                />
               </Box>
             )}
 
@@ -181,9 +202,12 @@ const ApprovalPage = () => {
               <Group justify="flex-start" mt="lg">
                 <Text size="sm" fw={500}>
                   Capture a Photo for Verification{" "}
-                  <Text component="span" c={COLORS.asteric}>*</Text>
+                  <Text component="span" c={COLORS.asteric}>
+                    *
+                  </Text>
                 </Text>
-                <WebcamComponent imageUrl={form.values.imageUrl}
+                <WebcamComponent
+                  imageUrl={form.values.imageUrl}
                   setFieldValue={(value) => {
                     form.setFieldValue("imageUrl", value);
                     setShowAlertForPhoto(false);
@@ -193,13 +217,18 @@ const ApprovalPage = () => {
             )}
 
             <Flex justify="flex-end" gap="md" mt="xl">
-              <Button color="green" onClick={processApproval}>Approve Agreement</Button>
-              <Button color="red" onClick={processRejection}>Reject Agreement</Button>
+              <Button color="green" onClick={processApproval}>
+                Approve Agreement
+              </Button>
+              <Button color="red" onClick={processRejection}>
+                Reject Agreement
+              </Button>
             </Flex>
           </Card>
         </Container>
       )}
-    </>);
+    </>
+  );
 };
 
 export default ApprovalPage;

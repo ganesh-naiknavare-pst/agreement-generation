@@ -657,7 +657,7 @@ export function AgreementGenerator() {
           <Stepper.Completed>
             {isSubmitting ? (
               <Center>
-                <Loader size="lg" mt={40} />
+                <Loader mt={40} />
               </Center>
             ) : (
               showMessage && (

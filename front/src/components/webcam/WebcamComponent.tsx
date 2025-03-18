@@ -100,7 +100,7 @@ function WebcamComponent({
       <Container size="md" p="xl">
         <Paper p="xl" radius="md" withBorder shadow="md">
           <Stack align="center" p="md">
-            <Loader size="xl" />
+            <Loader />
             <Text>Loading camera...</Text>
           </Stack>
         </Paper>
