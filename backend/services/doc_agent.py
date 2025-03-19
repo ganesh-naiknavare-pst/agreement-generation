@@ -190,7 +190,7 @@ async def create_agreement_details(
             try:
                 # Wait for approvals
                 approval_result = await listen_for_approval(
-                    timeout_seconds=100, is_template=False
+                    timeout_seconds=300, is_template=False
                 )
 
                 if approval_result == ApprovalResult.APPROVED:

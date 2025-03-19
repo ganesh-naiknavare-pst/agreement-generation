@@ -174,7 +174,7 @@ async def template_based_agreement(
             try:
                 # Wait for approvals
                 approval_result = await listen_for_approval(
-                    timeout_seconds=100, is_template=True
+                    timeout_seconds=300, is_template=True
                 )
 
                 if approval_result == ApprovalResult.APPROVED:
