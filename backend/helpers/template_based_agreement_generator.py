@@ -1,7 +1,6 @@
 import tempfile
 from helpers.rent_agreement_generator import resize_image
 from constants import Model, CHAT_OPENAI_BASE_URL
-import pypandoc
 from langgraph.graph import StateGraph, START, END
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory

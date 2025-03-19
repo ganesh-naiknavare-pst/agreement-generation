@@ -5,7 +5,8 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, KeepTogether
+import re
 
 def extract_text_from_pdf(pdf_path, chunk_size=1000):
     """Extracts text from a PDF file and returns it in manageable chunks."""
@@ -47,7 +48,34 @@ def extract_fonts(pdf_path):
     font_name, _ = font_counter.most_common(1)[0]
     return font_name, font_file
 
-def create_pdf_file(content, output_pdf_path="output.pdf", font_name="Times-Roman", font_file="/backend/fonts/times-roman/Times-Roman.ttf"):
+import re
+
+def markdown_to_html(text):
+    """Converts Markdown to HTML for ReportLab compatibility."""
+
+    # Convert Headers
+    text = re.sub(r'### (.*?)\s*\n?', r'<para fontSize="14"><b>\1</b></para><br/><br/>', text)
+    text = re.sub(r'## (.*?)\s*\n?', r'<para fontSize="12"><b>\1</b></para><br/><br/>', text)
+    text = re.sub(r'# (.*?)\s*\n?', r'<para fontSize="16"><b>\1</b></para><br/><br/>', text)
+    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
+    text = re.sub(r'---+', r'<hr width="100%"/><br/>', text)
+    text = re.sub(r'(?m)^\s*[-•] (.*?)$', r'• \1', text)
+    text = text.replace("\n", "<br/>")  
+    return text
+
+
+def replace_images_with_inline_html(content):
+    """Replaces Markdown-style images ![label](path) with ReportLab-compatible HTML <img> tags with proper spacing."""
+    image_pattern = re.findall(r'!\[(.*?)\]\((.*?)\)', content)
+    
+    for label, path in image_pattern:
+        if os.path.exists(path):
+            image_tag = f'<br/><br/><br/><img src="{path}" width="60" height="30"/><br/>'
+            content = content.replace(f"![{label}]({path})", image_tag)
+    
+    return content
+
+def create_pdf_file(content, output_pdf_path="output.pdf", font_name="Times-Roman", font_file="backend/fonts/times-roman/Times-Roman.ttf"):
     doc = SimpleDocTemplate(output_pdf_path, pagesize=A4)
 
     styles = getSampleStyleSheet()
@@ -64,11 +92,14 @@ def create_pdf_file(content, output_pdf_path="output.pdf", font_name="Times-Roma
         pdfmetrics.registerFont(TTFont(font_name, font_file))
 
     story = []
+    
+    content = replace_images_with_inline_html(content)
+    
     paragraphs = content.split("\n\n")
 
     for para in paragraphs:
-        para = para.replace("\n", "<br/>")
-        story.append(Paragraph(para, custom_style))
+        formatted_para = markdown_to_html(para)
+        story.append(KeepTogether([Paragraph(formatted_para, custom_style)]))
         story.append(Spacer(1, 12))
 
     doc.build(story)
