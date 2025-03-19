@@ -190,7 +190,7 @@ async def create_agreement_details(
             try:
                 # Wait for approvals
                 approval_result = await listen_for_approval(
-                    timeout_seconds=300, is_template=False
+                    timeout_seconds=100, is_template=False
                 )
 
                 if approval_result == ApprovalResult.APPROVED:
@@ -240,6 +240,30 @@ async def create_agreement_details(
                         where={"id": agreement_id},
                         data={"status": AgreementStatus.FAILED},
                     )
+
+                    owner_useragreement = await db.userrentagreementstatus.find_first(
+                        where={"userId": agreement_state.owner_id, "agreementId": agreement_id}
+                    )
+                    if not owner_useragreement:
+                        await db.userrentagreementstatus.create(
+                            data={
+                                "userId": agreement_state.owner_id,
+                                "agreementId": agreement_id,
+                                "status": AgreementStatus.FAILED,
+                            }
+                        )
+                    for tenant_id in tenants:
+                        tenant_useragreement = await db.userrentagreementstatus.find_first(
+                            where={"userId": tenant_id, "agreementId": agreement_id}
+                        )
+                        if not tenant_useragreement:
+                            await db.userrentagreementstatus.create(
+                                data={
+                                    "userId": tenant_id,
+                                    "agreementId": agreement_id,
+                                    "status": AgreementStatus.FAILED,
+                                }
+                            )
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")
