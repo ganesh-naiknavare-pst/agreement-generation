@@ -8,6 +8,7 @@ from helpers.state_manager import State, agreement_state
 import os
 from PIL import Image
 import io
+from helpers.agreement_generator_helper import create_pdf_file
 
 os.environ["OPENAI_API_KEY"] = "XXX"
 
@@ -135,9 +136,7 @@ def create_pdf(state: State):
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
     temp_pdf_path = temp_pdf.name
 
-    pypandoc.convert_text(
-        content, "pdf", "md", encoding="utf-8", outputfile=temp_pdf_path
-    )
+    create_pdf_file(content, temp_pdf_path)
     agreement_state.pdf_file_path = temp_pdf_path
     return {"messages": content}
 

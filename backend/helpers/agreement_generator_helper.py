@@ -1,6 +1,6 @@
-import platform
 import fitz
 import os
+from collections import Counter
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.pagesizes import A4
@@ -28,27 +28,26 @@ def find_font_file(font_name, fonts_dir="fonts"):
     return None
 
 def extract_fonts(pdf_path):
-    """Extracts fonts from the PDF and returns the first found font and its file path."""
     doc = fitz.open(pdf_path)
-    font_set = set()
+    font_counter = Counter()
 
     for page in doc:
-        text_info = page.get_text("dict")
-        for block in text_info.get("blocks", []):
-            for line in block.get("lines", []):
-                for span in line.get("spans", []):
-                    font_set.add(span.get("font", "Unknown"))
+        text_instances = page.get_text("dict")["blocks"]
+        for block in text_instances:
+            if "lines" in block:
+                for line in block["lines"]:
+                    for span in line["spans"]:
+                        font_name = span["font"]
+                        font_counter[font_name] += 1
 
-    doc.close()
-
-    if font_set:
-        font_name = list(font_set)[0]
-        font_file = find_font_file(font_name)
-        return font_name, font_file
-    else:
+    if not font_counter:
         return "Helvetica", None
+    
+    font_file = find_font_file(font_name)
+    font_name, _ = font_counter.most_common(1)[0]
+    return font_name, font_file
 
-def create_pdf_file(content, font_name="Helvetica", font_file=None, output_pdf_path="output.pdf"):
+def create_pdf_file(content, output_pdf_path="output.pdf", font_name="Times-Roman", font_file="/backend/fonts/times-roman/Times-Roman.ttf"):
     doc = SimpleDocTemplate(output_pdf_path, pagesize=A4)
 
     styles = getSampleStyleSheet()

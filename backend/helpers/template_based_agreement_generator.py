@@ -73,7 +73,7 @@ def create_pdf(state: State):
     base_dir = os.path.dirname(os.path.abspath(__file__))
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
     temp_pdf_path = temp_pdf.name
-    create_pdf_file(content, template_agreement_state.pdf_font_name, template_agreement_state.pdf_font_file, temp_pdf_path)
+    create_pdf_file(content, temp_pdf_path, template_agreement_state.pdf_font_name, template_agreement_state.pdf_font_file)
 
     template_agreement_state.pdf_file_path = temp_pdf_path
     return {"messages": content}
@@ -111,7 +111,7 @@ def update_pdf_with_signatures():
 
     # Convert updated content to PDF
     temp_pdf_path = template_agreement_state.pdf_file_path
-    create_pdf_file(content, template_agreement_state.pdf_font_name, template_agreement_state.pdf_font_file, temp_pdf_path)
+    create_pdf_file(content, temp_pdf_path, template_agreement_state.pdf_font_name, template_agreement_state.pdf_font_file)
 
 # Build graph
 graph_builder = StateGraph(State)
