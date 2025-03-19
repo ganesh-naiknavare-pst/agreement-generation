@@ -30,26 +30,19 @@ const ResponseCard: React.FC<ResponseCardProps> = ({ type }) => {
       icon: <IconClockExclamation size="1.5rem" />,
       message:
         "⏳ Unfortunately, the agreement link has expired as the required action was not completed within the 5-minutes.",
-      footer: "If you need further assistance or have any questions, please contact support.",
+      footer:
+        "If you need further assistance or have any questions, please contact support.",
     },
   };
 
-  const currentStatus = statusConfig[type as keyof typeof statusConfig] || statusConfig.FAILED;
+  const currentStatus =
+    statusConfig[type as keyof typeof statusConfig] || statusConfig.FAILED;
 
   return (
     <Center style={{ height: "60vh" }}>
-      <Card
-        shadow="sm"
-        padding="lg"
-        withBorder
-        style={{ textAlign: "center", height: "300px", width: "700px" }}
-      >
-        <Text>
-          <ThemeIcon
-            radius="xl"
-            size="xl"
-            color={currentStatus.color}
-          >
+      <Card shadow="sm" padding="lg" withBorder style={{ textAlign: "center" }}>
+        <Text component="span">
+          <ThemeIcon radius="xl" size="xl" color={currentStatus.color}>
             {currentStatus.icon}
           </ThemeIcon>
         </Text>
@@ -59,15 +52,16 @@ const ResponseCard: React.FC<ResponseCardProps> = ({ type }) => {
           fw={700}
           c={currentStatus.color}
           mt="md"
+          component="span"
         >
           {currentStatus.title}
         </Text>
 
-        <Text size="md" mt="sm">
+        <Text size="md" mt="sm" component="span">
           {currentStatus.message}
         </Text>
 
-        <Text size="lg" fw={700} c={COLORS.blue} mt="md">
+        <Text size="lg" fw={700} c={COLORS.blue} mt="md" component="span">
           {currentStatus.footer}
         </Text>
       </Card>
