@@ -1,8 +1,8 @@
 import logging
+from api.routes.websocket import notify_clients
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import (
     listen_for_approval,
-    ApprovalTimeoutError,
     ConnectionClosedError,
     ApprovalResult,
 )
@@ -232,6 +232,7 @@ async def template_based_agreement(
                                 "status": AgreementStatus.FAILED,
                             }
                         )
+                    await notify_clients({"userId": template_agreement_state.authority_id, "status": "FAILED"})
                     
                     participant_useragreement = await db.useragreementstatus.find_first(
                         where={"userId": template_agreement_state.participant_id, "agreementId": agreement_id}
@@ -244,6 +245,8 @@ async def template_based_agreement(
                                 "status": AgreementStatus.FAILED,
                             }
                         )
+                    await notify_clients({"userId": template_agreement_state.participant_id, "status": "FAILED"})
+
                     delete_temp_file()
                     delete_template_file()
                     template_agreement_state.reset()

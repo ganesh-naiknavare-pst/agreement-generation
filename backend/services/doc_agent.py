@@ -1,10 +1,10 @@
 import logging
 import shutil
 import os
+from api.routes.websocket import notify_clients
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import (
     listen_for_approval,
-    ApprovalTimeoutError,
     ConnectionClosedError,
     ApprovalResult,
 )
@@ -240,6 +240,7 @@ async def create_agreement_details(
                         where={"id": agreement_id},
                         data={"status": AgreementStatus.FAILED},
                     )
+                    await notify_clients({"userId": tenant_id, "status": "FAILED"})
 
                     owner_useragreement = await db.userrentagreementstatus.find_first(
                         where={"userId": agreement_state.owner_id, "agreementId": agreement_id}
@@ -252,6 +253,8 @@ async def create_agreement_details(
                                 "status": AgreementStatus.FAILED,
                             }
                         )
+                        await notify_clients({"userId": agreement_state.owner_id, "status": "FAILED"})
+                        
                     for tenant_id, _ in tenants:
                         tenant_useragreement = await db.userrentagreementstatus.find_first(
                             where={"userId": tenant_id, "agreementId": agreement_id}
@@ -264,6 +267,7 @@ async def create_agreement_details(
                                     "status": AgreementStatus.FAILED,
                                 }
                             )
+                            await notify_clients({"userId": tenant_id, "status": "FAILED"})
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")

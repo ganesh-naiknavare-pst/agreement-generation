@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useForm } from "@mantine/form";
 import { IconAlertTriangle, IconUpload } from "@tabler/icons-react";
@@ -21,6 +21,7 @@ import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { COLORS } from "../colors";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 import WebcamComponent from "../components/webcam/WebcamComponent";
+import useWebSocket from "../hooks/useWebSocket";
 import ResponseCard from "../components/ResponseCard";
 import { useUserState } from "../hooks/useUserState";
 export type ApprovedUser = {
@@ -40,7 +41,9 @@ const ApprovalPage = () => {
 
   const {
     rentAgreementUser,
+    getRentAgreementUser,
     TemplateAgreementUser,
+    getTemplateAgreementUser,
     setStatus,
     status,
     loadRentAgreemntUser,
@@ -120,6 +123,18 @@ const ApprovalPage = () => {
     };
     reader.readAsDataURL(file);
   };
+
+  const onMessage = useCallback((message: any) => {
+    if (message.status === "FAILED") {
+      if (isRentAgreement) {
+        getRentAgreementUser({ method: "GET", params: { agreement_id: param.agreementId, user_id: param.id } });
+      } else {
+        getTemplateAgreementUser({ method: "GET", params: { agreement_id: param.agreementId, user_id: param.id } });
+      }
+    }
+  }, [param.agreementId]);
+
+  useWebSocket("ws://0.0.0.0:8000/ws", onMessage);
 
   return (
     <>
