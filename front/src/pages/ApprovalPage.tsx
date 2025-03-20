@@ -31,6 +31,8 @@ export type ApprovedUser = {
   agreement_type: string;
 };
 
+const websocket_url = import.meta.env.VITE_WEBSOCKET_URL;
+
 const ApprovalPage = () => {
   const param = useParams();
   const [showAlertForSign, setShowAlertForSign] = useState(false);
@@ -134,7 +136,7 @@ const ApprovalPage = () => {
     }
   }, [param.agreementId]);
 
-  useWebSocket("ws://0.0.0.0:8000/ws", onMessage);
+  useWebSocket(websocket_url, onMessage);
 
   return (
     <>
