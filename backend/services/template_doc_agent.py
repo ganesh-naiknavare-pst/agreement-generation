@@ -220,6 +220,30 @@ async def template_based_agreement(
                         where={"id": agreement_id},
                         data={"status": AgreementStatus.FAILED},
                     )
+
+                    authority_useragreement = await db.useragreementstatus.find_first(
+                        where={"userId": template_agreement_state.authority_id, "agreementId": agreement_id}
+                    )
+                    if not authority_useragreement:
+                        await db.useragreementstatus.create(
+                            data={
+                                "userId": template_agreement_state.authority_id,
+                                "agreementId": agreement_id,
+                                "status": AgreementStatus.FAILED,
+                            }
+                        )
+                    
+                    participant_useragreement = await db.useragreementstatus.find_first(
+                        where={"userId": template_agreement_state.participant_id, "agreementId": agreement_id}
+                    )                   
+                    if not participant_useragreement:
+                        await db.useragreementstatus.create(
+                            data={
+                                "userId": template_agreement_state.participant_id,
+                                "agreementId": agreement_id,
+                                "status": AgreementStatus.FAILED,
+                            }
+                        )
                     delete_temp_file()
                     delete_template_file()
                     template_agreement_state.reset()
