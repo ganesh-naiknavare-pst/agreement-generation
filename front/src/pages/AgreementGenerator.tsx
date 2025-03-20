@@ -15,8 +15,13 @@ import {
   Title,
   Divider,
   Container,
+  Table,
+  ActionIcon,
+  Radio,
+  MultiSelect,
+  Select,
 } from "@mantine/core";
-import { IconCheck } from "@tabler/icons-react";
+import { IconCheck, IconTrash } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
 import { DatePickerInput } from "@mantine/dates";
 import { COLORS } from "../colors";
@@ -31,6 +36,7 @@ import {
   getFailureOtpState,
   getDefaultOtpState,
 } from "../types/otp";
+import { AddressForm } from "./AddressForm";
 
 export function AgreementGenerator() {
   const [active, setActive] = useState(0);
@@ -44,6 +50,8 @@ export function AgreementGenerator() {
   );
   const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
   const [otpIndex, setOtpIndex] = useState<number | null>(null);
+  const [furnitureList, setFurnitureList] = useState<{ name: string; quantity: number }[]>([]);
+  const [furnishingType, setFurnishingType] = useState("");
   const [ownerOtpState, setOwnerOtpState] = useState<OtpState>(
     getDefaultOtpState()
   );
@@ -55,6 +63,10 @@ export function AgreementGenerator() {
     tenants: {} as Record<number, { send: boolean; verify: boolean }>,
   });
   const ownerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [isOwnerAddressConfirmed, setIsOwnerAddressConfirmed] = useState(false);
+  const [showOwnerDetailedFields, setShowOwnerDetailedFields] = useState(false);
+  const [isTenantAddressConfirmed, setIsTenantAddressConfirmed] = useState<Record<number, boolean>>({});
+  const [showTenantDetailedFields, setShowTenantDetailedFields] = useState<Record<number, boolean>>({});
 
   const startOwnerCountdown = () => {
     if (ownerOtpState.isCountdownActive) return;
@@ -170,6 +182,29 @@ export function AgreementGenerator() {
       setOtpIndex(null);
     }
   }, [data]);
+
+  const addFurniture = () => {
+    const errors: Record<string, string> = {};
+
+    if (!form.values.propertyDetails.furnitureName.trim()) {
+      errors.furnitureName = "Please enter a furniture name";
+    }
+    if (form.values.propertyDetails.furnitureQuantity < 1) {
+      errors.furnitureQuantity = "Please enter a valid furniture quantity";
+    }
+    if (Object.keys(errors).length > 0) {
+      form.setErrors(errors);
+      return;
+    }
+
+    setFurnitureList((prev) => [...prev, { name: form.values.propertyDetails.furnitureName, quantity: form.values.propertyDetails.furnitureQuantity }]);
+    form.setFieldValue("furnitureName", "");
+    form.setFieldValue("furnitureQuantity", 1);
+  };
+
+  const removeFurniture = (index: number) => {
+    setFurnitureList((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSendOTP = async () => {
     setLoadingStates((prev) => ({ ...prev, sendOwner: true }));
@@ -304,21 +339,58 @@ export function AgreementGenerator() {
   const form = useForm({
     mode: "controlled",
     initialValues: {
+      // Owner Details
+      ownerAddress: "",
       ownerFullName: "",
+      ownerAddressConfirmed: false,
+      ownerShowDetails: false,
       ownerEmailAddress: "",
-      tenantNumber: 2,
+      ownerAddressDetails: {
+        flatFloor: "",
+        buildingName: "",
+        area: "",
+        city: "",
+        pincode: "",
+      },
+
+      // Tenant Details
       tenants: Array.from({ length: 2 }, () => ({
         fullName: "",
         email: "",
+        Address: "",
+        tenantNumber: 2,
+        AddressConfirmed: false,
+        ShowDetails: false,
+        addressDetails: {
+          flatFloor: "",
+          buildingName: "",
+          area: "",
+          city: "",
+          pincode: "",
+        },
       })),
-      address: "",
-      city: "",
-      date: new Date(),
-      rentAmount: 0,
-      agreementPeriod: [
-        new Date(),
-        new Date(new Date().setMonth(new Date().getMonth() + 6)),
-      ],
+
+      // Agreement Details
+      agreementDetails: {
+        address: "",
+        city: "",
+        date: new Date(),
+        rentAmount: 0,
+        securityAmount: 0,
+        agreementPeriod: [
+          new Date(),
+          new Date(new Date().setMonth(new Date().getMonth() + 6)), // Default to 6 months
+        ],
+      },
+
+      // Property Details
+      propertyDetails: {
+        utilities: "",
+        propertyArea: "",
+        bhkType: "",
+        furnitureName: "",
+        furnitureQuantity: 1,
+      },
     },
 
     validate: (values) => {
@@ -335,9 +407,12 @@ export function AgreementGenerator() {
         if (!emailRegex.test(values.ownerEmailAddress)) {
           errors.ownerEmailAddress = "Please enter a valid email address";
         }
+        if (!values.ownerAddress.trim()) {
+          errors.ownerAddress = "Address is required.";
+        }
       }
 
-      if (active === 1 && values.tenantNumber < 1) {
+      if (active === 1 && values.tenants.length < 1) {
         errors.tenantNumber = "At least one tenant is required";
       }
 
@@ -351,24 +426,30 @@ export function AgreementGenerator() {
             errors[`tenants.${index}.email`] =
               "Please enter a valid email address";
           }
+          if (!tenant.Address.trim()) {
+            errors[`tenants.${index}.address`] = "Address is required.";
+          }
         });
       }
 
-      if (active === 3) {
-        if (values.address.trim().length < 10) {
+      if (active === 4) {
+        if (values.agreementDetails.address.trim().length < 10) {
           errors.address = "Address must be at least 10 characters";
         }
-        if (!values.city.trim()) {
+        if (!values.agreementDetails.city.trim()) {
           errors.city = "City is required";
         }
-        if (values.rentAmount <= 0) {
+        if (values.agreementDetails.rentAmount <= 0) {
           errors.rentAmount = "Rent amount must be greater than 0";
         }
-        if (values.agreementPeriod.length !== 2) {
+        if (values.agreementDetails.securityAmount <= 0) {
+          errors.securityAmount = "Security amount must be greater than 0";
+        }
+        if (values.agreementDetails.agreementPeriod.length !== 2) {
           errors.agreementPeriod =
             "Agreement period must be a valid date range";
         } else {
-          const [start, end] = values.agreementPeriod;
+          const [start, end] = values.agreementDetails.agreementPeriod;
           const sixMonthLater = new Date(start);
           sixMonthLater.setMonth(sixMonthLater.getMonth() + 6);
           if (end < sixMonthLater) {
@@ -377,7 +458,14 @@ export function AgreementGenerator() {
           }
         }
       }
-
+      if (active === 3) {
+        if (
+          (furnishingType === "furnished" || furnishingType === "semi-furnished") &&
+          furnitureList.length === 0
+        ) {
+          errors.furnitureName = "Please add at least one furniture item";
+        }
+      }
       return errors;
     },
   });
@@ -391,6 +479,17 @@ export function AgreementGenerator() {
           form.values.tenants[index] || {
             fullName: "",
             email: "",
+            Address: "",
+            tenantNumber: 2,
+            AddressConfirmed: false,
+            ShowDetails: false,
+            addressDetails: {
+              flatFloor: "",
+              buildingName: "",
+              area: "",
+              city: "",
+              pincode: "",
+            },
           }
       )
     );
@@ -422,7 +521,7 @@ export function AgreementGenerator() {
       }
     }
 
-    setActive((current) => (current < 3 ? current + 1 : current));
+    setActive((current) => (current < 5 ? current + 1 : current));
   };
 
   const prevStep = () =>
@@ -431,7 +530,7 @@ export function AgreementGenerator() {
   const handleSubmit = async () => {
     const { hasErrors } = form.validate();
     if (hasErrors) return;
-    setActive((current) => (current < 4 ? current + 1 : current));
+    setActive((current) => (current < 5 ? current + 1 : current));
     setIsSubmitting(true);
     setShowMessage(false);
     setTimeout(() => {
@@ -446,10 +545,10 @@ export function AgreementGenerator() {
         name: tenant.fullName,
         email: tenant.email,
       })),
-      property_address: form.values.address,
-      city: form.values.city,
-      rent_amount: form.values.rentAmount,
-      agreement_period: form.values.agreementPeriod.map((date) =>
+      property_address: form.values.agreementDetails.address,
+      city: form.values.agreementDetails.city,
+      rent_amount: form.values.agreementDetails.rentAmount,
+      agreement_period: form.values.agreementDetails.agreementPeriod.map((date) =>
         date.toISOString()
       ),
     };
@@ -464,6 +563,33 @@ export function AgreementGenerator() {
     }
   };
 
+  const handleConfirmOwnerAddress = () => {
+    const fullAddress = `${form.values.ownerAddressDetails.flatFloor}, ${form.values.ownerAddressDetails.buildingName}, ${form.values.ownerAddressDetails.area}, ${form.values.ownerAddressDetails.city} - ${form.values.ownerAddressDetails.pincode}`;
+    form.setFieldValue("ownerAddress", fullAddress);
+    setIsOwnerAddressConfirmed(true);
+    setShowOwnerDetailedFields(false);
+  };
+
+  const handleEditOwnerAddress = () => {
+    setIsOwnerAddressConfirmed(false);
+    form.setFieldValue("ownerAddress", "");
+    setShowOwnerDetailedFields(true);
+  };
+  const handleConfirmTenantAddress = (index: number) => {
+    const tenantDetails = form.values.tenants[index].addressDetails;
+
+    const fullAddress = `${tenantDetails.flatFloor}, ${tenantDetails.buildingName}, ${tenantDetails.area}, ${tenantDetails.city} - ${tenantDetails.pincode}`;
+
+    form.setFieldValue(`tenants.${index}.address`, fullAddress);
+    setIsTenantAddressConfirmed((prev) => ({ ...prev, [index]: true }));
+    setShowTenantDetailedFields((prev) => ({ ...prev, [index]: false }));
+  };
+
+  const handleEditTenantAddress = (index: number) => {
+    setIsTenantAddressConfirmed((prev) => ({ ...prev, [index]: false }));
+    form.setFieldValue(`tenants.${index}.address`, "");
+    setShowTenantDetailedFields((prev) => ({ ...prev, [index]: true }));
+  };
   return (
     <>
       <Title order={3}>Generate Rent Agreement</Title>
@@ -506,7 +632,6 @@ export function AgreementGenerator() {
                 ) : null
               }
             />
-
             <OTPInput
               otpState={ownerOtpState}
               onOtpChange={(otp) =>
@@ -527,6 +652,27 @@ export function AgreementGenerator() {
               }
               loading={loadingStates.sendOwner || loadingStates.verifyOwner}
             />
+            {!showOwnerDetailedFields && !isOwnerAddressConfirmed && (
+              <Button variant="light" mt="sm" onClick={() => setShowOwnerDetailedFields(true)}>
+                Enter Detailed Address
+              </Button>
+            )}
+
+            {showOwnerDetailedFields && (
+              <AddressForm
+                addressDetails={form.values.ownerAddressDetails}
+                onChange={(field, value) => form.setFieldValue(field, value)}
+                onConfirm={handleConfirmOwnerAddress}
+                formPrefix="ownerAddressDetails"
+              />
+            )}
+
+            {isOwnerAddressConfirmed && (
+              <Button mt="sm" variant="outline" color="blue" onClick={handleEditOwnerAddress}>
+                Edit Address
+              </Button>
+            )}
+
           </Stepper.Step>
 
           <Stepper.Step label="Step 2" description="No. of Tenants">
@@ -612,11 +758,140 @@ export function AgreementGenerator() {
                     loadingStates.tenants[index]?.verify
                   }
                 />
+                <TextInput
+                  label="Address"
+                  placeholder="Your detailed address"
+                  {...form.getInputProps(`tenants.${index}.address`)}
+                  disabled={!isTenantAddressConfirmed[index]}
+                  withAsterisk
+                />
+                {!showTenantDetailedFields[index] && !isTenantAddressConfirmed[index] && (
+                  <Button variant="light" mt="sm" onClick={() => {
+                    setShowTenantDetailedFields((prev) => ({ ...prev, [index]: true }));
+
+                  }}>
+                    Enter Detailed Address
+                  </Button>
+                )}
+
+                {showTenantDetailedFields[index] && (
+                  <AddressForm
+                    addressDetails={form.values.tenants[index].addressDetails}
+                    onChange={(field, value) => {
+                      form.setFieldValue(`tenants.${index}.${field}`, value);
+                    }}
+                    onConfirm={() => handleConfirmTenantAddress(index)}
+                    formPrefix="addressDetails"
+                  />
+                )}
+
+                {isTenantAddressConfirmed[index] && (
+                  <Button mt="sm" variant="outline" color="blue" onClick={() => handleEditTenantAddress(index)}>
+                    Edit Address
+                  </Button>
+                )}
               </Box>
             ))}
           </Stepper.Step>
 
-          <Stepper.Step label="Step 4" description="Agreement Details">
+          <Stepper.Step label="Step 4" description="Lease property Details">
+            <NumberInput
+              label="Area (sq. ft.)"
+              placeholder="Enter area in square feet"
+              key={form.key("propertyArea")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("propertyArea")}
+              withAsterisk
+            />
+
+            <MultiSelect
+              label="Utilities (Optional)"
+              placeholder="Select utilities available"
+              key={form.key("utilities")}
+              style={{ textAlign: "start" }}
+              data={["Electricity", "Water", "Gas", "Internet", "Parking"]}
+              {...form.getInputProps("utilities")}
+            />
+
+            <Select
+              label="BHK Type"
+              placeholder="Select BHK type"
+              key={form.key("bhkType")}
+              style={{ textAlign: "start" }}
+              data={[
+                { value: "1BHK", label: "1 BHK" },
+                { value: "2BHK", label: "2 BHK" },
+                { value: "3BHK", label: "3 BHK" },
+                { value: "4BHK", label: "4 BHK" },
+              ]}
+              {...form.getInputProps("bhkType")}
+              withAsterisk
+            />
+
+            <Radio.Group
+              label="Furnishing Type"
+              value={furnishingType}
+              onChange={setFurnishingType}
+              withAsterisk
+              style={{ marginBottom: 10 }}
+            >
+              <Group mt="xs">
+                <Radio value="furnished" label="Furnished" />
+                <Radio value="semi-furnished" label="Semi-Furnished" />
+                <Radio value="not-furnished" label="Not Furnished" />
+              </Group>
+            </Radio.Group>
+            {(furnishingType === "furnished" || furnishingType === "semi-furnished") && (
+              <Box>
+                <TextInput
+                  label="Furniture Name"
+                  placeholder="Enter furniture name"
+                  key={form.key("propertyDetails.furnitureName")}
+                  style={{ textAlign: "start" }}
+                  {...form.getInputProps("propertyDetails.furnitureName")}
+                />
+                <NumberInput
+                  label="Quantity"
+                  min={1}
+                  key={form.key("propertyDetails.furnitureQuantity")}
+                  style={{ textAlign: "start" }}
+                  {...form.getInputProps("propertyDetails.furnitureQuantity")}
+                />
+                <Button style={{ marginTop: 10, marginBottom: 20 }} onClick={addFurniture}>Add</Button>
+                {furnitureList.length > 0 && (
+                  <Card shadow="sm" padding="lg" withBorder style={{ textAlign: "center" }}>
+                    <Table highlightOnHover verticalSpacing="md" horizontalSpacing={20} mt="md">
+                      <Table.Thead>
+                        <Table.Tr>
+                          <Table.Th>Sr No.</Table.Th>
+                          <Table.Th>Item</Table.Th>
+                          <Table.Th>Number of units</Table.Th>
+                          <Table.Th>Action</Table.Th>
+                        </Table.Tr>
+                      </Table.Thead>
+                      <Table.Tbody>
+                        {
+                          furnitureList.map((item, index) => (
+                            <Table.Tr key={index}>
+                              <Table.Td style={{ textAlign: "left" }}>{index + 1}</Table.Td>
+                              <Table.Td style={{ textAlign: "left" }}>{item.name}</Table.Td>
+                              <Table.Td style={{ textAlign: "left" }}>{item.quantity}</Table.Td>
+                              <Table.Td style={{ textAlign: "left" }}>
+                                <ActionIcon color="red" onClick={() => removeFurniture(index)}>
+                                  <IconTrash size={16} />
+                                </ActionIcon>
+                              </Table.Td>
+                            </Table.Tr>
+                          ))
+                        }
+                      </Table.Tbody>
+                    </Table>
+                  </Card>
+                )}
+              </Box>
+            )}
+          </Stepper.Step>
+          <Stepper.Step label="Step 5" description="Agreement Details">
             <TextInput
               label="Address"
               placeholder="Address"
@@ -640,6 +915,15 @@ export function AgreementGenerator() {
               key={form.key("rentAmount")}
               style={{ textAlign: "start" }}
               {...form.getInputProps("rentAmount")}
+              withAsterisk
+            />
+            <NumberInput
+              label="Security Desposit "
+              placeholder="Enter Security desposit amount"
+              min={0}
+              key={form.key("securityAmount")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("securityAmount")}
               withAsterisk
             />
             <DatePickerInput
@@ -735,30 +1019,31 @@ export function AgreementGenerator() {
         </Stepper>
 
         <Group justify="flex-end" mt="xl">
-          {active > 0 && active < 4 && !isSubmitting && (
+          {active > 0 && active < 5 && !isSubmitting && (
             <Button variant="default" onClick={prevStep}>
               Back
             </Button>
           )}
-          {active < 4 && (
+          {active < 5 && (
             <Button
-              onClick={active < 3 ? nextStep : handleSubmit}
+              onClick={active < 4 ? nextStep : handleSubmit}
               disabled={
                 (active === 0 && !ownerOtpState.isVerified) ||
                 (active === 2 &&
                   Object.values(tenantsOtpState).length !==
-                    form.values.tenants.length) ||
+                  form.values.tenants.length) ||
                 (active === 2 &&
                   Object.values(tenantsOtpState).some(
                     (state) => !state?.isVerified
-                  ))
+                  )) ||
+                (active === 3 && (!furnishingType || furnitureList.length === 0))
               }
             >
-              {active < 3 ? "Continue" : "Generate Agreement"}
+              {active < 4 ? "Continue" : "Generate Agreement"}
             </Button>
           )}
         </Group>
-      </Container>
+      </Container >
     </>
   );
 }
