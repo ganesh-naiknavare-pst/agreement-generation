@@ -252,7 +252,7 @@ async def create_agreement_details(
                                 "status": AgreementStatus.FAILED,
                             }
                         )
-                    for tenant_id in tenants:
+                    for tenant_id, _ in tenants:
                         tenant_useragreement = await db.userrentagreementstatus.find_first(
                             where={"userId": tenant_id, "agreementId": agreement_id}
                         )
