@@ -7,10 +7,10 @@ export const COLORS = {
   grayLight: "#485056",
   themeIconDark: "#FFD700",
   themeIconLight: "#0b090a",
-  titleColor: "#FFFFFF",
   loadingColor: "#228be6",
   yellow: "#de9351",
   asteric: "#e03130",
-  otploadingcolor: "rgba(255, 255, 255, 1)",
-  white: "#fff",
+  white: "#ffffff",
+  dimmed: "#adb3b8",
+  black: "#000000",
 };

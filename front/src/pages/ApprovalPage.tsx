@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useForm } from "@mantine/form";
-import { IconAlertTriangle, IconUpload } from "@tabler/icons-react";
+import { IconAlertTriangle } from "@tabler/icons-react";
 import {
   Center,
   Title,
@@ -10,19 +10,18 @@ import {
   Group,
   Text,
   Container,
-  Box,
-  Image,
   Alert,
   Loader,
   Card,
   Divider,
+  Box,
 } from "@mantine/core";
-import { Dropzone, FileWithPath, MIME_TYPES } from "@mantine/dropzone";
 import { COLORS } from "../colors";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import ResponseCard from "../components/ResponseCard";
 import { useUserState } from "../hooks/useUserState";
+import SignatureModalButton from "../components/signatureComponent/SignatureModalButton";
 export type ApprovedUser = {
   status: string;
   user_id: string;
@@ -111,14 +110,8 @@ const ApprovalPage = () => {
     },
   });
 
-  const handleSignatureUpload = (field: string, files: FileWithPath[]) => {
-    const file = files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      form.setFieldValue(field, reader.result as string);
-      setShowAlertForSign(false);
-    };
-    reader.readAsDataURL(file);
+  const handleSignatureSave = (signatureData: string) => {
+    form.setFieldValue("signature", signatureData);
   };
 
   return (
@@ -167,53 +160,35 @@ const ApprovalPage = () => {
 
             <Divider my="sm" />
             <Group justify="flex-start" mt="md" mb={5}>
-              <Text size="sm" fw={500}>
-                Upload Your Signature{" "}
+              <Text size="sm" fw={700}>
+                Signature{" "}
                 <Text component="span" c={COLORS.asteric}>
                   *
                 </Text>
               </Text>
             </Group>
-            <Dropzone
-              onDrop={(files) => handleSignatureUpload("signature", files)}
-              accept={[MIME_TYPES.png, MIME_TYPES.jpeg]}
-            >
-              <Group align="center" gap="md">
-                <IconUpload size={20} />
-                <Text>Drag & drop or click to upload your signature.</Text>
-              </Group>
-            </Dropzone>
-            {form.values.signature && (
-              <Box mt="md">
-                <Text size="sm" fw={500}>
-                  Signature Preview:
-                </Text>
-                <Image
-                  src={form.values.signature}
-                  alt="Signature"
-                  w="auto"
-                  h={100}
-                  fit="contain"
-                />
-              </Box>
-            )}
+            <SignatureModalButton onSignatureSave={handleSignatureSave} />
 
             {isRentAgreement && (
-              <Group justify="flex-start" mt="lg">
-                <Text size="sm" fw={500}>
-                  Capture a Photo for Verification{" "}
-                  <Text component="span" c={COLORS.asteric}>
-                    *
+              <>
+                <Group justify="flex-start" mt="lg">
+                  <Text size="sm" fw={700}>
+                    Image capture{" "}
+                    <Text component="span" c={COLORS.asteric}>
+                      *
+                    </Text>
                   </Text>
-                </Text>
-                <WebcamComponent
-                  imageUrl={form.values.imageUrl}
-                  setFieldValue={(value) => {
-                    form.setFieldValue("imageUrl", value);
-                    setShowAlertForPhoto(false);
-                  }}
-                />
-              </Group>
+                </Group>
+                <Box my={10}>
+                  <WebcamComponent
+                    imageUrl={form.values.imageUrl}
+                    setFieldValue={(value) => {
+                      form.setFieldValue("imageUrl", value);
+                      setShowAlertForPhoto(false);
+                    }}
+                  />
+                </Box>
+              </>
             )}
 
             <Flex justify="flex-end" gap="md" mt="xl">
