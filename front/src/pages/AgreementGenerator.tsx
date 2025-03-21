@@ -20,6 +20,8 @@ import {
   Radio,
   MultiSelect,
   Select,
+  Stack,
+  Accordion,
 } from "@mantine/core";
 import { IconCheck, IconTrash } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
@@ -63,10 +65,7 @@ export function AgreementGenerator() {
     tenants: {} as Record<number, { send: boolean; verify: boolean }>,
   });
   const ownerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [isOwnerAddressConfirmed, setIsOwnerAddressConfirmed] = useState(false);
-  const [showOwnerDetailedFields, setShowOwnerDetailedFields] = useState(false);
-  const [isTenantAddressConfirmed, setIsTenantAddressConfirmed] = useState<Record<number, boolean>>({});
-  const [showTenantDetailedFields, setShowTenantDetailedFields] = useState<Record<number, boolean>>({});
+  const [opened, setOpened] = useState<string[]>([]);
 
   const startOwnerCountdown = () => {
     if (ownerOtpState.isCountdownActive) return;
@@ -193,13 +192,16 @@ export function AgreementGenerator() {
       errors.furnitureQuantity = "Please enter a valid furniture quantity";
     }
     if (Object.keys(errors).length > 0) {
-      form.setErrors(errors);
+      form.setErrors({
+        "propertyDetails.furnitureName": errors.furnitureName,
+        "propertyDetails.furnitureQuantity": errors.furnitureQuantity,
+      });
       return;
     }
 
     setFurnitureList((prev) => [...prev, { name: form.values.propertyDetails.furnitureName, quantity: form.values.propertyDetails.furnitureQuantity }]);
-    form.setFieldValue("furnitureName", "");
-    form.setFieldValue("furnitureQuantity", 1);
+    form.setFieldValue("propertyDetails.furnitureName", "");
+    form.setFieldValue("propertyDetails.furnitureQuantity", 1);
   };
 
   const removeFurniture = (index: number) => {
@@ -343,7 +345,6 @@ export function AgreementGenerator() {
       ownerAddress: "",
       ownerFullName: "",
       ownerAddressConfirmed: false,
-      ownerShowDetails: false,
       ownerEmailAddress: "",
       ownerAddressDetails: {
         flatFloor: "",
@@ -357,10 +358,9 @@ export function AgreementGenerator() {
       tenants: Array.from({ length: 2 }, () => ({
         fullName: "",
         email: "",
-        Address: "",
+        address: "",
         tenantNumber: 2,
         AddressConfirmed: false,
-        ShowDetails: false,
         addressDetails: {
           flatFloor: "",
           buildingName: "",
@@ -385,7 +385,7 @@ export function AgreementGenerator() {
 
       // Property Details
       propertyDetails: {
-        utilities: "",
+        amenities: "",
         propertyArea: "",
         bhkType: "",
         furnitureName: "",
@@ -426,7 +426,7 @@ export function AgreementGenerator() {
             errors[`tenants.${index}.email`] =
               "Please enter a valid email address";
           }
-          if (!tenant.Address.trim()) {
+          if (!tenant.address.trim()) {
             errors[`tenants.${index}.address`] = "Address is required.";
           }
         });
@@ -482,7 +482,6 @@ export function AgreementGenerator() {
             Address: "",
             tenantNumber: 2,
             AddressConfirmed: false,
-            ShowDetails: false,
             addressDetails: {
               flatFloor: "",
               buildingName: "",
@@ -497,7 +496,7 @@ export function AgreementGenerator() {
   };
 
   const nextStep = () => {
-    const { hasErrors } = form.validate();
+    const { hasErrors, errors } = form.validate();
 
     if (hasErrors) return;
 
@@ -566,30 +565,17 @@ export function AgreementGenerator() {
   const handleConfirmOwnerAddress = () => {
     const fullAddress = `${form.values.ownerAddressDetails.flatFloor}, ${form.values.ownerAddressDetails.buildingName}, ${form.values.ownerAddressDetails.area}, ${form.values.ownerAddressDetails.city} - ${form.values.ownerAddressDetails.pincode}`;
     form.setFieldValue("ownerAddress", fullAddress);
-    setIsOwnerAddressConfirmed(true);
-    setShowOwnerDetailedFields(false);
+    setOpened([]);
   };
 
-  const handleEditOwnerAddress = () => {
-    setIsOwnerAddressConfirmed(false);
-    form.setFieldValue("ownerAddress", "");
-    setShowOwnerDetailedFields(true);
-  };
+
   const handleConfirmTenantAddress = (index: number) => {
     const tenantDetails = form.values.tenants[index].addressDetails;
-
     const fullAddress = `${tenantDetails.flatFloor}, ${tenantDetails.buildingName}, ${tenantDetails.area}, ${tenantDetails.city} - ${tenantDetails.pincode}`;
-
     form.setFieldValue(`tenants.${index}.address`, fullAddress);
-    setIsTenantAddressConfirmed((prev) => ({ ...prev, [index]: true }));
-    setShowTenantDetailedFields((prev) => ({ ...prev, [index]: false }));
+    setOpened((prev) => prev.filter((item) => item !== `tenantAddress-${index}`));
   };
 
-  const handleEditTenantAddress = (index: number) => {
-    setIsTenantAddressConfirmed((prev) => ({ ...prev, [index]: false }));
-    form.setFieldValue(`tenants.${index}.address`, "");
-    setShowTenantDetailedFields((prev) => ({ ...prev, [index]: true }));
-  };
   return (
     <>
       <Title order={3}>Generate Rent Agreement</Title>
@@ -652,26 +638,40 @@ export function AgreementGenerator() {
               }
               loading={loadingStates.sendOwner || loadingStates.verifyOwner}
             />
-            {!showOwnerDetailedFields && !isOwnerAddressConfirmed && (
-              <Button variant="light" mt="sm" onClick={() => setShowOwnerDetailedFields(true)}>
-                Enter Detailed Address
-              </Button>
-            )}
+            <div>
+              <Text size="sm" fw={500} style={{ marginBottom: 4 }}>
+                Address <span style={{ color: "red" }}>*</span>
+              </Text>
 
-            {showOwnerDetailedFields && (
-              <AddressForm
-                addressDetails={form.values.ownerAddressDetails}
-                onChange={(field, value) => form.setFieldValue(field, value)}
-                onConfirm={handleConfirmOwnerAddress}
-                formPrefix="ownerAddressDetails"
-              />
-            )}
+              <Accordion value={opened} onChange={setOpened} multiple variant="contained" >
+                <Accordion.Item value="ownerAddress">
+                  <Accordion.Control
+                    style={{
+                      borderColor: "#ced4da",
+                      borderRadius: "4px",
+                      width: "100%",
+                      cursor: "pointer",
+                      textAlign: "start",
+                    }}
+                  >
+                    <span style={{ color: form.values.ownerAddress ? "inherit" : "#b6bcd0" }}>
+                      {form.values.ownerAddress || "Click to enter detailed address"}
+                    </span>
+                  </Accordion.Control>
 
-            {isOwnerAddressConfirmed && (
-              <Button mt="sm" variant="outline" color="blue" onClick={handleEditOwnerAddress}>
-                Edit Address
-              </Button>
-            )}
+                  <Accordion.Panel>
+                    <AddressForm
+                      addressDetails={form.values.ownerAddressDetails}
+                      onChange={(field, value) => form.setFieldValue(field, value)}
+                      onConfirm={handleConfirmOwnerAddress}
+                      formPrefix="ownerAddressDetails"
+                    />
+                  </Accordion.Panel>
+                </Accordion.Item>
+              </Accordion>
+            </div>
+
+
 
           </Stepper.Step>
 
@@ -758,138 +758,149 @@ export function AgreementGenerator() {
                     loadingStates.tenants[index]?.verify
                   }
                 />
-                <TextInput
-                  label="Address"
-                  placeholder="Your detailed address"
-                  {...form.getInputProps(`tenants.${index}.address`)}
-                  disabled={!isTenantAddressConfirmed[index]}
-                  withAsterisk
-                />
-                {!showTenantDetailedFields[index] && !isTenantAddressConfirmed[index] && (
-                  <Button variant="light" mt="sm" onClick={() => {
-                    setShowTenantDetailedFields((prev) => ({ ...prev, [index]: true }));
+                <div>
+                  <Text size="sm" fw={500} style={{ marginBottom: 4 }}>
+                    Address <span style={{ color: "red" }}>*</span>
+                  </Text>
 
-                  }}>
-                    Enter Detailed Address
-                  </Button>
-                )}
+                  <Accordion value={opened} onChange={setOpened} multiple variant="contained">
+                    <Accordion.Item value={`tenantAddress-${index}`}>
+                      <Accordion.Control
+                        style={{
+                          borderColor: "#ced4da",
+                          borderRadius: "4px",
+                          width: "100%",
+                          cursor: "pointer",
+                          textAlign: "start",
+                        }}
+                      >
+                        <span style={{ color: form.values.tenants[index].address ? "inherit" : "#b6bcd0" }}>
+                          {form.values.tenants[index].address || "Click to enter detailed address"}
+                        </span>
 
-                {showTenantDetailedFields[index] && (
-                  <AddressForm
-                    addressDetails={form.values.tenants[index].addressDetails}
-                    onChange={(field, value) => {
-                      form.setFieldValue(`tenants.${index}.${field}`, value);
-                    }}
-                    onConfirm={() => handleConfirmTenantAddress(index)}
-                    formPrefix="addressDetails"
-                  />
-                )}
+                      </Accordion.Control>
 
-                {isTenantAddressConfirmed[index] && (
-                  <Button mt="sm" variant="outline" color="blue" onClick={() => handleEditTenantAddress(index)}>
-                    Edit Address
-                  </Button>
-                )}
+                      <Accordion.Panel>
+                        <AddressForm
+                          addressDetails={form.values.tenants[index].addressDetails}
+                          onChange={(field, value) => {
+                            form.setFieldValue(`tenants.${index}.${field}`, value);
+                          }}
+                          onConfirm={() => handleConfirmTenantAddress(index)}
+                          formPrefix="addressDetails"
+                        />
+                      </Accordion.Panel>
+                    </Accordion.Item>
+                  </Accordion>
+                </div>
               </Box>
             ))}
           </Stepper.Step>
 
           <Stepper.Step label="Step 4" description="Lease property Details">
-            <NumberInput
-              label="Area (sq. ft.)"
-              placeholder="Enter area in square feet"
-              key={form.key("propertyArea")}
-              style={{ textAlign: "start" }}
-              {...form.getInputProps("propertyArea")}
-              withAsterisk
-            />
+            <Stack gap="md">
+              <NumberInput
+                label="Area (sq. ft.)"
+                placeholder="Enter area in square feet"
+                key={form.key("propertyArea")}
+                style={{ textAlign: "start" }}
+                {...form.getInputProps("propertyArea")}
+                withAsterisk
+              />
 
-            <MultiSelect
-              label="Utilities (Optional)"
-              placeholder="Select utilities available"
-              key={form.key("utilities")}
-              style={{ textAlign: "start" }}
-              data={["Electricity", "Water", "Gas", "Internet", "Parking"]}
-              {...form.getInputProps("utilities")}
-            />
+              <MultiSelect
+                label="Amenities (Optional)"
+                placeholder="Select amenities available"
+                key={form.key("amenities")}
+                style={{ textAlign: "start" }}
+                data={["Electricity", "Water", "Gas", "Internet", "Parking"]}
+                {...form.getInputProps("amenities")}
+                clearable
+                searchable
+              />
 
-            <Select
-              label="BHK Type"
-              placeholder="Select BHK type"
-              key={form.key("bhkType")}
-              style={{ textAlign: "start" }}
-              data={[
-                { value: "1BHK", label: "1 BHK" },
-                { value: "2BHK", label: "2 BHK" },
-                { value: "3BHK", label: "3 BHK" },
-                { value: "4BHK", label: "4 BHK" },
-              ]}
-              {...form.getInputProps("bhkType")}
-              withAsterisk
-            />
+              <Select
+                label="BHK Type"
+                placeholder="Select BHK type"
+                key={form.key("bhkType")}
+                style={{ textAlign: "start" }}
+                data={[
+                  { value: "1BHK", label: "1 BHK" },
+                  { value: "2BHK", label: "2 BHK" },
+                  { value: "3BHK", label: "3 BHK" },
+                  { value: "4BHK", label: "4 BHK" },
+                ]}
+                {...form.getInputProps("bhkType")}
+                withAsterisk
+              />
 
-            <Radio.Group
-              label="Furnishing Type"
-              value={furnishingType}
-              onChange={setFurnishingType}
-              withAsterisk
-              style={{ marginBottom: 10 }}
-            >
-              <Group mt="xs">
-                <Radio value="furnished" label="Furnished" />
-                <Radio value="semi-furnished" label="Semi-Furnished" />
-                <Radio value="not-furnished" label="Not Furnished" />
-              </Group>
-            </Radio.Group>
-            {(furnishingType === "furnished" || furnishingType === "semi-furnished") && (
-              <Box>
-                <TextInput
-                  label="Furniture Name"
-                  placeholder="Enter furniture name"
-                  key={form.key("propertyDetails.furnitureName")}
-                  style={{ textAlign: "start" }}
-                  {...form.getInputProps("propertyDetails.furnitureName")}
-                />
-                <NumberInput
-                  label="Quantity"
-                  min={1}
-                  key={form.key("propertyDetails.furnitureQuantity")}
-                  style={{ textAlign: "start" }}
-                  {...form.getInputProps("propertyDetails.furnitureQuantity")}
-                />
-                <Button style={{ marginTop: 10, marginBottom: 20 }} onClick={addFurniture}>Add</Button>
-                {furnitureList.length > 0 && (
-                  <Card shadow="sm" padding="lg" withBorder style={{ textAlign: "center" }}>
-                    <Table highlightOnHover verticalSpacing="md" horizontalSpacing={20} mt="md">
-                      <Table.Thead>
-                        <Table.Tr>
-                          <Table.Th>Sr No.</Table.Th>
-                          <Table.Th>Item</Table.Th>
-                          <Table.Th>Number of units</Table.Th>
-                          <Table.Th>Action</Table.Th>
-                        </Table.Tr>
-                      </Table.Thead>
-                      <Table.Tbody>
-                        {
-                          furnitureList.map((item, index) => (
-                            <Table.Tr key={index}>
-                              <Table.Td style={{ textAlign: "left" }}>{index + 1}</Table.Td>
-                              <Table.Td style={{ textAlign: "left" }}>{item.name}</Table.Td>
-                              <Table.Td style={{ textAlign: "left" }}>{item.quantity}</Table.Td>
-                              <Table.Td style={{ textAlign: "left" }}>
-                                <ActionIcon color="red" onClick={() => removeFurniture(index)}>
-                                  <IconTrash size={16} />
-                                </ActionIcon>
-                              </Table.Td>
-                            </Table.Tr>
-                          ))
-                        }
-                      </Table.Tbody>
-                    </Table>
-                  </Card>
-                )}
-              </Box>
-            )}
+              <Radio.Group
+                label="Furnishing Type"
+                value={furnishingType}
+                onChange={setFurnishingType}
+                withAsterisk
+                style={{ marginBottom: 10 }}
+              >
+                <Group mt="xs">
+                  <Radio value="furnished" label="Furnished" />
+                  <Radio value="semi-furnished" label="Semi-Furnished" />
+                  <Radio value="not-furnished" label="Not Furnished" />
+                </Group>
+              </Radio.Group>
+              {(furnishingType === "furnished" || furnishingType === "semi-furnished") && (
+                <Box>
+                  <Group gap={30} >
+                    <TextInput
+                      label="furniture and appliances"
+                      placeholder="Enter furniture name"
+                      key={form.key("propertyDetails.furnitureName")}
+                      style={{ textAlign: "start", flex: 1, minWidth: 200 }}
+                      {...form.getInputProps("propertyDetails.furnitureName")}
+                      withAsterisk
+                    />
+                    <NumberInput
+                      label="Quantity"
+                      min={1}
+                      key={form.key("propertyDetails.furnitureQuantity")}
+                      style={{ textAlign: "start", flex: 1, minWidth: 200 }}
+                      {...form.getInputProps("propertyDetails.furnitureQuantity")}
+                      withAsterisk
+                    />
+                    <Button style={{ marginTop: 40, marginBottom: 20 }} onClick={addFurniture}>Add</Button>
+                  </Group>
+                  {furnitureList.length > 0 && (
+                    <Card shadow="sm" padding="lg" withBorder style={{ textAlign: "center" }}>
+                      <Table highlightOnHover verticalSpacing="md" horizontalSpacing={20} mt="md">
+                        <Table.Thead>
+                          <Table.Tr>
+                            <Table.Th>Sr No.</Table.Th>
+                            <Table.Th>Item</Table.Th>
+                            <Table.Th>Number of units</Table.Th>
+                            <Table.Th>Action</Table.Th>
+                          </Table.Tr>
+                        </Table.Thead>
+                        <Table.Tbody>
+                          {
+                            furnitureList.map((item, index) => (
+                              <Table.Tr key={index}>
+                                <Table.Td style={{ textAlign: "left" }}>{index + 1}</Table.Td>
+                                <Table.Td style={{ textAlign: "left" }}>{item.name}</Table.Td>
+                                <Table.Td style={{ textAlign: "left" }}>{item.quantity}</Table.Td>
+                                <Table.Td style={{ textAlign: "left" }}>
+                                  <ActionIcon color="red" onClick={() => removeFurniture(index)}>
+                                    <IconTrash size={16} />
+                                  </ActionIcon>
+                                </Table.Td>
+                              </Table.Tr>
+                            ))
+                          }
+                        </Table.Tbody>
+                      </Table>
+                    </Card>
+                  )}
+                </Box>
+              )}
+            </Stack>
           </Stepper.Step>
           <Stepper.Step label="Step 5" description="Agreement Details">
             <TextInput
