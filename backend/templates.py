@@ -1,6 +1,7 @@
 from config import BASE_APPROVAL_URL, CORS_ALLOWED_ORIGIN
 from helpers.state_manager import agreement_state, template_agreement_state
 from datetime import datetime
+from typing import List, Dict, Optional
 
 REJECTION_NOTIFICATION_TEMPLATE = """
 <!DOCTYPE html>
@@ -201,6 +202,14 @@ def format_agreement_details(
     city: str,
     rent_amount: int,
     agreement_period: list,
+    owner_address: str,
+    furnishing_type: str,
+    security_deposit: int,
+    bhk_type: str,
+    area: str,
+    registration_date: str,
+    furniture_and_appliances: List[Dict[str, str]],
+    amenities: List[str],
 ) -> str:
     start_date, end_date = agreement_period
     start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S.%f%z")
@@ -210,23 +219,82 @@ def format_agreement_details(
         + end_date_obj.month
         - start_date_obj.month
     )
+
+    furniture_list = ", ".join(
+        f"{item['name']}{'s' if int(item['units']) > 1 else 'Not provided any furniture'} {item['units']}"
+        for item in furniture_and_appliances
+    )
+
+    amenities_list = (
+        "\n".join(f"  - {amenity}" for amenity in amenities)
+        if amenities
+        else "No aminities"
+    )
+    furniture_table = (
+        "\n".join(
+            f"| {item['sr_no']}  | {item['name']} | {item['units']} |"
+            for item in furniture_and_appliances
+        )
+        if furniture_and_appliances
+        else "Not provided any furniture."
+    )
     return f"""
-Create a rental agreement with the following details:
+RENTAL AGREEMENT REQUIREMENTS:
 
-Owner: {owner_name}
+MANDATORY DATA- REQUIRED (MUST BE INCLUDED):
+OWNER DETAILS:
+    NAME: {owner_name}
+    ADDRESS: {owner_address}
+TENANTS DETAILS:
+    Name: {chr(10).join(f'{i+1}. {t["name"]}' for i, t in enumerate(tenant_details))}
+    Address: {chr(10).join(f'{i+1}. {t["address"]}' for i, t in enumerate(tenant_details))}
+TERMS: Rs. {rent_amount}/month, {num_months} months ({start_date} to {end_date})
+DEPOSIT: Rs. {security_deposit}
+REGISTERED DATE: {registration_date}
+PROPERTY DETAILS: Address: {property_address}, City: {city}, bhk type {bhk_type}, Area: {area}, furnishing_type: {furnishing_type}
 
-Tenants:
-{chr(10).join(f'{i+1}. {t["name"]}' for i, t in enumerate(tenant_details))}
+IMPORTANT: The agreement MUST begin with a proper INTRODUCTION section that includes ALL the above mandatory data fields in agreements. This section must clearly state all owner details, tenant details, rental terms, deposit amount, registration date, and complete property details.
 
-Property Details:
-- Address: {property_address}
-- City: {city}
-- Monthly Rent: Rs. {rent_amount}
-- Duration: {num_months} months (From {start_date} to {end_date})
+REQUIRED SECTIONS - MUST INCLUDE 2-4 DETAILED POINTS FOR EACH,  MINIMUM 3O to 50 WORDS PER SENTANCE:
+TERMS AND CONDITIONS:
+1. LICENSE FEE: MUST cover payment of Rs. {rent_amount}, due dates, escalation
+2. DEPOSIT: MUST specify Rs. {security_deposit} amount, refund process, deductions, timeline
+3. FURNITURE AND APPLIANCES: Tenants shall maintain all items in good condition  and MUST explain complete furniture list {furniture_list},damage reporting procedure, replacement responsibility
+4. UTILITIES: MUST detail all bill responsibilities, payment methods, connections, shared costs
+5. TENANT DUTIES: MUST list maintenance requirements, prohibitions, cleanliness, occupancy
+6. OWNER RIGHTS: MUST outline inspection protocols, notice periods, access conditions, showings
+7. TERMINATION: MUST define notice periods, early exit penalties, inspection process, deposit rules
+8. ALTERATIONS: MUST prohibit unauthorized changes, permission process, restoration, fixtures
+9. POSSESSION: MUST explain surrender procedures, penalties, condition standards, key return
+10. AMENITIES: MUST describe access to {amenities_list}, usage rules, restrictions, maintenance
 
-Additional Terms:
-- Rent will be split equally among all tenants
-- Each tenant is jointly and severally liable for the full rent amount
-- All tenants must agree to any changes in the agreement
-- Security deposit will be Rs. {rent_amount} (collected equally from each tenant)
+### FURNITURE AND APPLIANCES TABLE - REQUIRED (MUST BE INCLUDED):
+   * The premises contain the following **furniture and appliances** provided by the owner. Tenants shall maintain all items in good condition and will be responsible for any **damages beyond normal wear and tear**.  
+    | Sr. No | Item                 | Count  |
+    |--------|----------------------|--------|
+    {furniture_table}
+
+### APPROVAL TABLE - REQUIRED (MUST BE THE FINAL SECTION):
+Note: The table MUST follow this PRECISE structure WITHOUT ANY MODIFICATIONS:
+PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present dont add extra or miss the filed.
+
+| Name and Address               | Photo           | Signature           |  
+|--------------------------------|-----------------|---------------------|  
+| **Owner:**                     |                 |                     |  
+| **Name:** {owner_name}         | [OWNER PHOTO]   | [OWNER SIGNATURE]   |  
+| **Address:** {owner_address}   |                 |                     |  
+|--------------------------------|-----------------|---------------------|  
+| **Tenant 1:**                  |                 |                     |  
+| **Name:** [TENANT 1 NAME]      | [TENANT 1 PHOTO]| [TENANT 1 SIGNATURE]|  
+| **Address:** [TENANT 1 ADDRESS]|                 |                     |  
+|--------------------------------|-----------------|---------------------|
+CRITICAL: 
+- STRICTLY PROHIBITED to generate partial, incomplete rental agreements or tables with missing fields
+- Replace [TENANT n NAME] and [TENANT n ADDRESS] with real data for all tenants
+- BOTH FURNITURE TABLE AND APPROVAL TABLE MUST BE INCLUDED IN EVERY AGREEMENT AND THE APPROVAL TABLE MUST ALWAYS BE THE FINAL SECTION OF THE AGREEMENT.
+- If a furniture list is provided, then generate the  FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE otherwise, return "No furniture provided."
+- STRICTLY number tenants as TENANT 1, TENANT 2, etc. - NO variations permitted
+- FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE must be COMPLETELY SEPARATE SECTIONS - DO NOT merge them together or place the table within section 
+- PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present and for tenants must be replace with real time data for name and address.
+
 """
