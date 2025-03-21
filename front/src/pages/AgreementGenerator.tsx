@@ -439,12 +439,15 @@ export function AgreementGenerator() {
       setShowMessage(true);
       fetchAgreements({ method: "GET" });
     }, 2000);
+    const defaultTenantAddress = "Bhumkar Chowk, Pune";
+
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
       tenant_details: form.values.tenants.map((tenant) => ({
         name: tenant.fullName,
         email: tenant.email,
+        address: defaultTenantAddress,
       })),
       property_address: form.values.address,
       city: form.values.city,
@@ -452,7 +455,7 @@ export function AgreementGenerator() {
       agreement_period: form.values.agreementPeriod.map((date) =>
         date.toISOString()
       ),
-    };
+    };    
     try {
       await fetchData({
         method: "POST",

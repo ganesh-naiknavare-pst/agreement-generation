@@ -24,9 +24,18 @@ from prisma import Base64
 from langchain_core.prompts.prompt import PromptTemplate
 from prompts import template
 from prisma.enums import AgreementStatus
+from typing import List, Dict
 
 logging.basicConfig(level=logging.INFO)
 
+furniture_and_appliances_example = [
+    {"sr_no": "1", "name": "Fan", "units": "03"},
+    {"sr_no": "2", "name": "Tube light", "units": "01"},
+    {"sr_no": "3", "name": "Bulb", "units": "04"},
+    {"sr_no": "4", "name": "Sofa", "units": "01"},
+    {"sr_no": "5", "name": "Electric Geezer", "units": "01"},
+]
+amenities_example = ["Swimming Pool", "Parking", "Club House"]
 
 class AgreementRequest(BaseModel):
     owner_name: str
@@ -36,6 +45,14 @@ class AgreementRequest(BaseModel):
     city: str
     rent_amount: int
     agreement_period: list[datetime]
+    owner_address:str ="Vishal nagar pune"
+    furnishing_type: str = "Semi-Furnished"
+    security_deposit: int =50000
+    bhk_type: str= "2BHK"
+    area: str= "1200 sq. ft."
+    registration_date: str= "2025-01-05"
+    furniture_and_appliances: List[Dict[str, str]] = furniture_and_appliances_example
+    amenities: List[str]= amenities_example
 
 
 def run_agreement_tool(user_input: str) -> str:
@@ -160,6 +177,14 @@ async def create_agreement_details(
             city=request.city,
             rent_amount=request.rent_amount,
             agreement_period=[date.isoformat() for date in request.agreement_period],
+            owner_address=request.owner_address ,
+            furnishing_type= request.furnishing_type,
+            security_deposit= request.security_deposit ,
+            bhk_type= request.bhk_type,
+            area= request.area,
+            registration_date= request.registration_date,
+            furniture_and_appliances= request.furniture_and_appliances,
+            amenities= request.amenities,
         )
 
         try:
