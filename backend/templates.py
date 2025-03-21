@@ -202,9 +202,9 @@ def format_agreement_details(
     city: str,
     rent_amount: int,
     agreement_period: list,
-    owner_address:str ,
-    furnishing_type: str ,
-    security_deposit: int ,
+    owner_address: str,
+    furnishing_type: str,
+    security_deposit: int,
     bhk_type: str,
     area: str,
     registration_date: str,
@@ -220,18 +220,24 @@ def format_agreement_details(
         - start_date_obj.month
     )
 
-
     furniture_list = ", ".join(
         f"{item['name']}{'s' if int(item['units']) > 1 else 'Not provided any furniture'} {item['units']}"
         for item in furniture_and_appliances
     )
 
-    amenities_list = "\n".join(f"  - {amenity}" for amenity in amenities) if amenities else "No aminities"
+    amenities_list = (
+        "\n".join(f"  - {amenity}" for amenity in amenities)
+        if amenities
+        else "No aminities"
+    )
     furniture_table = (
-    "\n".join(f"| {item['sr_no']}  | {item['name']} | {item['units']} |" for item in furniture_and_appliances)
-    if furniture_and_appliances
-    else "Not provided any furniture."
-)
+        "\n".join(
+            f"| {item['sr_no']}  | {item['name']} | {item['units']} |"
+            for item in furniture_and_appliances
+        )
+        if furniture_and_appliances
+        else "Not provided any furniture."
+    )
     return f"""
 RENTAL AGREEMENT REQUIREMENTS:
 
