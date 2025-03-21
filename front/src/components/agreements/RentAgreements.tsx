@@ -55,6 +55,13 @@ export function RentAgreements() {
     }
   };
 
+  const statusTooltips: Record<string, string> = {  
+    APPROVED: "Approved by all involved parties",  
+    PROCESSING: "Awaiting action from one or more parties",  
+    REJECTED: "Rejected by at least one party",  
+    FAILED: "No action taken by one or more parties",  
+  };
+
   const paginatedData = agreements
     ? agreements.slice((page - 1) * pageSize, page * pageSize)
     : [];
@@ -88,7 +95,7 @@ export function RentAgreements() {
                   {new Date(agreement.agreementPeriod[0]).toLocaleDateString()} - {new Date(agreement.agreementPeriod[1]).toLocaleDateString()}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  <Tooltip label={agreement.status} withArrow>
+                  <Tooltip label={statusTooltips[agreement.status]} withArrow>
                     <Badge size="sm" color={getStatusColor(agreement.status)}>
                       {agreement.status}
                     </Badge>
