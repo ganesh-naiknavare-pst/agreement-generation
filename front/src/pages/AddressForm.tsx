@@ -1,8 +1,23 @@
 import { Button, Card, TextInput } from "@mantine/core";
 import { useState } from "react";
 
-export const AddressForm = ({ addressDetails, onChange, onConfirm, formPrefix }: { addressDetails: any; onChange: (field: string, value: any) => void; onConfirm: () => void; formPrefix: string }) => {
-  const [errors, setErrors] = useState({
+interface AddressDetails {
+  flatFloor: string;
+  buildingName: string;
+  area: string;
+  city: string;
+  pincode: string;
+}
+
+interface AddressFormProps {
+  addressDetails: AddressDetails;
+  onChange: (field: string, value: string) => void;
+  onConfirm: () => void;
+  formPrefix: string;
+}
+
+export const AddressForm = ({ addressDetails, onChange, onConfirm, formPrefix }: AddressFormProps) => {
+  const [errors, setErrors] = useState<AddressDetails>({
     flatFloor: '',
     buildingName: '',
     area: '',
@@ -10,7 +25,7 @@ export const AddressForm = ({ addressDetails, onChange, onConfirm, formPrefix }:
     pincode: ''
   });
 
-  const validateField = (field: string, value: any) => {
+  const validateField = (field: string, value: string) => {
     let error = '';
     switch (field) {
       case 'flatFloor':
@@ -19,13 +34,13 @@ export const AddressForm = ({ addressDetails, onChange, onConfirm, formPrefix }:
         }
         break;
       case 'buildingName':
-        if (!/^[a-zA-Z\s]+$/.test(value)) {
-          error = 'Building Name should contain characters only';
+        if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
+          error = 'Building Name should contain characters and numbers only';
         }
         break;
       case 'area':
-        if (!/^[a-zA-Z\s]+$/.test(value)) {
-          error = 'Area should contain characters only';
+        if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
+          error = 'Area should contain characters and numbers only';
         }
         break;
       case 'city':
@@ -45,18 +60,18 @@ export const AddressForm = ({ addressDetails, onChange, onConfirm, formPrefix }:
     return error === '';
   };
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string) => {
     onChange(field, value);
     validateField(field.replace(`${formPrefix}.`, ""), value);
   };
 
-
   const handleConfirm = () => {
-    const isValid = Object.keys(errors).every((key) => validateField(key, addressDetails[key] || ""));
+    const isValid = Object.keys(errors).every((key) => validateField(key, addressDetails[key as keyof AddressDetails] || ""));
     if (isValid) {
       onConfirm();
     }
   };
+
   return (
     <>
       <Card shadow="sm" padding="lg" mt={10} withBorder style={{ backgroundColor: "#ebf2fc" }}>

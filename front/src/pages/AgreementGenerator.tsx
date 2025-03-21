@@ -371,18 +371,15 @@ export function AgreementGenerator() {
       })),
 
       // Agreement Details
-      agreementDetails: {
-        address: "",
-        city: "",
-        date: new Date(),
-        rentAmount: 0,
-        securityAmount: 0,
-        agreementPeriod: [
-          new Date(),
-          new Date(new Date().setMonth(new Date().getMonth() + 6)), // Default to 6 months
-        ],
-      },
-
+      address: "",
+      city: "",
+      date: new Date(),
+      rentAmount: 0,
+      securityAmount: 0,
+      agreementPeriod: [
+        new Date(),
+        new Date(new Date().setMonth(new Date().getMonth() + 6)),
+      ],
       // Property Details
       propertyDetails: {
         amenities: "",
@@ -433,28 +430,26 @@ export function AgreementGenerator() {
       }
 
       if (active === 4) {
-        if (values.agreementDetails.address.trim().length < 10) {
+        if (values.address.trim().length < 10) {
           errors.address = "Address must be at least 10 characters";
         }
-        if (!values.agreementDetails.city.trim()) {
+        if (!values.city.trim()) {
           errors.city = "City is required";
         }
-        if (values.agreementDetails.rentAmount <= 0) {
+        if (values.rentAmount <= 0) {
           errors.rentAmount = "Rent amount must be greater than 0";
         }
-        if (values.agreementDetails.securityAmount <= 0) {
+        if (values.securityAmount <= 0) {
           errors.securityAmount = "Security amount must be greater than 0";
         }
-        if (values.agreementDetails.agreementPeriod.length !== 2) {
-          errors.agreementPeriod =
-            "Agreement period must be a valid date range";
+        if (values.agreementPeriod.length !== 2) {
+          errors.agreementPeriod = "Agreement period must be a valid date range";
         } else {
-          const [start, end] = values.agreementDetails.agreementPeriod;
+          const [start, end] = values.agreementPeriod;
           const sixMonthLater = new Date(start);
           sixMonthLater.setMonth(sixMonthLater.getMonth() + 6);
           if (end < sixMonthLater) {
-            errors.agreementPeriod =
-              "Agreement period must be at least six months";
+            errors.agreementPeriod = "Agreement period must be at least six months";
           }
         }
       }
@@ -496,7 +491,7 @@ export function AgreementGenerator() {
   };
 
   const nextStep = () => {
-    const { hasErrors, errors } = form.validate();
+    const { hasErrors } = form.validate();
 
     if (hasErrors) return;
 
@@ -544,10 +539,10 @@ export function AgreementGenerator() {
         name: tenant.fullName,
         email: tenant.email,
       })),
-      property_address: form.values.agreementDetails.address,
-      city: form.values.agreementDetails.city,
-      rent_amount: form.values.agreementDetails.rentAmount,
-      agreement_period: form.values.agreementDetails.agreementPeriod.map((date) =>
+      property_address: form.values.address,
+      city: form.values.city,
+      rent_amount: form.values.rentAmount,
+      agreement_period: form.values.agreementPeriod.map((date) =>
         date.toISOString()
       ),
     };
