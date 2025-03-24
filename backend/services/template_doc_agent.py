@@ -214,11 +214,11 @@ async def template_based_agreement(
                     delete_template_file()
                     template_agreement_state.reset()
                     return {"message": "Agreement was rejected by one or more parties."}
-                else:
-                    # ApprovalResult.CONNECTION_CLOSED
+                elif approval_result == ApprovalResult.EXPIRED:
+                    # ApprovalResult.EXPIRED
                     await db.templateagreement.update(
                         where={"id": agreement_id},
-                        data={"status": AgreementStatus.FAILED},
+                        data={"status": AgreementStatus.EXPIRED},
                     )
 
                     authority_useragreement = await db.useragreementstatus.find_first(
@@ -229,24 +229,36 @@ async def template_based_agreement(
                             data={
                                 "userId": template_agreement_state.authority_id,
                                 "agreementId": agreement_id,
-                                "status": AgreementStatus.FAILED,
+                                "status": AgreementStatus.EXPIRED,
                             }
                         )
-                    await notify_clients({"userId": template_agreement_state.authority_id, "status": "FAILED"})
-                    
+                    await notify_clients({"userId": template_agreement_state.authority_id, "status": "EXPIRED"})
+
                     participant_useragreement = await db.useragreementstatus.find_first(
                         where={"userId": template_agreement_state.participant_id, "agreementId": agreement_id}
-                    )                   
+                    )
                     if not participant_useragreement:
                         await db.useragreementstatus.create(
                             data={
                                 "userId": template_agreement_state.participant_id,
                                 "agreementId": agreement_id,
-                                "status": AgreementStatus.FAILED,
+                                "status": AgreementStatus.EXPIRED,
                             }
                         )
-                    await notify_clients({"userId": template_agreement_state.participant_id, "status": "FAILED"})
+                    await notify_clients({"userId": template_agreement_state.participant_id, "status": "EXPIRED"})
 
+                    delete_temp_file()
+                    delete_template_file()
+                    template_agreement_state.reset()
+                    return {
+                        "message": "Agreement was expired due to no action taken by one or more parties within 5 minutes."
+                    }
+                else:
+                    # ApprovalResult.CONNECTION_CLOSED
+                    await db.agreement.update(
+                        where={"id": agreement_id},
+                        data={"status": AgreementStatus.FAILED},
+                    )
                     delete_temp_file()
                     delete_template_file()
                     template_agreement_state.reset()

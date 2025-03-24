@@ -48,18 +48,21 @@ export function RentAgreements() {
         return COLORS.blue;
       case "REJECTED":
         return COLORS.red;
-      case "FAILED":
+      case "EXPIRED":
         return COLORS.yellow;
+      case "FAILED":
+        return COLORS.gray;
       default:
         return COLORS.grayDark;
     }
   };
 
-  const statusTooltips: Record<string, string> = {  
-    APPROVED: "Approved by all involved parties",  
-    PROCESSING: "Awaiting action from one or more parties",  
-    REJECTED: "Rejected by at least one party",  
-    FAILED: "No action taken by one or more parties",  
+  const statusTooltips: Record<string, string> = {
+    APPROVED: "Approved by all involved parties",
+    PROCESSING: "Awaiting action from one or more parties",
+    REJECTED: "Rejected by one or more parties",
+    EXPIRED: "No action taken by one or more parties",
+    FAILED: "Failed due to connection issue",
   };
 
   const paginatedData = agreements

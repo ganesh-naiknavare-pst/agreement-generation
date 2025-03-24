@@ -50,18 +50,19 @@ export function TemplateAgreements() {
         return COLORS.blue;
       case "REJECTED":
         return COLORS.red;
-      case "FAILED":
+      case "EXPIRED":
         return COLORS.yellow;
-      default:
-        return COLORS.grayDark;
+      case "FAILED":
+        return COLORS.gray;
     }
   };
 
   const statusTooltips: Record<string, string> = {
-    APPROVED: "All parties have approved",
-    PROCESSING: "Waiting for the parties to take action",
-    REJECTED: "Any one of the party has rejected ",
-    FAILED: "Any party has not taken any action",
+    APPROVED: "Approved by all involved parties",
+    PROCESSING: "Awaiting action from one or more parties",
+    REJECTED: "Rejected by one or more parties",
+    EXPIRED: "No action taken by one or more parties",
+    FAILED: "Failed due to connection issue",
   };
 
   const paginatedData = templateAgreement ? templateAgreement.slice((page - 1) * pageSize, page * pageSize) : [];
@@ -98,8 +99,8 @@ export function TemplateAgreements() {
                   {new Date(agreement.createdAt).toLocaleString()}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                <Tooltip label={statusTooltips[agreement.status]} withArrow>
-                <Badge size="sm" color={getStatusColor(agreement.status)}>
+                  <Tooltip label={statusTooltips[agreement.status]} withArrow>
+                    <Badge size="sm" color={getStatusColor(agreement.status)}>
                       {agreement.status}
                     </Badge>
                   </Tooltip>

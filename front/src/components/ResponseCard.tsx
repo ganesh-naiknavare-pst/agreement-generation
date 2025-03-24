@@ -1,5 +1,5 @@
 import { Card, Center, Text, ThemeIcon } from "@mantine/core";
-import { IconCheck, IconClockExclamation, IconX } from "@tabler/icons-react";
+import { IconAlertTriangle, IconCheck, IconClockExclamation, IconX } from "@tabler/icons-react";
 import { COLORS } from "../colors";
 
 type ResponseCardProps = {
@@ -24,7 +24,7 @@ const ResponseCard: React.FC<ResponseCardProps> = ({ type }) => {
         "❌ Your rejection has been recorded. If this was a mistake, please contact support.",
       footer: "Thank you for your response.",
     },
-    FAILED: {
+    EXPIRED: {
       color: COLORS.yellow,
       title: "Agreement link expired !",
       icon: <IconClockExclamation size="1.5rem" />,
@@ -32,6 +32,15 @@ const ResponseCard: React.FC<ResponseCardProps> = ({ type }) => {
         "⏳ Unfortunately, the agreement link has expired as the required action was not completed within the 5-minutes.",
       footer:
         "If you need further assistance or have any questions, please contact support.",
+    },
+    FAILED: {
+      color: COLORS.gray,
+      title: "Agreement process failed!",
+      icon: <IconAlertTriangle size="1.5rem" />,
+      message:
+        "⚠️ Sorry for the inconvenience! The agreement process failed unexpectedly due to a connection issue.",
+      footer:
+        "Please try again or contact support if the issue persists.",
     },
   };
 

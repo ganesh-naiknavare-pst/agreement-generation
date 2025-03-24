@@ -234,13 +234,12 @@ async def create_agreement_details(
                         shutil.rmtree("./utils")
                     agreement_state.reset()
                     return {"message": "Agreement was rejected by one or more parties."}
-                else:
-                    # ApprovalResult.CONNECTION_CLOSED
+                elif approval_result == ApprovalResult.EXPIRED:
+                    # ApprovalResult.EXPIRED
                     await db.agreement.update(
                         where={"id": agreement_id},
-                        data={"status": AgreementStatus.FAILED},
+                        data={"status": AgreementStatus.EXPIRED},
                     )
-                    await notify_clients({"userId": tenant_id, "status": "FAILED"})
 
                     owner_useragreement = await db.userrentagreementstatus.find_first(
                         where={"userId": agreement_state.owner_id, "agreementId": agreement_id}
@@ -250,11 +249,11 @@ async def create_agreement_details(
                             data={
                                 "userId": agreement_state.owner_id,
                                 "agreementId": agreement_id,
-                                "status": AgreementStatus.FAILED,
+                                "status": AgreementStatus.EXPIRED,
                             }
                         )
-                        await notify_clients({"userId": agreement_state.owner_id, "status": "FAILED"})
-                        
+                        await notify_clients({"userId": agreement_state.owner_id, "status": "EXPIRED"})
+
                     for tenant_id, _ in tenants:
                         tenant_useragreement = await db.userrentagreementstatus.find_first(
                             where={"userId": tenant_id, "agreementId": agreement_id}
@@ -264,10 +263,23 @@ async def create_agreement_details(
                                 data={
                                     "userId": tenant_id,
                                     "agreementId": agreement_id,
-                                    "status": AgreementStatus.FAILED,
+                                    "status": AgreementStatus.EXPIRED,
                                 }
                             )
-                            await notify_clients({"userId": tenant_id, "status": "FAILED"})
+                            await notify_clients({"userId": tenant_id, "status": "EXPIRED"})
+                    delete_temp_file()
+                    if os.path.exists("./utils"):
+                        shutil.rmtree("./utils")
+                    agreement_state.reset()
+                    return {
+                        "message": "Agreement was expired due to no action taken by one or more parties within 5 minutes."
+                    }
+                else:
+                    # ApprovalResult.CONNECTION_CLOSED
+                    await db.agreement.update(
+                        where={"id": agreement_id},
+                        data={"status": AgreementStatus.FAILED},
+                    )
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")

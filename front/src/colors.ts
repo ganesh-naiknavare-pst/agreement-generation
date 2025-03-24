@@ -13,4 +13,5 @@ export const COLORS = {
   asteric: "#e03130",
   otploadingcolor: "rgba(255, 255, 255, 1)",
   white: "#fff",
+  gray: "#4B5563",
 };

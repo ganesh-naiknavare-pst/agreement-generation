@@ -20,7 +20,7 @@ const useWebSocket = (url: string, onMessage: (message: any) => void) => {
     };
 
     return () => {
-      if (ws.current) {
+      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.close();
       }
     };
