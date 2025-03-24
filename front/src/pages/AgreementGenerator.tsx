@@ -184,24 +184,28 @@ export function AgreementGenerator() {
 
   const addFurniture = () => {
     const errors: Record<string, string> = {};
+    const furnitureName = form.values.furnitureName.trim();
 
-    if (!form.values.propertyDetails.furnitureName.trim()) {
+    if (!furnitureName) {
       errors.furnitureName = "Please enter a furniture name";
+    } else if (/^\d+$/.test(furnitureName)) {
+      errors.furnitureName = "Furniture name cannot be only numbers";
     }
-    if (form.values.propertyDetails.furnitureQuantity < 1) {
+
+    if (form.values.furnitureQuantity < 1) {
       errors.furnitureQuantity = "Please enter a valid furniture quantity";
     }
+
     if (Object.keys(errors).length > 0) {
       form.setErrors({
-        "propertyDetails.furnitureName": errors.furnitureName,
-        "propertyDetails.furnitureQuantity": errors.furnitureQuantity,
+        furnitureName: errors.furnitureName,
+        furnitureQuantity: errors.furnitureQuantity,
       });
       return;
     }
-
-    setFurnitureList((prev) => [...prev, { name: form.values.propertyDetails.furnitureName, quantity: form.values.propertyDetails.furnitureQuantity }]);
-    form.setFieldValue("propertyDetails.furnitureName", "");
-    form.setFieldValue("propertyDetails.furnitureQuantity", 1);
+    setFurnitureList((prev) => [...prev, { name: form.values.furnitureName, quantity: form.values.furnitureQuantity }]);
+    form.setFieldValue("furnitureName", "");
+    form.setFieldValue("furnitureQuantity", 1);
   };
 
   const removeFurniture = (index: number) => {
@@ -359,7 +363,6 @@ export function AgreementGenerator() {
         fullName: "",
         email: "",
         address: "",
-        tenantNumber: 2,
         AddressConfirmed: false,
         addressDetails: {
           flatFloor: "",
@@ -369,11 +372,11 @@ export function AgreementGenerator() {
           pincode: "",
         },
       })),
-
+      tenantNumber: 1,
       // Agreement Details
       address: "",
       city: "",
-      date: new Date(),
+      registrationDate: new Date(),
       rentAmount: 0,
       securityAmount: 0,
       agreementPeriod: [
@@ -381,13 +384,11 @@ export function AgreementGenerator() {
         new Date(new Date().setMonth(new Date().getMonth() + 6)),
       ],
       // Property Details
-      propertyDetails: {
-        amenities: "",
-        propertyArea: "",
-        bhkType: "",
-        furnitureName: "",
-        furnitureQuantity: 1,
-      },
+      amenities: [],
+      propertyArea: "",
+      bhkType: "",
+      furnitureName: "",
+      furnitureQuantity: 1,
     },
 
     validate: (values) => {
@@ -408,11 +409,11 @@ export function AgreementGenerator() {
           errors.ownerAddress = "Address is required.";
         }
       }
-
-      if (active === 1 && values.tenants.length < 1) {
-        errors.tenantNumber = "At least one tenant is required";
+      if (active === 1) {
+        if (values.tenantNumber < 1) {
+          errors.tenantNumber = "Number of tenants must be at least 1";
+        }
       }
-
       if (active === 2) {
         values.tenants.forEach((tenant, index) => {
           if (!fullNameRegex.test(tenant.fullName.trim())) {
@@ -460,6 +461,12 @@ export function AgreementGenerator() {
         ) {
           errors.furnitureName = "Please add at least one furniture item";
         }
+        if (!values.propertyArea || Number(values.propertyArea) <= 0) {
+          errors.propertyArea = "Please enter a valid area in square feet";
+        }
+        if (!values.bhkType) {
+          errors.bhkType = "Please select a BHK type";
+        }
       }
       return errors;
     },
@@ -475,7 +482,6 @@ export function AgreementGenerator() {
             fullName: "",
             email: "",
             Address: "",
-            tenantNumber: 2,
             AddressConfirmed: false,
             addressDetails: {
               flatFloor: "",
@@ -851,17 +857,17 @@ export function AgreementGenerator() {
                     <TextInput
                       label="furniture and appliances"
                       placeholder="Enter furniture name"
-                      key={form.key("propertyDetails.furnitureName")}
+                      key={form.key("furnitureName")}
                       style={{ textAlign: "start", flex: 1, minWidth: 200 }}
-                      {...form.getInputProps("propertyDetails.furnitureName")}
+                      {...form.getInputProps("furnitureName")}
                       withAsterisk
                     />
                     <NumberInput
                       label="Quantity"
                       min={1}
-                      key={form.key("propertyDetails.furnitureQuantity")}
+                      key={form.key("furnitureQuantity")}
                       style={{ textAlign: "start", flex: 1, minWidth: 200 }}
-                      {...form.getInputProps("propertyDetails.furnitureQuantity")}
+                      {...form.getInputProps("furnitureQuantity")}
                       withAsterisk
                     />
                     <Button style={{ marginTop: 40, marginBottom: 20 }} onClick={addFurniture}>Add</Button>
@@ -915,6 +921,15 @@ export function AgreementGenerator() {
               key={form.key("city")}
               style={{ textAlign: "start" }}
               {...form.getInputProps("city")}
+              withAsterisk
+            />
+            <DatePickerInput
+              label="Registration date"
+              placeholder="Select registration date"
+              minDate={new Date()}
+              key={form.key("registrationDate")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("registrationDate")}
               withAsterisk
             />
             <NumberInput
@@ -1045,7 +1060,9 @@ export function AgreementGenerator() {
                   Object.values(tenantsOtpState).some(
                     (state) => !state?.isVerified
                   )) ||
-                (active === 3 && (!furnishingType || furnitureList.length === 0))
+                (active === 3 &&
+                  (furnishingType === "furnished" || furnishingType === "semi-furnished") &&
+                  furnitureList.length === 0)
               }
             >
               {active < 4 ? "Continue" : "Generate Agreement"}
