@@ -52,7 +52,9 @@ export function AgreementGenerator() {
   );
   const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
   const [otpIndex, setOtpIndex] = useState<number | null>(null);
-  const [furnitureList, setFurnitureList] = useState<{ name: string; quantity: number }[]>([]);
+  const [furnitureList, setFurnitureList] = useState<
+    { name: string; quantity: number }[]
+  >([]);
   const [furnishingType, setFurnishingType] = useState("");
   const [ownerOtpState, setOwnerOtpState] = useState<OtpState>(
     getDefaultOtpState()
@@ -203,7 +205,13 @@ export function AgreementGenerator() {
       });
       return;
     }
-    setFurnitureList((prev) => [...prev, { name: form.values.furnitureName, quantity: form.values.furnitureQuantity }]);
+    setFurnitureList((prev) => [
+      ...prev,
+      {
+        name: form.values.furnitureName,
+        quantity: form.values.furnitureQuantity,
+      },
+    ]);
     form.setFieldValue("furnitureName", "");
     form.setFieldValue("furnitureQuantity", 1);
   };
@@ -444,19 +452,22 @@ export function AgreementGenerator() {
           errors.securityAmount = "Security amount must be greater than 0";
         }
         if (values.agreementPeriod.length !== 2) {
-          errors.agreementPeriod = "Agreement period must be a valid date range";
+          errors.agreementPeriod =
+            "Agreement period must be a valid date range";
         } else {
           const [start, end] = values.agreementPeriod;
           const sixMonthLater = new Date(start);
           sixMonthLater.setMonth(sixMonthLater.getMonth() + 6);
           if (end < sixMonthLater) {
-            errors.agreementPeriod = "Agreement period must be at least six months";
+            errors.agreementPeriod =
+              "Agreement period must be at least six months";
           }
         }
       }
       if (active === 3) {
         if (
-          (furnishingType === "furnished" || furnishingType === "semi-furnished") &&
+          (furnishingType === "furnished" ||
+            furnishingType === "semi-furnished") &&
           furnitureList.length === 0
         ) {
           errors.furnitureName = "Please add at least one furniture item";
@@ -538,7 +549,12 @@ export function AgreementGenerator() {
       setShowMessage(true);
       fetchAgreements({ method: "GET" });
     }, 2000);
-    const defaultTenantAddress = "Bhumkar Chowk, Pune";
+
+    const transformedFurnitureList = furnitureList.map((item, index) => ({
+      sr_no: (index + 1).toString(),
+      name: item.name,
+      units: item.quantity.toString(),
+    }));
 
     const requestData = {
       owner_name: form.values.ownerFullName,
@@ -546,7 +562,7 @@ export function AgreementGenerator() {
       tenant_details: form.values.tenants.map((tenant) => ({
         name: tenant.fullName,
         email: tenant.email,
-        address: defaultTenantAddress,
+        address: tenant.address,
       })),
       property_address: form.values.address,
       city: form.values.city,
@@ -554,7 +570,15 @@ export function AgreementGenerator() {
       agreement_period: form.values.agreementPeriod.map((date) =>
         date.toISOString()
       ),
-    };    
+      owner_address: form.values.ownerAddress,
+      furnishing_type: furnishingType,
+      security_deposit: form.values.securityAmount,
+      bhk_type: form.values.bhkType,
+      area: form.values.propertyArea,
+      registration_date: form.values.registrationDate.toISOString(),
+      furniture_and_appliances: transformedFurnitureList,
+      amenities: form.values.amenities,
+    };
     try {
       await fetchData({
         method: "POST",
@@ -572,12 +596,13 @@ export function AgreementGenerator() {
     setOpened([]);
   };
 
-
   const handleConfirmTenantAddress = (index: number) => {
     const tenantDetails = form.values.tenants[index].addressDetails;
     const fullAddress = `${tenantDetails.flatFloor}, ${tenantDetails.buildingName}, ${tenantDetails.area}, ${tenantDetails.city} - ${tenantDetails.pincode}`;
     form.setFieldValue(`tenants.${index}.address`, fullAddress);
-    setOpened((prev) => prev.filter((item) => item !== `tenantAddress-${index}`));
+    setOpened((prev) =>
+      prev.filter((item) => item !== `tenantAddress-${index}`)
+    );
   };
 
   return (
@@ -647,7 +672,12 @@ export function AgreementGenerator() {
                 Address <span style={{ color: "red" }}>*</span>
               </Text>
 
-              <Accordion value={opened} onChange={setOpened} multiple variant="contained" >
+              <Accordion
+                value={opened}
+                onChange={setOpened}
+                multiple
+                variant="contained"
+              >
                 <Accordion.Item value="ownerAddress">
                   <Accordion.Control
                     style={{
@@ -658,15 +688,22 @@ export function AgreementGenerator() {
                       textAlign: "start",
                     }}
                   >
-                    <span style={{ color: form.values.ownerAddress ? "inherit" : "#b6bcd0" }}>
-                      {form.values.ownerAddress || "Click to enter detailed address"}
+                    <span
+                      style={{
+                        color: form.values.ownerAddress ? "inherit" : "#b6bcd0",
+                      }}
+                    >
+                      {form.values.ownerAddress ||
+                        "Click to enter detailed address"}
                     </span>
                   </Accordion.Control>
 
                   <Accordion.Panel>
                     <AddressForm
                       addressDetails={form.values.ownerAddressDetails}
-                      onChange={(field, value) => form.setFieldValue(field, value)}
+                      onChange={(field, value) =>
+                        form.setFieldValue(field, value)
+                      }
                       onConfirm={handleConfirmOwnerAddress}
                       formPrefix="ownerAddressDetails"
                     />
@@ -674,9 +711,6 @@ export function AgreementGenerator() {
                 </Accordion.Item>
               </Accordion>
             </div>
-
-
-
           </Stepper.Step>
 
           <Stepper.Step label="Step 2" description="No. of Tenants">
@@ -767,7 +801,12 @@ export function AgreementGenerator() {
                     Address <span style={{ color: "red" }}>*</span>
                   </Text>
 
-                  <Accordion value={opened} onChange={setOpened} multiple variant="contained">
+                  <Accordion
+                    value={opened}
+                    onChange={setOpened}
+                    multiple
+                    variant="contained"
+                  >
                     <Accordion.Item value={`tenantAddress-${index}`}>
                       <Accordion.Control
                         style={{
@@ -778,17 +817,28 @@ export function AgreementGenerator() {
                           textAlign: "start",
                         }}
                       >
-                        <span style={{ color: form.values.tenants[index].address ? "inherit" : "#b6bcd0" }}>
-                          {form.values.tenants[index].address || "Click to enter detailed address"}
+                        <span
+                          style={{
+                            color: form.values.tenants[index].address
+                              ? "inherit"
+                              : "#b6bcd0",
+                          }}
+                        >
+                          {form.values.tenants[index].address ||
+                            "Click to enter detailed address"}
                         </span>
-
                       </Accordion.Control>
 
                       <Accordion.Panel>
                         <AddressForm
-                          addressDetails={form.values.tenants[index].addressDetails}
+                          addressDetails={
+                            form.values.tenants[index].addressDetails
+                          }
                           onChange={(field, value) => {
-                            form.setFieldValue(`tenants.${index}.${field}`, value);
+                            form.setFieldValue(
+                              `tenants.${index}.${field}`,
+                              value
+                            );
                           }}
                           onConfirm={() => handleConfirmTenantAddress(index)}
                           formPrefix="addressDetails"
@@ -851,9 +901,10 @@ export function AgreementGenerator() {
                   <Radio value="not-furnished" label="Not Furnished" />
                 </Group>
               </Radio.Group>
-              {(furnishingType === "furnished" || furnishingType === "semi-furnished") && (
+              {(furnishingType === "furnished" ||
+                furnishingType === "semi-furnished") && (
                 <Box>
-                  <Group gap={30} >
+                  <Group gap={30}>
                     <TextInput
                       label="furniture and appliances"
                       placeholder="Enter furniture name"
@@ -870,11 +921,26 @@ export function AgreementGenerator() {
                       {...form.getInputProps("furnitureQuantity")}
                       withAsterisk
                     />
-                    <Button style={{ marginTop: 40, marginBottom: 20 }} onClick={addFurniture}>Add</Button>
+                    <Button
+                      style={{ marginTop: 40, marginBottom: 20 }}
+                      onClick={addFurniture}
+                    >
+                      Add
+                    </Button>
                   </Group>
                   {furnitureList.length > 0 && (
-                    <Card shadow="sm" padding="lg" withBorder style={{ textAlign: "center" }}>
-                      <Table highlightOnHover verticalSpacing="md" horizontalSpacing={20} mt="md">
+                    <Card
+                      shadow="sm"
+                      padding="lg"
+                      withBorder
+                      style={{ textAlign: "center" }}
+                    >
+                      <Table
+                        highlightOnHover
+                        verticalSpacing="md"
+                        horizontalSpacing={20}
+                        mt="md"
+                      >
                         <Table.Thead>
                           <Table.Tr>
                             <Table.Th>Sr No.</Table.Th>
@@ -884,20 +950,27 @@ export function AgreementGenerator() {
                           </Table.Tr>
                         </Table.Thead>
                         <Table.Tbody>
-                          {
-                            furnitureList.map((item, index) => (
-                              <Table.Tr key={index}>
-                                <Table.Td style={{ textAlign: "left" }}>{index + 1}</Table.Td>
-                                <Table.Td style={{ textAlign: "left" }}>{item.name}</Table.Td>
-                                <Table.Td style={{ textAlign: "left" }}>{item.quantity}</Table.Td>
-                                <Table.Td style={{ textAlign: "left" }}>
-                                  <ActionIcon color="red" onClick={() => removeFurniture(index)}>
-                                    <IconTrash size={16} />
-                                  </ActionIcon>
-                                </Table.Td>
-                              </Table.Tr>
-                            ))
-                          }
+                          {furnitureList.map((item, index) => (
+                            <Table.Tr key={index}>
+                              <Table.Td style={{ textAlign: "left" }}>
+                                {index + 1}
+                              </Table.Td>
+                              <Table.Td style={{ textAlign: "left" }}>
+                                {item.name}
+                              </Table.Td>
+                              <Table.Td style={{ textAlign: "left" }}>
+                                {item.quantity}
+                              </Table.Td>
+                              <Table.Td style={{ textAlign: "left" }}>
+                                <ActionIcon
+                                  color="red"
+                                  onClick={() => removeFurniture(index)}
+                                >
+                                  <IconTrash size={16} />
+                                </ActionIcon>
+                              </Table.Td>
+                            </Table.Tr>
+                          ))}
                         </Table.Tbody>
                       </Table>
                     </Card>
@@ -1055,13 +1128,14 @@ export function AgreementGenerator() {
                 (active === 0 && !ownerOtpState.isVerified) ||
                 (active === 2 &&
                   Object.values(tenantsOtpState).length !==
-                  form.values.tenants.length) ||
+                    form.values.tenants.length) ||
                 (active === 2 &&
                   Object.values(tenantsOtpState).some(
                     (state) => !state?.isVerified
                   )) ||
                 (active === 3 &&
-                  (furnishingType === "furnished" || furnishingType === "semi-furnished") &&
+                  (furnishingType === "furnished" ||
+                    furnishingType === "semi-furnished") &&
                   furnitureList.length === 0)
               }
             >
@@ -1069,7 +1143,7 @@ export function AgreementGenerator() {
             </Button>
           )}
         </Group>
-      </Container >
+      </Container>
     </>
   );
 }
