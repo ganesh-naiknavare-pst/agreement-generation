@@ -7,11 +7,24 @@ export const COLORS = {
   grayLight: "#485056",
   themeIconDark: "#FFD700",
   themeIconLight: "#0b090a",
-  titleColor: "#FFFFFF",
   loadingColor: "#228be6",
   yellow: "#de9351",
   asteric: "#e03130",
-  otploadingcolor: "rgba(255, 255, 255, 1)",
-  white: "#fff",
+  white: "#ffffff",
+  dimmed: "#adb3b8",
+  black: "#000000",
   gray: "#4B5563",
 };
+
+export const inkColors: string[] = [
+  "#1976d2",
+  "#0d47a1",
+  "#000000",
+  "#444444",
+  "#0000ff",
+  "#000080",
+  "#191970",
+  "#00008b",
+  "#483d8b",
+  "#4169e1",
+];
