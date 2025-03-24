@@ -14,3 +14,16 @@ export const COLORS = {
   dimmed: "#adb3b8",
   black: "#000000",
 };
+
+export const inkColors: string[] = [
+  "#1976d2",
+  "#0d47a1",
+  "#000000",
+  "#444444",
+  "#0000ff",
+  "#000080",
+  "#191970",
+  "#00008b",
+  "#483d8b",
+  "#4169e1",
+];

@@ -21,7 +21,7 @@ import useApi, { BackendEndpoints } from "../hooks/useApi";
 import WebcamComponent from "../components/webcam/WebcamComponent";
 import ResponseCard from "../components/ResponseCard";
 import { useUserState } from "../hooks/useUserState";
-import SignatureModalButton from "../components/signatureComponent/SignatureModalButton";
+import SignatureButton from "../components/signatureComponent/SignatureButton";
 export type ApprovedUser = {
   status: string;
   user_id: string;
@@ -167,7 +167,7 @@ const ApprovalPage = () => {
                 </Text>
               </Text>
             </Group>
-            <SignatureModalButton onSignatureSave={handleSignatureSave} />
+            <SignatureButton onSignatureSave={handleSignatureSave} />
 
             {isRentAgreement && (
               <>
