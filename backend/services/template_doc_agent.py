@@ -1,5 +1,5 @@
-import asyncio
 import logging
+from helpers.thread_executer import execute_in_new_thread
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import (
     listen_for_approval,
@@ -26,9 +26,6 @@ from constants import MAX_RETRIES, RETRY_DELAY
 from langchain_core.prompts.prompt import PromptTemplate
 from prisma import Base64
 from prisma.enums import AgreementStatus
-from concurrent.futures import ThreadPoolExecutor
-
-thread_pool = ThreadPoolExecutor(max_workers=10)
 
 
 logging.basicConfig(level=logging.INFO)
@@ -148,8 +145,8 @@ async def template_based_agreement(
         template_agreement_state.template_file_path = temp_file_path
         print(f"Template file path: {template_agreement_state.template_file_path}")
         try:
-            response = await asyncio.get_event_loop().run_in_executor(
-                thread_pool, generate_agreement_with_retry, req.user_prompt
+            response = await execute_in_new_thread(
+                generate_agreement_with_retry, req.user_prompt
             )
         except Exception as e:
             await db.templateagreement.update(

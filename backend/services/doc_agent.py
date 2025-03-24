@@ -1,7 +1,7 @@
-import asyncio
 import logging
 import shutil
 import os
+from helpers.thread_executer import execute_in_new_thread
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import (
     listen_for_approval,
@@ -25,9 +25,6 @@ from prisma import Base64
 from langchain_core.prompts.prompt import PromptTemplate
 from prompts import template
 from prisma.enums import AgreementStatus
-from concurrent.futures import ThreadPoolExecutor
-
-thread_pool = ThreadPoolExecutor(max_workers=10)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -167,8 +164,8 @@ async def create_agreement_details(
         )
 
         try:
-            response = await asyncio.get_event_loop().run_in_executor(
-                thread_pool, generate_agreement_with_retry, agreement_details
+            response = await execute_in_new_thread(
+                generate_agreement_with_retry, agreement_details
             )
         except Exception as e:
             await db.agreement.update(
