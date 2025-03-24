@@ -25,6 +25,9 @@ from prisma import Base64
 from langchain_core.prompts.prompt import PromptTemplate
 from prompts import template
 from prisma.enums import AgreementStatus
+from concurrent.futures import ThreadPoolExecutor
+
+thread_pool = ThreadPoolExecutor(max_workers=10)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -164,8 +167,8 @@ async def create_agreement_details(
         )
 
         try:
-            response = await asyncio.to_thread(
-                generate_agreement_with_retry, agreement_details
+            response = await asyncio.get_event_loop().run_in_executor(
+                thread_pool, generate_agreement_with_retry, agreement_details
             )
         except Exception as e:
             await db.agreement.update(
