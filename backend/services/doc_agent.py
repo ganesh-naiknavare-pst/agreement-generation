@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import shutil
 import os
@@ -163,7 +164,9 @@ async def create_agreement_details(
         )
 
         try:
-            response = generate_agreement_with_retry(agreement_details)
+            response = await asyncio.to_thread(
+                generate_agreement_with_retry, agreement_details
+            )
         except Exception as e:
             await db.agreement.update(
                 where={"id": agreement_id},

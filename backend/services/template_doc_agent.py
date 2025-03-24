@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import (
@@ -144,7 +145,9 @@ async def template_based_agreement(
         template_agreement_state.template_file_path = temp_file_path
         print(f"Template file path: {template_agreement_state.template_file_path}")
         try:
-            response = generate_agreement_with_retry(req.user_prompt)
+            response = await asyncio.to_thread(
+                generate_agreement_with_retry, req.user_prompt
+            )
         except Exception as e:
             await db.templateagreement.update(
                 where={"id": agreement_id},
