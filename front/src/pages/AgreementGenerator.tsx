@@ -372,7 +372,7 @@ export function AgreementGenerator() {
           pincode: "",
         },
       })),
-      tenantNumber: 1,
+      tenantNumber: 2,
       // Agreement Details
       address: "",
       city: "",
@@ -1028,6 +1028,8 @@ export function AgreementGenerator() {
 
                         setOwnerOtpState(getDefaultOtpState());
                         setTenantsOtpState({});
+                        setFurnitureList([]);
+                        setFurnishingType("");
                       }}
                     >
                       Finish
