@@ -10,6 +10,7 @@ import uvicorn
 import os
 from contextlib import asynccontextmanager
 from database.connection import conn_manager
+from helpers.thread_executer import thread_pool
 
 
 @asynccontextmanager
@@ -19,6 +20,7 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         await conn_manager.disconnect()
+        thread_pool.shutdown(wait=True)
 
 
 app = FastAPI(lifespan=lifespan)
