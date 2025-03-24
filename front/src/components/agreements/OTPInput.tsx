@@ -18,11 +18,7 @@ export function OTPInput({
         <>
           {!otpState.isSent && !otpState.showResendButton ? (
             <Button onClick={onSendOtp} disabled={disabledSendOtp}>
-              {loading ? (
-                <Loader color={COLORS.otploadingcolor} size="xs" />
-              ) : (
-                "Send OTP"
-              )}
+              {loading ? <Loader color={COLORS.white} size="xs" /> : "Send OTP"}
             </Button>
           ) : otpState.showResendButton ? (
             <>
@@ -33,7 +29,7 @@ export function OTPInput({
               )}
               <Button mt="xs" onClick={onSendOtp}>
                 {loading ? (
-                  <Loader color={COLORS.otploadingcolor} size="xs" />
+                  <Loader color={COLORS.white} size="xs" />
                 ) : (
                   "Resend OTP"
                 )}
@@ -70,7 +66,7 @@ export function OTPInput({
                 mt="xs"
               >
                 {loading ? (
-                  <Loader color={COLORS.otploadingcolor} size="xs" />
+                  <Loader color={COLORS.white} size="xs" />
                 ) : (
                   "Verify OTP"
                 )}
