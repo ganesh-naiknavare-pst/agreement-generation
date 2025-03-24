@@ -10,18 +10,19 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, KeepTogethe
 from reportlab.lib import colors
 from PIL import Image as PILImage
 import pypandoc
+from typing import List, Tuple, Optional, Union
 import shutil
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
 
-def extract_text_from_pdf(pdf_path, chunk_size=1000):
+def extract_text_from_pdf(pdf_path: str, chunk_size: int = 1000) -> List[str]:
     """Extracts text from a PDF file and returns it in manageable chunks."""
     doc = fitz.open(pdf_path)
     full_text = "\n".join([page.get_text("text") for page in doc])
     chunks = [full_text[i: i + chunk_size] for i in range(0, len(full_text), chunk_size)]
     return chunks
 
-def find_font_file(font_name, fonts_dir="fonts"):
+def find_font_file(font_name: str, fonts_dir: str = "fonts") -> Optional[str]:
     """Searches for a font file in the project-specific fonts directory."""
     font_extensions = (".ttf", ".otf")
     for root, _, files in os.walk(fonts_dir):
@@ -30,7 +31,7 @@ def find_font_file(font_name, fonts_dir="fonts"):
                 return os.path.join(root, file)
     return None
 
-def extract_fonts(pdf_path):
+def extract_fonts(pdf_path: str) -> Tuple[str, Optional[str]]:
     """Extracts the most common font from a PDF."""
     doc = fitz.open(pdf_path)
     font_counter = Counter()
@@ -48,7 +49,7 @@ def extract_fonts(pdf_path):
     font_file = find_font_file(font_name)
     return font_name, font_file
 
-def resize_image(image_path, max_width=80, max_height=50):
+def resize_image(image_path: str, max_width: int = 80, max_height: int = 50) -> Optional[str]:
     """Resizes an image to fit within max dimensions while maintaining aspect ratio."""
     try:
         img = PILImage.open(image_path)
@@ -59,7 +60,7 @@ def resize_image(image_path, max_width=80, max_height=50):
     except Exception as e:
         return None
 
-def preprocess_table_data(data):
+def preprocess_table_data(data: List[List[str]]) -> List[List[str]]:
     """Preprocess table data to merge grouped rows while keeping the header intact."""
     if not data:
         return []
@@ -84,7 +85,7 @@ def preprocess_table_data(data):
             i += 1
     return merged_data
 
-def clean_html_for_reportlab(html):
+def clean_html_for_reportlab(html: str) -> str:
     html = re.sub(r'<b>\s*</b>', '', html)
     html = re.sub(r'<para>\s*</para>', '', html)
     html = re.sub(r'(<br\s*/?>\s*)+', '<br/>', html)
@@ -95,9 +96,7 @@ def clean_html_for_reportlab(html):
     html = html.replace('<hr width="100%"/>', '<hr/>')
     return html.strip()
 
-def markdown_to_html(text):
-    """Converts Markdown to HTML for ReportLab compatibility."""
-    
+def markdown_to_html(text: str) -> str:
     text = re.sub(r'### (.*?)\s*\n?', r'<para fontSize="14"><b>\1</b></para><br/><br/>', text)
     text = re.sub(r'## (.*?)\s*\n?', r'<para fontSize="12"><b>\1</b></para><br/><br/>', text)
     text = re.sub(r'# (.*?)\s*\n?', r'<para fontSize="16"><b>\1</b></para><br/><br/>', text)
@@ -107,7 +106,7 @@ def markdown_to_html(text):
     text = text.replace("\n", "<br/>")  
     return text
 
-def parse_markdown_table(md_table):
+def parse_markdown_table(md_table: str, temp_files: Optional[List[str]] = None) -> Table:
     """Parses a Markdown table and ensures images are correctly inserted."""
     lines = md_table.strip().split("\n")
     rows = [line.split("|")[1:-1] for line in lines if "|" in line]
@@ -131,6 +130,7 @@ def parse_markdown_table(md_table):
                     resized_img = resize_image(img_path)
                     if resized_img:
                         data[row_idx][col_idx] = Image(resized_img, width=80, height=50)
+                        temp_files.append(resized_img)
             else:
                 html_content = pypandoc.convert_text(cell_content, "html", format="md")
                 html_content = re.sub(r"</strong>\s*<strong>", r"</strong><br/><strong>", html_content)
@@ -153,7 +153,12 @@ def parse_markdown_table(md_table):
     table.setStyle(TableStyle(style))
     return table
 
-def create_pdf_file(content, output_pdf_path="output.pdf", font_name="Times-Roman", font_file="fonts/times.ttf"):
+def create_pdf_file(
+    content: str, 
+    output_pdf_path: str = "output.pdf", 
+    font_name: str = "Times-Roman", 
+    font_file: Optional[str] = "fonts/times.ttf"
+) -> str:
     """Creates a PDF file with formatted text, images, and properly styled tables, ensuring temp files are cleaned up."""
     doc = SimpleDocTemplate(output_pdf_path, pagesize=A4)
     styles = getSampleStyleSheet()
@@ -170,53 +175,53 @@ def create_pdf_file(content, output_pdf_path="output.pdf", font_name="Times-Roma
         pdfmetrics.registerFont(TTFont(font_name, font_file))
 
     story = []
-    temp_files = []  # Store temp file paths for cleanup
+    temp_files = []
 
-    paragraphs = content.split("\n\n")
-    table_pattern = re.compile(r"(\|.+?\|(?:\n\|[-:]+[-|:]+\|)+\n(?:\|.+?\|\n?)+)")
-    image_pattern = re.compile(r"!\[(.*?)\]\((.*?)\)")
+    try:
+        paragraphs = content.split("\n\n")
+        table_pattern = re.compile(r"(\|.+?\|(?:\n\|[-:]+[-|:]+\|)+\n(?:\|.+?\|\n?)+)")
+        image_pattern = re.compile(r"!\[(.*?)\]\((.*?)\)")
 
-    for para in paragraphs:
-        if table_pattern.match(para):
-            table = parse_markdown_table(para)
-            story.append(KeepTogether([table]))
-        else:
-            html_content = markdown_to_html(para)
-            clean_content = clean_html_for_reportlab(html_content)
-            elements = []
-            temp_text = clean_content
-            image_replacements = {}
+        for para in paragraphs:
+            if table_pattern.match(para):
+                table = parse_markdown_table(para, temp_files)
+                story.append(KeepTogether([table]))
+            else:
+                html_content = markdown_to_html(para)
+                clean_content = clean_html_for_reportlab(html_content)
+                elements = []
+                temp_text = clean_content
+                image_replacements = {}
 
-            for match in image_pattern.finditer(para):
-                label, img_path = match.groups()
-                placeholder = f"[[IMAGE_{len(image_replacements)}]]"
-                image_replacements[placeholder] = img_path
-                temp_text = temp_text.replace(match.group(0), placeholder)
+                for match in image_pattern.finditer(para):
+                    label, img_path = match.groups()
+                    placeholder = f"[[IMAGE_{len(image_replacements)}]]"
+                    image_replacements[placeholder] = img_path
+                    temp_text = temp_text.replace(match.group(0), placeholder)
 
-            parts = re.split(r"(\[\[IMAGE_\d+\]\])", temp_text)
+                parts = re.split(r"(\[\[IMAGE_\d+\]\])", temp_text)
 
-            for part in parts:
-                if part in image_replacements:
-                    img_path = image_replacements[part]
-                    if os.path.exists(img_path):
-                        resized_img_path = resize_image(img_path)
-                        if resized_img_path:
-                            elements.append(Image(resized_img_path, width=80, height=50))
-                            temp_files.append(resized_img_path)  # Track temp file
-                elif part.strip() == "---":
-                    elements.append(HRFlowable(width="100%", thickness=1, color="black", spaceBefore=10, spaceAfter=10))
-                else:
-                    elements.append(Paragraph(part, custom_style))
+                for part in parts:
+                    if part in image_replacements:
+                        img_path = image_replacements[part]
+                        if os.path.exists(img_path):
+                            resized_img_path = resize_image(img_path)
+                            if resized_img_path:
+                                elements.append(Image(resized_img_path, width=80, height=50))
+                                temp_files.append(resized_img_path)
+                    elif part.strip() == "---":
+                        elements.append(HRFlowable(width="100%", thickness=1, color="black", spaceBefore=10, spaceAfter=10))
+                    else:
+                        elements.append(Paragraph(part, custom_style))
 
-            story.append(KeepTogether(elements))
-        story.append(Spacer(1, 12))
+                story.append(KeepTogether(elements))
+            story.append(Spacer(1, 12))
+        doc.build(story)
+        return output_pdf_path
 
-    doc.build(story)
-
-    for temp_file in temp_files:
-        try:
-            os.remove(temp_file)
-        except Exception as e:
-            print(f"Warning: Could not delete temp file {temp_file} - {e}")
-
-    return output_pdf_path
+    finally:
+        for temp_file in temp_files:
+            try:
+                os.remove(temp_file)
+            except Exception as e:
+                pass
