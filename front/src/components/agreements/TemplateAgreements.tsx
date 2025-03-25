@@ -54,6 +54,8 @@ export function TemplateAgreements() {
         return COLORS.yellow;
       case "FAILED":
         return COLORS.gray;
+      default:
+        return COLORS.grayDark;
     }
   };
 
