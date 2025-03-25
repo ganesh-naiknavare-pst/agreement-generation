@@ -107,6 +107,41 @@ Thought:{agent_scratchpad}
 
 """
 
+PREFIX = '''
+You are a legal agreement generator. Your task is to create agreement based on the provided input.
+You must accurately describe the terms and conditions in a formal document, ensuring that the 
+agreement reflects the user's request.
+
+IMPORTANT: When you need to generate an agreement, you MUST pass ALL the provided details to the 
+tool without omitting any fields. This includes owner details, tenant details, property information, 
+terms, furniture lists, APPROVAL TABLE and all other provided data. DO NOT summarize or truncate the input.
+'''
+
+FORMAT_INSTRUCTIONS = """
+To use a tool, please use the following format:
+
+Thought: Do I need to use a tool? Yes
+Action: generate_agreement
+Action Input: the user input to the action
+Observation: the result of the action
+
+When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
+'''
+Thought: Do I need to use a tool? No
+Final Answer: the final answer to the original input question
+'''
+
+Remember to include ALL details in the Action Input.
+"""
+
+SUFFIX = '''
+Begin!
+
+Instructions: {input}
+{agent_scratchpad}
+'''
+
+
 AGREEMENT_SYSTEM_PROMPT = """
 You are a rental agreement generator. Create complete, detailed rental agreements based on provided information.
 
@@ -115,13 +150,10 @@ You are a rental agreement generator. Create complete, detailed rental agreement
 - STRICTLY PROHIBITED to generate partial, incomplete rental agreements or tables with missing fields should be generate complete agreement
 - PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present and for tenants must be replace with real time data for name and address.
 - **BOTH FURNITURE AND APPLIANCES TABLE AND APPROVAL TABLE MUST BE INCLUDED IN EVERY AGREEMENT.**
-- THE APPROVAL TABLE MUST ALWAYS BE THE FINAL SECTION OF THE AGREEMENT.
 - The Rupee symbol (₹) is STRICTLY PROHIBITED - use ONLY 'Rs.' format
 - STRICTLY number tenants as TENANT 1, TENANT 2, etc. - NO variations permitted
 - ALL placeholders MUST be replaced with actual values EXCEPT photo/signature placeholders in APPROVAL TABLE
 - EQUAL numbers of photo and signature placeholders for EACH party is MANDATORY in APPROVAL TABLE
-- Approval section MUST be titled EXACTLY as "## Approval and Signature Section" WITHOUT numbering
-- ALL tables MUST maintain PERFECT alignment with COMPLETE columns - NO partial tables
 
 REQUIRED SECTIONS(follow template format first) - MUST INCLUDE EACH POINT HAS MINIMUM 4O WORDS:
 TERMS AND CONDITIONS:
@@ -157,8 +189,6 @@ PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenan
 
 ### ADDITIONAL CRITICAL REQUIREMENTS:
 - FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE must be COMPLETELY SEPARATE SECTIONS - DO NOT merge them together or place the table within section 
-- If a furniture list is provided, then generate the  FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE otherwise, return "No furniture provided."
-- The Owner and Tenant data MUST be structured in a table format with EXACTLY THREE columns: "Name and Address", "Photo", and "Signature"
 - You MUST NEVER replace `[OWNER PHOTO]`, `[OWNER SIGNATURE]`, `[TENANT n PHOTO]`, or `[TENANT n SIGNATURE]` placeholders" 
-- After the APPROVAL TABLE don't return explaination, description and Signatures section STRICTLY PROHIBITED
+- After the APPROVAL TABLE, do not include the Explanation, Description, or Signatures section—strictly prohibited.
 """

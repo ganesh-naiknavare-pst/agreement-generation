@@ -39,6 +39,7 @@ import {
   getDefaultOtpState,
 } from "../types/otp";
 import { AddressForm } from "./AddressForm";
+import { FurnitureTable } from "../components/agreements/FurnitureTable";
 
 export function AgreementGenerator() {
   const [active, setActive] = useState(0);
@@ -935,44 +936,12 @@ export function AgreementGenerator() {
                       withBorder
                       style={{ textAlign: "center" }}
                     >
-                      <Table
-                        highlightOnHover
-                        verticalSpacing="md"
-                        horizontalSpacing={20}
-                        mt="md"
-                      >
-                        <Table.Thead>
-                          <Table.Tr>
-                            <Table.Th>Sr No.</Table.Th>
-                            <Table.Th>Item</Table.Th>
-                            <Table.Th>Number of units</Table.Th>
-                            <Table.Th>Action</Table.Th>
-                          </Table.Tr>
-                        </Table.Thead>
-                        <Table.Tbody>
-                          {furnitureList.map((item, index) => (
-                            <Table.Tr key={index}>
-                              <Table.Td style={{ textAlign: "left" }}>
-                                {index + 1}
-                              </Table.Td>
-                              <Table.Td style={{ textAlign: "left" }}>
-                                {item.name}
-                              </Table.Td>
-                              <Table.Td style={{ textAlign: "left" }}>
-                                {item.quantity}
-                              </Table.Td>
-                              <Table.Td style={{ textAlign: "left" }}>
-                                <ActionIcon
-                                  color="red"
-                                  onClick={() => removeFurniture(index)}
-                                >
-                                  <IconTrash size={16} />
-                                </ActionIcon>
-                              </Table.Td>
-                            </Table.Tr>
-                          ))}
-                        </Table.Tbody>
-                      </Table>
+                      {furnitureList.length > 0 && (
+                        <FurnitureTable
+                          furnitureList={furnitureList}
+                          onRemove={removeFurniture}
+                        />
+                      )}
                     </Card>
                   )}
                 </Box>

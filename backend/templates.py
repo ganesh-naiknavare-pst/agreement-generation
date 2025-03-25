@@ -291,7 +291,7 @@ CRITICAL:
 - STRICTLY PROHIBITED to generate partial, incomplete rental agreements or tables with missing fields
 - Replace [TENANT n NAME] and [TENANT n ADDRESS] with real data for all tenants
 - BOTH FURNITURE TABLE AND APPROVAL TABLE MUST BE INCLUDED IN EVERY AGREEMENT AND THE APPROVAL TABLE MUST ALWAYS BE THE FINAL SECTION OF THE AGREEMENT.
-- If a furniture list is provided, then generate the  FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE otherwise, return "No furniture provided."
+- If a furniture list is provided, generate the **FURNITURE AND APPLIANCES** section and table; otherwise, return **"No furniture provided."** without an empty table.
 - STRICTLY number tenants as TENANT 1, TENANT 2, etc. - NO variations permitted
 - FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE must be COMPLETELY SEPARATE SECTIONS - DO NOT merge them together or place the table within section 
 - PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present and for tenants must be replace with real time data for name and address.

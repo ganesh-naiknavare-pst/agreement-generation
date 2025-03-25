@@ -21,22 +21,10 @@ from constants import MAX_RETRIES, RETRY_DELAY
 from datetime import datetime
 import base64
 from prisma import Base64
-from langchain_core.prompts.prompt import PromptTemplate
-from prompts import template
 from prisma.enums import AgreementStatus
 from typing import List, Dict
-
+from prompts import PREFIX, FORMAT_INSTRUCTIONS, SUFFIX
 logging.basicConfig(level=logging.INFO)
-
-furniture_and_appliances_example = [
-    {"sr_no": "1", "name": "Fan", "units": "03"},
-    {"sr_no": "2", "name": "Tube light", "units": "01"},
-    {"sr_no": "3", "name": "Bulb", "units": "04"},
-    {"sr_no": "4", "name": "Sofa", "units": "01"},
-    {"sr_no": "5", "name": "Electric Geezer", "units": "01"},
-]
-amenities_example = ["Swimming Pool", "Parking", "Club House"]
-
 
 class AgreementRequest(BaseModel):
     owner_name: str
@@ -123,7 +111,11 @@ agent = initialize_agent(
     memory=memory,
     max_iterations=1,
     early_stopping_method="generate",
-    prompt=PromptTemplate.from_template(template),
+    agent_kwargs={
+        "prefix": PREFIX,
+        "format_instructions": FORMAT_INSTRUCTIONS,
+        "suffix": SUFFIX,
+    },
 )
 
 
