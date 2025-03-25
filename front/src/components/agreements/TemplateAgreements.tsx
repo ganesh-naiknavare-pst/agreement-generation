@@ -14,6 +14,7 @@ import { IconEye } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
 import { useAgreements } from "../../hooks/useAgreements";
 import { useState } from "react";
+import { statusTooltips } from "../../constants";
 
 export function TemplateAgreements() {
   const { templateAgreement } = useAgreements();
@@ -50,8 +51,10 @@ export function TemplateAgreements() {
         return COLORS.blue;
       case "REJECTED":
         return COLORS.red;
-      case "FAILED":
+      case "EXPIRED":
         return COLORS.yellow;
+      case "FAILED":
+        return COLORS.gray;
       default:
         return COLORS.grayDark;
     }
@@ -91,7 +94,7 @@ export function TemplateAgreements() {
                   {new Date(agreement.createdAt).toLocaleString()}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  <Tooltip label={agreement.status} withArrow>
+                  <Tooltip label={statusTooltips[agreement.status]} withArrow>
                     <Badge size="sm" color={getStatusColor(agreement.status)}>
                       {agreement.status}
                     </Badge>
