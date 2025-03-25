@@ -198,6 +198,8 @@ async def template_based_agreement(
                 elif approval_result == ApprovalResult.REJECTED:
                     # If explicitly rejected
                     await update_agreement_status(db, agreement_id, AgreementStatus.REJECTED, True)
+                    await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.REJECTED, True)
+                    await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.REJECTED, True)
                     delete_temp_file()
                     delete_template_file()
                     template_agreement_state.reset()

@@ -21,8 +21,8 @@ const ResponseCard: React.FC<ResponseCardProps> = ({ type }) => {
       icon: <IconX size="1.5rem" />,
       title: "Agreement has been rejected !",
       message:
-        "❌ Your rejection has been recorded. If this was a mistake, please contact support.",
-      footer: "Thank you for your response.",
+        "❌ The agreement has been rejected by one of the parties and cannot be processed further.",
+      footer: "If this was a mistake, please contact support.",
     },
     EXPIRED: {
       color: COLORS.yellow,

@@ -217,10 +217,11 @@ async def create_agreement_details(
                     }
                 elif approval_result == ApprovalResult.REJECTED:
                     # If explicitly rejected
-                    await db.agreement.update(
-                        where={"id": agreement_id},
-                        data={"status": AgreementStatus.REJECTED},
-                    )
+                    await update_agreement_status(db, agreement_id, AgreementStatus.REJECTED)
+                    await create_user_agreement_status(db, agreement_state.owner_id, agreement_id, AgreementStatus.REJECTED)
+                    for tenant_id, _ in tenants:
+                        await create_user_agreement_status(db, tenant_id, agreement_id, AgreementStatus.REJECTED)
+
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")

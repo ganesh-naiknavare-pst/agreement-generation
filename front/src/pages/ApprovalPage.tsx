@@ -120,7 +120,7 @@ const ApprovalPage = () => {
   };
 
   const onMessage = useCallback((message: any) => {
-    if (message.status === "FAILED" || message.status === "EXPIRED") {
+    if (message.status === "FAILED" || message.status === "EXPIRED" || message.status === "REJECTED" ) {
       if (isRentAgreement) {
         getRentAgreementUser({ method: "GET", params: { agreement_id: param.agreementId, user_id: param.id } });
       } else {
