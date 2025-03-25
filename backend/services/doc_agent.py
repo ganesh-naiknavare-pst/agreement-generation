@@ -1,10 +1,10 @@
 import logging
 import shutil
 import os
+from helpers.db_operations import create_user_agreement_status, update_agreement_status, store_final_pdf
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import (
     listen_for_approval,
-    ApprovalTimeoutError,
     ConnectionClosedError,
     ApprovalResult,
 )
@@ -20,7 +20,6 @@ from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_t
 from constants import MAX_RETRIES, RETRY_DELAY
 from datetime import datetime
 import base64
-from prisma import Base64
 from langchain_core.prompts.prompt import PromptTemplate
 from prompts import template
 from prisma.enums import AgreementStatus
@@ -165,10 +164,7 @@ async def create_agreement_details(
         try:
             response = generate_agreement_with_retry(agreement_details)
         except Exception as e:
-            await db.agreement.update(
-                where={"id": agreement_id},
-                data={"status": AgreementStatus.FAILED},
-            )
+            await update_agreement_status(db, agreement_id, AgreementStatus.FAILED)
             raise HTTPException(
                 status_code=500,
                 detail=f"Error generating agreement after {MAX_RETRIES} attempts: {str(e)}",
@@ -210,12 +206,8 @@ async def create_agreement_details(
                         send_email_with_attachment(
                             tenant_email, final_pdf_path, "tenant", False, tenant_id
                         )
-                    with open(agreement_state.pdf_file_path, "rb") as pdf_file:
-                        pdf_base64 = Base64.encode(pdf_file.read())
-                    await db.agreement.update(
-                        where={"id": agreement_id},
-                        data={"pdf": pdf_base64, "status": AgreementStatus.APPROVED},
-                    )
+                    # Stores final agreement pdf in db
+                    await store_final_pdf(db, agreement_id, agreement_state.pdf_file_path)
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")
@@ -225,45 +217,39 @@ async def create_agreement_details(
                     }
                 elif approval_result == ApprovalResult.REJECTED:
                     # If explicitly rejected
-                    await db.agreement.update(
-                        where={"id": agreement_id},
-                        data={"status": AgreementStatus.REJECTED},
-                    )
+                    await update_agreement_status(db, agreement_id, AgreementStatus.REJECTED)
+                    await create_user_agreement_status(db, agreement_state.owner_id, agreement_id, AgreementStatus.REJECTED)
+                    for tenant_id, _ in tenants:
+                        await create_user_agreement_status(db, tenant_id, agreement_id, AgreementStatus.REJECTED)
+
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")
                     agreement_state.reset()
                     return {"message": "Agreement was rejected by one or more parties."}
+
+                elif approval_result == ApprovalResult.EXPIRED:
+                    # ApprovalResult.EXPIRED
+                    await update_agreement_status(db, agreement_id, AgreementStatus.EXPIRED)
+                    await create_user_agreement_status(db, agreement_state.owner_id, agreement_id, AgreementStatus.EXPIRED)
+                    for tenant_id, _ in tenants:
+                        await create_user_agreement_status(db, tenant_id, agreement_id, AgreementStatus.EXPIRED)
+
+                    delete_temp_file()
+                    if os.path.exists("./utils"):
+                        shutil.rmtree("./utils")
+                    agreement_state.reset()
+                    return {
+                        "message": "Agreement was expired due to no action taken by one or more parties within 5 minutes."
+                    }
+
                 else:
                     # ApprovalResult.CONNECTION_CLOSED
-                    await db.agreement.update(
-                        where={"id": agreement_id},
-                        data={"status": AgreementStatus.FAILED},
-                    )
-
-                    owner_useragreement = await db.userrentagreementstatus.find_first(
-                        where={"userId": agreement_state.owner_id, "agreementId": agreement_id}
-                    )
-                    if not owner_useragreement:
-                        await db.userrentagreementstatus.create(
-                            data={
-                                "userId": agreement_state.owner_id,
-                                "agreementId": agreement_id,
-                                "status": AgreementStatus.FAILED,
-                            }
-                        )
+                    await update_agreement_status(db, agreement_id, AgreementStatus.FAILED)
+                    await create_user_agreement_status(db, agreement_state.owner_id, agreement_id, AgreementStatus.FAILED)
                     for tenant_id, _ in tenants:
-                        tenant_useragreement = await db.userrentagreementstatus.find_first(
-                            where={"userId": tenant_id, "agreementId": agreement_id}
-                        )
-                        if not tenant_useragreement:
-                            await db.userrentagreementstatus.create(
-                                data={
-                                    "userId": tenant_id,
-                                    "agreementId": agreement_id,
-                                    "status": AgreementStatus.FAILED,
-                                }
-                            )
+                        await create_user_agreement_status(db, tenant_id, agreement_id, AgreementStatus.FAILED)
+
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")
@@ -271,30 +257,30 @@ async def create_agreement_details(
                     return {
                         "message": "Agreement process failed due to connection issues."
                     }
+
             except ConnectionClosedError as e:
                 # Update status to FAILED on connection closed
-                await db.agreement.update(
-                    where={"id": agreement_id},
-                    data={"status": AgreementStatus.FAILED},
-                )
+                await update_agreement_status(db, agreement_id, AgreementStatus.FAILED)
+                await create_user_agreement_status(db, agreement_state.owner_id, agreement_id, AgreementStatus.FAILED)
+                for tenant_id, _ in tenants:
+                    await create_user_agreement_status(db, tenant_id, agreement_id, AgreementStatus.FAILED)
+
                 delete_temp_file()
                 if os.path.exists("./utils"):
                     shutil.rmtree("./utils")
                 agreement_state.reset()
                 return {
-                    "message": f"Agreement process failed: Connection closed unexpectedly"
+                    "message": "Agreement process failed: Connection closed unexpectedly"
                 }
         else:
-            await db.agreement.update(
-                where={"id": agreement_id},
-                data={"status": AgreementStatus.FAILED},
-            )
+            await update_agreement_status(db, agreement_id, AgreementStatus.FAILED)
             return {"message": "Error sending initial agreement emails."}
+
     except Exception as e:
-        await db.agreement.update(
-            where={"id": agreement_id},
-            data={"status": AgreementStatus.FAILED},
-        )
+        await update_agreement_status(db, agreement_id, AgreementStatus.FAILED)
+        await create_user_agreement_status(db, agreement_state.owner_id, agreement_id, AgreementStatus.FAILED)
+        for tenant_id, _ in tenants:
+            await create_user_agreement_status(db, tenant_id, agreement_id, AgreementStatus.FAILED)
         raise HTTPException(
             status_code=500, detail=f"An unexpected error occurred: {str(e)}"
         )

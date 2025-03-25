@@ -13,6 +13,7 @@ export const COLORS = {
   white: "#ffffff",
   dimmed: "#adb3b8",
   black: "#000000",
+  gray: "#4B5563",
 };
 
 export const inkColors: string[] = [
