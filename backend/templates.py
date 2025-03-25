@@ -206,7 +206,7 @@ def format_agreement_details(
     furnishing_type: str,
     security_deposit: int,
     bhk_type: str,
-    area: str,
+    area: int,
     registration_date: str,
     furniture_and_appliances: List[Dict[str, str]],
     amenities: List[str],
@@ -251,7 +251,7 @@ TENANTS DETAILS:
 TERMS: Rs. {rent_amount}/month, {num_months} months ({start_date} to {end_date})
 DEPOSIT: Rs. {security_deposit}
 REGISTERED DATE: {registration_date}
-PROPERTY DETAILS: Address: {property_address}, City: {city}, bhk type {bhk_type}, Area: {area}, furnishing_type: {furnishing_type}
+PROPERTY DETAILS: Address: {property_address}, City: {city}, bhk type {bhk_type}, Area: {area} sq. ft., furnishing_type: {furnishing_type}
 
 IMPORTANT: The agreement MUST begin with a proper INTRODUCTION section that includes ALL the above mandatory data fields in agreements. This section must clearly state all owner details, tenant details, rental terms, deposit amount, registration date, and complete property details.
 
@@ -265,8 +265,7 @@ TERMS AND CONDITIONS:
 6. OWNER RIGHTS: MUST outline inspection protocols, notice periods, access conditions, showings
 7. TERMINATION: MUST define notice periods, early exit penalties, inspection process, deposit rules
 8. ALTERATIONS: MUST prohibit unauthorized changes, permission process, restoration, fixtures
-9. POSSESSION: MUST explain surrender procedures, penalties, condition standards, key return
-10. AMENITIES: MUST describe access to {amenities_list}, usage rules, restrictions, maintenance
+9. AMENITIES: MUST describe access to {amenities_list}, usage rules, restrictions, maintenance
 
 ### FURNITURE AND APPLIANCES TABLE - REQUIRED (MUST BE INCLUDED):
    * The premises contain the following **furniture and appliances** provided by the owner. Tenants shall maintain all items in good condition and will be responsible for any **damages beyond normal wear and tear**.  

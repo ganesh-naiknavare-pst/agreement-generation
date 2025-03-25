@@ -46,14 +46,14 @@ class AgreementRequest(BaseModel):
     city: str
     rent_amount: int
     agreement_period: list[datetime]
-    owner_address: str = "Vishal nagar pune"
-    furnishing_type: str = "Semi-Furnished"
-    security_deposit: int = 50000
-    bhk_type: str = "2BHK"
-    area: str = "1200 sq. ft."
-    registration_date: str = "2025-01-05"
-    furniture_and_appliances: List[Dict[str, str]] = furniture_and_appliances_example
-    amenities: List[str] = amenities_example
+    owner_address: str
+    furnishing_type: str
+    security_deposit: int
+    bhk_type: str
+    area: int
+    registration_date: str
+    furniture_and_appliances: List[Dict[str, str]]
+    amenities: List[str]
 
 
 def run_agreement_tool(user_input: str) -> str:

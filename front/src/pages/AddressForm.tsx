@@ -25,7 +25,7 @@ export const AddressForm = ({ addressDetails, onChange, onConfirm, formPrefix }:
     pincode: ''
   });
 
-  const validateField = (field: string, value: string) => {
+  const validateField = (field: string, value: string): string => {
     let error = '';
     switch (field) {
       case 'flatFloor':
@@ -51,22 +51,30 @@ export const AddressForm = ({ addressDetails, onChange, onConfirm, formPrefix }:
       case 'pincode':
         if (!/^\d+$/.test(value)) {
           error = 'Pincode should contain digits only';
+        } else if (value.length !== 6) {
+          error = 'Pincode should contain exactly 6 digits';
         }
         break;
       default:
         break;
     }
-    setErrors((prevErrors) => ({ ...prevErrors, [field]: error }));
-    return error === '';
+    return error;
   };
 
   const handleChange = (field: string, value: string) => {
     onChange(field, value);
-    validateField(field.replace(`${formPrefix}.`, ""), value);
   };
 
   const handleConfirm = () => {
-    const isValid = Object.keys(errors).every((key) => validateField(key, addressDetails[key as keyof AddressDetails] || ""));
+    const newErrors: AddressDetails = {
+      flatFloor: validateField('flatFloor', addressDetails.flatFloor),
+      buildingName: validateField('buildingName', addressDetails.buildingName),
+      area: validateField('area', addressDetails.area),
+      city: validateField('city', addressDetails.city),
+      pincode: validateField('pincode', addressDetails.pincode),
+    };
+    setErrors(newErrors);
+    const isValid = Object.values(newErrors).every((error) => error === '');
     if (isValid) {
       onConfirm();
     }
@@ -74,61 +82,61 @@ export const AddressForm = ({ addressDetails, onChange, onConfirm, formPrefix }:
 
   return (
     <>
-      <Card shadow="sm" padding="lg" mt={10} withBorder style={{ backgroundColor: "#ebf2fc" }}>
-        <TextInput
-          label="Flat No. & Floor"
-          value={addressDetails.flatFloor || ''}
-          onChange={(e) => handleChange(`${formPrefix}.flatFloor`, e.currentTarget.value)}
-          mt="sm"
-          withAsterisk
-          error={errors.flatFloor}
-        />
-        <TextInput
-          label="Building Name"
-          value={addressDetails.buildingName || ''}
-          onChange={(e) => handleChange(`${formPrefix}.buildingName`, e.currentTarget.value)}
-          mt="sm"
-          withAsterisk
-          error={errors.buildingName}
-        />
-        <TextInput
-          label="Area"
-          value={addressDetails.area || ''}
-          onChange={(e) => handleChange(`${formPrefix}.area`, e.currentTarget.value)}
-          mt="sm"
-          withAsterisk
-          error={errors.area}
-        />
-        <TextInput
-          label="City"
-          value={addressDetails.city || ''}
-          onChange={(e) => handleChange(`${formPrefix}.city`, e.currentTarget.value)}
-          mt="sm"
-          withAsterisk
-          error={errors.city}
-        />
-        <TextInput
-          label="Pincode"
-          value={addressDetails.pincode || ''}
-          onChange={(e) => handleChange(`${formPrefix}.pincode`, e.currentTarget.value)}
-          mt="sm"
-          withAsterisk
-          error={errors.pincode}
-        />
-        <Button
-          mt="sm"
-          onClick={handleConfirm}
-          disabled={
-            !addressDetails.flatFloor ||
-            !addressDetails.buildingName ||
-            !addressDetails.area ||
-            !addressDetails.city ||
-            !addressDetails.pincode
-          }
-        >
-          Confirm Address
-        </Button>
-      </Card>
+    <Card shadow="sm" padding="lg" mt={10} withBorder style={{ backgroundColor: "#ebf2fc" }}>
+      <TextInput
+        label="Flat No. & Floor"
+        value={addressDetails.flatFloor || ''}
+        onChange={(e) => handleChange(`${formPrefix}.flatFloor`, e.currentTarget.value)}
+        mt="sm"
+        withAsterisk
+        error={errors.flatFloor}
+      />
+      <TextInput
+        label="Building Name"
+        value={addressDetails.buildingName || ''}
+        onChange={(e) => handleChange(`${formPrefix}.buildingName`, e.currentTarget.value)}
+        mt="sm"
+        withAsterisk
+        error={errors.buildingName}
+      />
+      <TextInput
+        label="Area"
+        value={addressDetails.area || ''}
+        onChange={(e) => handleChange(`${formPrefix}.area`, e.currentTarget.value)}
+        mt="sm"
+        withAsterisk
+        error={errors.area}
+      />
+      <TextInput
+        label="City"
+        value={addressDetails.city || ''}
+        onChange={(e) => handleChange(`${formPrefix}.city`, e.currentTarget.value)}
+        mt="sm"
+        withAsterisk
+        error={errors.city}
+      />
+      <TextInput
+        label="Pincode"
+        value={addressDetails.pincode || ''}
+        onChange={(e) => handleChange(`${formPrefix}.pincode`, e.currentTarget.value)}
+        mt="sm"
+        withAsterisk
+        error={errors.pincode}
+      />
+      <Button
+        mt="sm"
+        onClick={handleConfirm}
+        disabled={
+          !addressDetails.flatFloor ||
+          !addressDetails.buildingName ||
+          !addressDetails.area ||
+          !addressDetails.city ||
+          !addressDetails.pincode
+        }
+      >
+        Confirm Address
+      </Button>
+    </Card>
     </>
   );
 };
