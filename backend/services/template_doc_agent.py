@@ -1,8 +1,8 @@
 import logging
+from helpers.db_operations import create_user_agreement_status, store_final_pdf, update_agreement_status
 from helpers.email_helper import send_email_with_attachment
 from helpers.websocket_helper import (
     listen_for_approval,
-    ApprovalTimeoutError,
     ConnectionClosedError,
     ApprovalResult,
 )
@@ -19,11 +19,9 @@ from fastapi import HTTPException
 import os
 from pydantic import BaseModel
 import shutil
-import os
 from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 from constants import MAX_RETRIES, RETRY_DELAY
 from langchain_core.prompts.prompt import PromptTemplate
-from prisma import Base64
 from prisma.enums import AgreementStatus
 
 
@@ -146,10 +144,7 @@ async def template_based_agreement(
         try:
             response = generate_agreement_with_retry(req.user_prompt)
         except Exception as e:
-            await db.templateagreement.update(
-                where={"id": agreement_id},
-                data={"status": AgreementStatus.FAILED},
-            )
+            await update_agreement_status(db, agreement_id, AgreementStatus.FAILED, True)
             raise HTTPException(
                 status_code=500, detail=f"Error generating agreement: {str(e)}"
             )
@@ -192,12 +187,8 @@ async def template_based_agreement(
                         "Participant",
                         True,
                     )
-                    with open(template_agreement_state.pdf_file_path, "rb") as pdf_file:
-                        pdf_base64 = Base64.encode(pdf_file.read())
-                    await db.templateagreement.update(
-                        where={"id": agreement_id},
-                        data={"pdf": pdf_base64, "status": AgreementStatus.APPROVED},
-                    )
+                    # Stores final agreement pdf in db
+                    await store_final_pdf(db, agreement_id, template_agreement_state.pdf_file_path)
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")
@@ -206,44 +197,31 @@ async def template_based_agreement(
                     return {"message": "Final signed agreement sent to all parties!"}
                 elif approval_result == ApprovalResult.REJECTED:
                     # If explicitly rejected
-                    await db.templateagreement.update(
-                        where={"id": agreement_id},
-                        data={"status": AgreementStatus.REJECTED},
-                    )
+                    await update_agreement_status(db, agreement_id, AgreementStatus.REJECTED, True)
+                    await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.REJECTED, True)
+                    await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.REJECTED, True)
                     delete_temp_file()
                     delete_template_file()
                     template_agreement_state.reset()
                     return {"message": "Agreement was rejected by one or more parties."}
+                elif approval_result == ApprovalResult.EXPIRED:
+                    # ApprovalResult.EXPIRED
+                    await update_agreement_status(db, agreement_id, AgreementStatus.EXPIRED, True)
+                    await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.EXPIRED, True)
+                    await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.EXPIRED, True)
+
+
+                    delete_temp_file()
+                    delete_template_file()
+                    template_agreement_state.reset()
+                    return {
+                        "message": "Agreement was expired due to no action taken by one or more parties within 5 minutes."
+                    }
                 else:
                     # ApprovalResult.CONNECTION_CLOSED
-                    await db.templateagreement.update(
-                        where={"id": agreement_id},
-                        data={"status": AgreementStatus.FAILED},
-                    )
-
-                    authority_useragreement = await db.useragreementstatus.find_first(
-                        where={"userId": template_agreement_state.authority_id, "agreementId": agreement_id}
-                    )
-                    if not authority_useragreement:
-                        await db.useragreementstatus.create(
-                            data={
-                                "userId": template_agreement_state.authority_id,
-                                "agreementId": agreement_id,
-                                "status": AgreementStatus.FAILED,
-                            }
-                        )
-                    
-                    participant_useragreement = await db.useragreementstatus.find_first(
-                        where={"userId": template_agreement_state.participant_id, "agreementId": agreement_id}
-                    )                   
-                    if not participant_useragreement:
-                        await db.useragreementstatus.create(
-                            data={
-                                "userId": template_agreement_state.participant_id,
-                                "agreementId": agreement_id,
-                                "status": AgreementStatus.FAILED,
-                            }
-                        )
+                    await update_agreement_status(db, agreement_id, AgreementStatus.FAILED, True)
+                    await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.FAILED, True)
+                    await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.FAILED, True)
                     delete_temp_file()
                     delete_template_file()
                     template_agreement_state.reset()
@@ -252,10 +230,9 @@ async def template_based_agreement(
                     }
             except ConnectionClosedError as e:
                 # If connection was closed unexpectedly
-                await db.templateagreement.update(
-                    where={"id": agreement_id},
-                    data={"status": AgreementStatus.FAILED},
-                )
+                await update_agreement_status(db, agreement_id, AgreementStatus.FAILED, True)
+                await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.FAILED, True)
+                await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.FAILED, True)
                 delete_temp_file()
                 delete_template_file()
                 template_agreement_state.reset()
@@ -263,14 +240,10 @@ async def template_based_agreement(
                     "message": f"Agreement process failed: Connection closed unexpectedly"
                 }
         else:
-            await db.templateagreement.update(
-                where={"id": agreement_id},
-                data={"status": AgreementStatus.FAILED},
-            )
+            await update_agreement_status(db, agreement_id, AgreementStatus.FAILED, True)
             return {"message": "Error sending initial agreement emails."}
     except Exception as e:
-        await db.templateagreement.update(
-            where={"id": agreement_id},
-            data={"status": AgreementStatus.FAILED},
-        )
+        await update_agreement_status(db, agreement_id, AgreementStatus.FAILED, True)
+        await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.FAILED, True)
+        await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.FAILED, True)
         raise HTTPException(status_code=500, detail=str(e))
