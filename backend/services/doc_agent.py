@@ -109,7 +109,7 @@ agent = initialize_agent(
     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
     verbose=True,
     memory=memory,
-    max_iterations=2,
+    max_iterations=1,
     early_stopping_method="generate",
     agent_kwargs={
         "prefix": PREFIX,
