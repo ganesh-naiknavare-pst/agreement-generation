@@ -14,6 +14,7 @@ import { IconEye } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
 import { useAgreements } from "../../hooks/useAgreements";
 import { useState } from "react";
+import { statusTooltips } from "../../constants";
 
 export function RentAgreements() {
   const { agreements } = useAgreements();
@@ -55,14 +56,6 @@ export function RentAgreements() {
       default:
         return COLORS.grayDark;
     }
-  };
-
-  const statusTooltips: Record<string, string> = {
-    APPROVED: "Approved by all involved parties",
-    PROCESSING: "Awaiting action from one or more parties",
-    REJECTED: "Rejected by one or more parties",
-    EXPIRED: "No action taken by one or more parties",
-    FAILED: "Failed due to connection issue",
   };
 
   const paginatedData = agreements

@@ -2,7 +2,7 @@ import { Box, Text, Flex } from "@mantine/core";
 import { NavLink, useLocation } from "react-router-dom";
 import cx from "clsx";
 import classes from "./TableOfContents.module.css";
-import { PageTitle } from "../../types";
+import { PageTitle } from "../../constants";
 import { IconHome, IconTemplate, IconFileSettings, IconMail } from "@tabler/icons-react";
 import { useState } from "react";
 
