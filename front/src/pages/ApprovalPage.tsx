@@ -107,16 +107,27 @@ const ApprovalPage = () => {
 
     validate: (values) => {
       const errors: Record<string, string> = {};
-      if (values.signature === "") {
+      if (!values.signature) {
         setShowAlertForSign(true);
         errors.signature = "Please upload a Signature to proceed";
+      } else {
+        setShowAlertForSign(false);
       }
+  
+      if (isRentAgreement && !values.imageUrl) {
+        setShowAlertForPhoto(true);
+        errors.imageUrl = "Please upload a photo to proceed";
+      } else {
+        setShowAlertForPhoto(false);
+      }
+  
       return errors;
     },
   });
 
   const handleSignatureSave = (signatureData: string) => {
     form.setFieldValue("signature", signatureData);
+    setShowAlertForSign(false);
   };
 
   const onMessage = useCallback((message: any) => {
