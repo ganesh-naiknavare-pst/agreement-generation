@@ -7,6 +7,8 @@ import {
 } from "react";
 import useApi, { BackendEndpoints } from "./useApi";
 import { useParams, useSearchParams } from "react-router-dom";
+import { Agreement, TemplateAgreement } from "../types/types";
+import { useUser } from "@clerk/clerk-react";
 export type UserData = {
   id: number;
   userId: string;
@@ -37,6 +39,7 @@ const UserContext = createContext<UserContextType>({
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
+  const { user } = useUser();
   const {
     data: rentAgreementUser,
     fetchData: getRentAgreementUser,
@@ -47,6 +50,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     fetchData: getTemplateAgreementUser,
     loading: loadTemplateAgreemntUser,
   } = useApi<UserData>(BackendEndpoints.GetTemplateAgreementUSer);
+  const { fetchData: updateClerkUserIds } = useApi<
+    Agreement[] | TemplateAgreement[]
+  >(BackendEndpoints.UpdateClerkUserIds);
   const param = useParams();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<string | null>(null);
@@ -55,17 +61,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (param.id && param.agreementId) {
       const agreement_id = param.agreementId;
       const user_id = param.id;
-      if (searchParams.get("type") === "rent") {
-        getRentAgreementUser({
-          method: "GET",
-          params: { agreement_id, user_id },
-        });
-      } else {
-        getTemplateAgreementUser({
-          method: "GET",
-          params: { agreement_id, user_id },
-        });
-      }
+      const isRentAgreement = searchParams.get("type") === "rent";
+
+      const agreementUserFetcher = isRentAgreement
+        ? getRentAgreementUser
+        : getTemplateAgreementUser;
+
+      agreementUserFetcher({
+        method: "GET",
+        params: { agreement_id, user_id },
+      });
+
+      updateClerkUserIds({
+        method: "POST",
+        data: {
+          agreement_id,
+          user_id: user?.id,
+          is_template: !isRentAgreement,
+        },
+      });
     }
   }, []);
 

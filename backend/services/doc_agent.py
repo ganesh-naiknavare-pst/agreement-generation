@@ -35,6 +35,7 @@ class AgreementRequest(BaseModel):
     city: str
     rent_amount: int
     agreement_period: list[datetime]
+    user_id: str
 
 
 def run_agreement_tool(user_input: str) -> str:
