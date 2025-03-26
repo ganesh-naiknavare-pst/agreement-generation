@@ -2,59 +2,60 @@ import base64
 import requests
 from constants import SMTP2GO_EMAIL_SEND_URL
 from config import SMTP2GO_API_KEY, SENDER_EMAIL
-from helpers.state_manager import agreement_state, template_agreement_state
+from helpers.state_manager import state_manager
 from templates import generate_email_template
 
 
 def send_rejection_email(
-    rejected_by_name: str, rejected_by_role: str = None, is_template: bool = False
+    agreement_id: str, rejected_by_name: str, rejected_by_role: str = None, is_template: bool = False
 ):
     """Send rejection notification emails to all parties involved in the agreement."""
     # Get all email addresses
     emails_to_notify = []
 
     if is_template:
+        current_state = state_manager.get_template_agreement_state(agreement_id)
         if (
-            hasattr(template_agreement_state, "authority_email")
-            and template_agreement_state.authority_email
+            hasattr(current_state, "authority_email")
+            and current_state.authority_email
         ):
             emails_to_notify.append(
                 (
-                    template_agreement_state.authority_email,
+                    current_state.authority_email,
                     "Authority",
-                    template_agreement_state.authority_id,
+                    current_state.authority_id,
                 )
             )
         if (
-            hasattr(template_agreement_state, "participant_email")
-            and template_agreement_state.participant_email
+            hasattr(current_state, "participant_email")
+            and current_state.participant_email
         ):
             emails_to_notify.append(
                 (
-                    template_agreement_state.participant_email,
+                    current_state.participant_email,
                     "Participant",
-                    template_agreement_state.participant_id,
+                    current_state.participant_id,
                 )
             )
 
     else:
-        if hasattr(agreement_state, "owner_email") and agreement_state.owner_email:
+        current_state = state_manager.get_agreement_state(agreement_id)
+        if hasattr(current_state, "owner_email") and current_state.owner_email:
             emails_to_notify.append(
-                (agreement_state.owner_email, "owner", agreement_state.owner_id)
+                (current_state.owner_email, "owner", current_state.owner_id)
             )
         # Add all tenants' emails
-        for tenant_id in agreement_state.tenants.keys():
-            tenant_email = getattr(agreement_state, "tenant_emails", {}).get(tenant_id)
+        for tenant_id in current_state.tenants.keys():
+            tenant_email = getattr(current_state, "tenant_emails", {}).get(tenant_id)
             if tenant_email:
                 emails_to_notify.append((tenant_email, "tenant", tenant_id))
 
     success_list = []
     failed_list = {}
-
     agreement_id = (
-        template_agreement_state.agreement_id
+        current_state.agreement_id
         if is_template
-        else agreement_state.agreement_id
+        else current_state.agreement_id
     )
 
     for email, role, user_id in emails_to_notify:
@@ -98,6 +99,7 @@ def send_email_with_attachment(
     recipient_email: str,
     pdf_path: str,
     role: str,
+    agreement_id: str,
     is_template: bool = False,
     user_id=None,
 ):
@@ -106,21 +108,21 @@ def send_email_with_attachment(
         file_content = attachment_file.read()
         encoded_file = base64.b64encode(file_content).decode("utf-8")
 
-    # Use the provided user_id for tenants, or owner_id for owner
     if is_template:
+        current_state = state_manager.get_template_agreement_state(agreement_id)
         user_id = (
-            template_agreement_state.participant_id
+            current_state.participant_id
             if role == "Participant"
-            else template_agreement_state.authority_id
+            else current_state.authority_id
         )
     else:
+        current_state = state_manager.get_agreement_state(agreement_id)
         if role == "owner" or user_id is None:
-            user_id = agreement_state.owner_id
-
+            user_id = current_state.owner_id
     agreement_id = (
-        template_agreement_state.agreement_id
+        current_state.agreement_id
         if is_template
-        else agreement_state.agreement_id
+        else current_state.agreement_id
     )
     email_body = generate_email_template(role, user_id, agreement_id, is_template)
 

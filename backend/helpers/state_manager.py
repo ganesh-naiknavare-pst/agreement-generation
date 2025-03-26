@@ -7,8 +7,7 @@ from dataclasses import dataclass, field
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
-
-
+    agreement_id: int
 @dataclass
 class AgreementState:
     owner_id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -53,9 +52,6 @@ class AgreementState:
         return self.owner_approved and all(self.tenants.values())
 
 
-agreement_state = AgreementState()
-
-
 @dataclass
 class TemplateAgreementState:
     authority_id: str = field(default_factory=lambda: str(uuid.uuid4()))
@@ -87,4 +83,41 @@ class TemplateAgreementState:
         return self.participant_approved and self.authority_approved
 
 
-template_agreement_state = TemplateAgreementState()
+class StateManager:
+    def __init__(self):
+        self._agreement_states: Dict[int, AgreementState] = {}
+        self._template_agreement_states: Dict[int, TemplateAgreementState] = {}
+        self._current_agreement_id: Optional[int] = None
+        self._current_template_agreement_id: Optional[int] = None
+
+    def get_agreement_state(self, agreement_id: int) -> AgreementState:
+        if agreement_id not in self._agreement_states:
+            state = AgreementState()
+            state.agreement_id = agreement_id
+            self._agreement_states[agreement_id] = state
+        return self._agreement_states[agreement_id]
+
+    def get_template_agreement_state(self, agreement_id: int) -> TemplateAgreementState:
+        if agreement_id not in self._template_agreement_states:
+            state = TemplateAgreementState()
+            state.agreement_id = agreement_id
+            self._template_agreement_states[agreement_id] = state
+        return self._template_agreement_states[agreement_id]
+
+    def cleanup_agreement_state(self, agreement_id: int) -> None:
+        if agreement_id in self._agreement_states:
+            del self._agreement_states[agreement_id]
+
+    def cleanup_template_agreement_state(self, agreement_id: int) -> None:
+        if agreement_id in self._template_agreement_states:
+            del self._template_agreement_states[agreement_id]
+
+    def set_current_agreement_id(self, agreement_id: int) -> None:
+        self._current_agreement_id = agreement_id
+
+    def set_current_template_agreement_id(self, agreement_id: int) -> None:
+        self._current_template_agreement_id = agreement_id
+
+
+# Create a singleton instance
+state_manager = StateManager()

@@ -1,6 +1,7 @@
 from config import BASE_APPROVAL_URL, CORS_ALLOWED_ORIGIN
-from helpers.state_manager import agreement_state, template_agreement_state
+from helpers.state_manager import state_manager
 from datetime import datetime
+import logging
 
 REJECTION_NOTIFICATION_TEMPLATE = """
 <!DOCTYPE html>
@@ -15,14 +16,14 @@ REJECTION_NOTIFICATION_TEMPLATE = """
         <tr>
             <td align="center" style="padding: 20px;">
                 <table role="presentation" width="600" bgcolor="#ffffff" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
-                    
+
                     <!-- Header -->
                     <tr>
                         <td bgcolor="#dc3545" style="padding: 15px; font-size: 20px; font-weight: bold; color: #ffffff; text-align: center; border-radius: 8px 8px 0 0;">
                             Agreement Rejected
                         </td>
                     </tr>
-                    
+
                     <!-- Content -->
                     <tr>
                         <td style="padding: 20px; font-size: 16px; color: #333333; text-align: left; line-height: 1.5;">
@@ -33,7 +34,7 @@ REJECTION_NOTIFICATION_TEMPLATE = """
                             <p><strong>Agreement Agent Team</strong></p>
                         </td>
                     </tr>
-                    
+
                     <!-- Footer -->
                     <tr>
                         <td style="padding: 15px; font-size: 14px; color: #666666; text-align: center; border-top: 1px solid #dddddd;">
@@ -126,7 +127,7 @@ PENDING_APPROVAL_TEMPLATE = """
                             <p>Please proceed with the agreement.</p>
                             <p>To proceed, please verify your identity by uploading your signature and photo.</p>
                             <p>After uploading your signature and photo, you will be able to approve or reject the agreement.</p>
-                            
+
                             <!-- Review Agreement Button -->
                             <table role="presentation" align="center" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
@@ -168,16 +169,23 @@ def generate_email_template(
     is_rejection: bool = False,
     rejected_by: str = None,
 ) -> str:
+    if is_template:
+        current_state = state_manager.get_template_agreement_state(agreement_id)
+    else:
+        current_state = state_manager.get_agreement_state(agreement_id)
+
+    if current_state is None:
+        logging.error("No active agreement state found")
+        return
 
     agreement_type_str = "template" if is_template else "rent"
+
     url = f"{CORS_ALLOWED_ORIGIN}/review-agreement/{user_id}/{agreement_id}?type={agreement_type_str}"
+
     if is_rejection:
         message = f"The agreement has been rejected by {rejected_by}."
         return REJECTION_NOTIFICATION_TEMPLATE.format(message=message)
-    elif (
-        agreement_state.is_fully_approved()
-        or template_agreement_state.is_fully_approved()
-    ):
+    elif (current_state.is_fully_approved()):
         message = (
             "The agreement has been approved"
             if is_template

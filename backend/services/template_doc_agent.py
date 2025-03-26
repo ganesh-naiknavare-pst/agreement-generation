@@ -15,7 +15,7 @@ from helpers.template_based_agreement_generator import (
     update_pdf_with_signatures,
 )
 from prompts import template
-from helpers.state_manager import template_agreement_state
+from helpers.state_manager import state_manager
 from fastapi import HTTPException
 import os
 from pydantic import BaseModel
@@ -35,78 +35,83 @@ class TemplateAgreementRequest(BaseModel):
     participant_email: str
 
 
-def run_agreement_tool(user_input: str) -> str:
-    output = None
-    for event in template_graph.stream({"messages": ("user", user_input)}):
+def run_agreement_tool(user_input: str, agreement_id: int) -> str:
+    state = {
+        "messages": [("user", user_input)],
+        "agreement_id": agreement_id
+    }
+    for event in template_graph.stream(state):
         if "create_pdf" in event:
-            output = event["create_pdf"]["messages"]
+            output = event["create_pdf"].get("messages", "No messages found")
             return output
     return "Failed to generate agreement"
 
 
 # Define Tool
-tools = [
-    Tool(
-        name="generate_agreement",
-        func=run_agreement_tool,
-        description="Generate a agreement PDF from the provided details. Output only the agreement text.",
-    )
-]
+def create_tool_with_agreement_id(agreement_id):
+    return [
+        Tool(
+            name="generate_agreement",
+            func=lambda user_input: run_agreement_tool(user_input, agreement_id),
+            description="Generate a rental agreement PDF from the provided details. Output only the agreement text.",
+        )
+    ]
 
 
-def delete_temp_file():
+
+def delete_temp_file(current_state):
     """Deletes the temporary agreement file if it exists."""
     try:
-        if template_agreement_state.pdf_file_path and os.path.exists(
-            template_agreement_state.pdf_file_path
+        if current_state.pdf_file_path and os.path.exists(
+            current_state.pdf_file_path
         ):
-            os.remove(template_agreement_state.pdf_file_path)
+            os.remove(current_state.pdf_file_path)
             logging.info(
-                f"Temporary file deleted: {template_agreement_state.pdf_file_path}"
+                f"Temporary file deleted: {current_state.pdf_file_path}"
             )
         else:
             logging.info(
-                f"Temp file not found: {template_agreement_state.pdf_file_path}"
+                f"Temp file not found: {current_state.pdf_file_path}"
             )
     except Exception as e:
         logging.info(f"Error deleting temp file: {str(e)}")
 
 
-def delete_template_file():
+
+def delete_template_file(current_state):
     """Deletes the template agreement file if it exists."""
     try:
-        if template_agreement_state.template_file_path and os.path.exists(
-            template_agreement_state.template_file_path
+        if current_state.template_file_path and os.path.exists(
+            current_state.template_file_path
         ):
-            os.remove(template_agreement_state.template_file_path)
+            os.remove(current_state.template_file_path)
             logging.info(
-                f"Template file deleted: {template_agreement_state.template_file_path}"
+                f"Template file deleted: {current_state.template_file_path}"
             )
         else:
             logging.info(
-                f"Template file not found: {template_agreement_state.template_file_path}"
+                f"Template file not found: {current_state.template_file_path}"
             )
     except Exception as e:
         logging.info(f"Error deleting template file: {str(e)}")
 
+def delete_template_temp_images(current_state):
+    files_to_delete = [
+        current_state.authority_signature,
+        current_state.participant_signature,
+    ]
 
-# Initialize agent
-agent = initialize_agent(
-    tools=tools,
-    llm=llm,
-    agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-    verbose=True,
-    memory=memory,
-    max_iterations=1,
-    early_stopping_method="generate",
-    prompt=PromptTemplate.from_template(template),
-)
-
+    for file_path in files_to_delete:
+        if file_path and os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f"Error deleting file {file_path}: {e}")
 
 def log_before_retry(retry_state):
     attempt = retry_state.attempt_number
     logging.info(f"Retry attempt {attempt}: Retrying agreement generation...")
-    delete_temp_file()
+    # delete_temp_file(current_state)
 
 
 def log_after_failure(retry_state):
@@ -123,28 +128,50 @@ def log_after_failure(retry_state):
     before_sleep=log_before_retry,
     after=log_after_failure,
 )
-def generate_agreement_with_retry(agreement_details):
-    return agent.invoke(agreement_details)
 
+def generate_agreement_with_retry(agent, agreement_details, agreement_id):
+    try:
+        response = agent.invoke({"input": agreement_details, "agreement_id": agreement_id})
+        if not response:
+            raise ValueError("Empty response from LLM")
+        return response
+    except Exception as e:
+        logging.info(f"Error while invoking agent for agreement_id {agreement_id}: {str(e)}")
+        return None
 
 async def template_based_agreement(
     req: TemplateAgreementRequest, file, agreement_id: int, db: object
 ):
     try:
-        template_agreement_state.agreement_id = agreement_id
-        template_agreement_state.set_authority(req.authority_email)
-        template_agreement_state.set_participant(req.participant_email)
+        state_manager.cleanup_template_agreement_state(agreement_id)
+        state_manager.set_current_template_agreement_id(agreement_id)
+        current_state = state_manager.get_template_agreement_state(agreement_id)
+        tools = create_tool_with_agreement_id(agreement_id)
+
+        agent = initialize_agent(
+            tools=tools,
+            llm=llm,
+            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+            verbose=True,
+            memory=memory,
+            max_iterations=1,
+            early_stopping_method="generate",
+            prompt=PromptTemplate.from_template(template),
+        )
+        current_state.agreement_id = agreement_id
+        current_state.set_authority(req.authority_email)
+        current_state.set_participant(req.participant_email)
         secure_filename = os.path.basename(file.filename)
         base_dir = os.path.join(os.path.dirname(__file__), "temp")
         os.makedirs(base_dir, exist_ok=True)
         temp_file_path = os.path.join(base_dir, secure_filename)
         with open(temp_file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        template_agreement_state.template_file_path = temp_file_path
-        print(f"Template file path: {template_agreement_state.template_file_path}")
+        current_state.template_file_path = temp_file_path
         try:
+            agreement_details = req.user_prompt
             response = await execute_in_new_thread(
-                generate_agreement_with_retry, req.user_prompt
+                generate_agreement_with_retry, agent, agreement_details, agreement_id
             )
         except Exception as e:
             await update_agreement_status(db, agreement_id, AgreementStatus.FAILED, True)
@@ -154,91 +181,98 @@ async def template_based_agreement(
 
         authority_success, _ = send_email_with_attachment(
             req.authority_email,
-            template_agreement_state.pdf_file_path,
+            current_state.pdf_file_path,
             "Authority",
+            agreement_id,
             True,
         )
         participant_success, _ = send_email_with_attachment(
             req.participant_email,
-            template_agreement_state.pdf_file_path,
+            current_state.pdf_file_path,
             "Participant",
+            agreement_id,
             True,
         )
-        template_agreement_state.is_pdf_generated = True
+        current_state.is_pdf_generated = True
 
         if authority_success and participant_success:
-            delete_temp_file()
-            delete_template_file()
+            delete_temp_file(current_state)
+            delete_template_file(current_state)
             try:
                 # Wait for approvals
                 approval_result = await listen_for_approval(
-                    timeout_seconds=300, is_template=True
+                    timeout_seconds=500, is_template=True, agreement_id=agreement_id
                 )
 
                 if approval_result == ApprovalResult.APPROVED:
-                    update_pdf_with_signatures()
+                    update_pdf_with_signatures(agreement_id)
                     # Send final agreement emails
                     authority_success, _ = send_email_with_attachment(
                         req.authority_email,
-                        template_agreement_state.pdf_file_path,
+                        current_state.pdf_file_path,
                         "Authority",
+                        agreement_id,
                         True,
                     )
                     participant_success, _ = send_email_with_attachment(
                         req.participant_email,
-                        template_agreement_state.pdf_file_path,
+                        current_state.pdf_file_path,
                         "Participant",
+                        agreement_id,
                         True,
                     )
                     # Stores final agreement pdf in db
-                    await store_final_pdf(db, agreement_id, template_agreement_state.pdf_file_path, True)
-                    delete_temp_file()
-                    if os.path.exists("./utils"):
-                        shutil.rmtree("./utils")
-                    delete_template_file()
-                    template_agreement_state.reset()
+                    await store_final_pdf(db, agreement_id, current_state.pdf_file_path)
+                    delete_temp_file(current_state)
+                    delete_template_temp_images(current_state)
+                    delete_template_file(current_state)
+                    state_manager.cleanup_template_agreement_state(agreement_id)
                     return {"message": "Final signed agreement sent to all parties!"}
                 elif approval_result == ApprovalResult.REJECTED:
                     # If explicitly rejected
                     await update_agreement_status(db, agreement_id, AgreementStatus.REJECTED, True)
-                    await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.REJECTED, True)
-                    await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.REJECTED, True)
-                    delete_temp_file()
-                    delete_template_file()
-                    template_agreement_state.reset()
+                    await create_user_agreement_status(db, current_state.authority_id, agreement_id, AgreementStatus.REJECTED, True)
+                    await create_user_agreement_status(db, current_state.participant_id, agreement_id, AgreementStatus.REJECTED, True)
+                    delete_temp_file(current_state)
+                    delete_template_file(current_state)
+                    delete_template_temp_images(current_state)
+                    state_manager.cleanup_template_agreement_state(agreement_id)
                     return {"message": "Agreement was rejected by one or more parties."}
                 elif approval_result == ApprovalResult.EXPIRED:
                     # ApprovalResult.EXPIRED
                     await update_agreement_status(db, agreement_id, AgreementStatus.EXPIRED, True)
-                    await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.EXPIRED, True)
-                    await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.EXPIRED, True)
+                    await create_user_agreement_status(db, current_state.authority_id, agreement_id, AgreementStatus.EXPIRED, True)
+                    await create_user_agreement_status(db, current_state.participant_id, agreement_id, AgreementStatus.EXPIRED, True)
 
 
-                    delete_temp_file()
-                    delete_template_file()
-                    template_agreement_state.reset()
+                    delete_temp_file(current_state)
+                    delete_template_file(current_state)
+                    delete_template_temp_images(current_state)
+                    state_manager.cleanup_template_agreement_state(agreement_id)
                     return {
                         "message": "Agreement was expired due to no action taken by one or more parties within 5 minutes."
                     }
                 else:
                     # ApprovalResult.CONNECTION_CLOSED
                     await update_agreement_status(db, agreement_id, AgreementStatus.FAILED, True)
-                    await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.FAILED, True)
-                    await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.FAILED, True)
-                    delete_temp_file()
-                    delete_template_file()
-                    template_agreement_state.reset()
+                    await create_user_agreement_status(db, current_state.authority_id, agreement_id, AgreementStatus.FAILED, True)
+                    await create_user_agreement_status(db, current_state.participant_id, agreement_id, AgreementStatus.FAILED, True)
+                    delete_temp_file(current_state)
+                    delete_template_file(current_state)
+                    delete_template_temp_images(current_state)
+                    state_manager.cleanup_template_agreement_state(agreement_id)
                     return {
                         "message": "Agreement process failed due to connection issues."
                     }
             except ConnectionClosedError as e:
                 # If connection was closed unexpectedly
                 await update_agreement_status(db, agreement_id, AgreementStatus.FAILED, True)
-                await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.FAILED, True)
-                await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.FAILED, True)
-                delete_temp_file()
-                delete_template_file()
-                template_agreement_state.reset()
+                await create_user_agreement_status(db, current_state.authority_id, agreement_id, AgreementStatus.FAILED, True)
+                await create_user_agreement_status(db, current_state.participant_id, agreement_id, AgreementStatus.FAILED, True)
+                delete_temp_file(current_state)
+                delete_template_file(current_state)
+                delete_template_temp_images(current_state)
+                state_manager.cleanup_template_agreement_state(agreement_id)
                 return {
                     "message": f"Agreement process failed: Connection closed unexpectedly"
                 }
@@ -247,6 +281,6 @@ async def template_based_agreement(
             return {"message": "Error sending initial agreement emails."}
     except Exception as e:
         await update_agreement_status(db, agreement_id, AgreementStatus.FAILED, True)
-        await create_user_agreement_status(db, template_agreement_state.authority_id, agreement_id, AgreementStatus.FAILED, True)
-        await create_user_agreement_status(db, template_agreement_state.participant_id, agreement_id, AgreementStatus.FAILED, True)
+        await create_user_agreement_status(db, current_state.authority_id, agreement_id, AgreementStatus.FAILED, True)
+        await create_user_agreement_status(db, current_state.participant_id, agreement_id, AgreementStatus.FAILED, True)
         raise HTTPException(status_code=500, detail=str(e))
