@@ -4,6 +4,7 @@ import {
   ReactNode,
   useEffect,
   useState,
+  useRef,
 } from "react";
 import useApi, { BackendEndpoints } from "./useApi";
 import { useParams, useSearchParams } from "react-router-dom";
@@ -39,6 +40,7 @@ const UserContext = createContext<UserContextType>({
 });
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
+  const hasFetchedRef = useRef(false);
   const { user } = useUser();
   const {
     data: rentAgreementUser,
@@ -58,7 +60,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    if (param.id && param.agreementId) {
+    if (param.id && param.agreementId && !hasFetchedRef.current) {
       const agreement_id = param.agreementId;
       const user_id = param.id;
       const isRentAgreement = searchParams.get("type") === "rent";
@@ -80,6 +82,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           is_template: !isRentAgreement,
         },
       });
+      hasFetchedRef.current = true;
     }
   }, []);
 

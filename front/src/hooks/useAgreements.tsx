@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useEffect } from "react";
+import { createContext, useContext, ReactNode, useEffect, useRef } from "react";
 import useApi, { BackendEndpoints } from "./useApi";
 import { useUser } from "@clerk/clerk-react";
 import { Agreement, TemplateAgreement } from "../types/types";
@@ -23,6 +23,8 @@ const AgreementsContext = createContext<AgreementContextType>({
 
 export const AgreementsProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useUser();
+  const hasFetchedRef = useRef(false);
+
   const {
     data: agreements,
     loading: loadRentAgreemnts,
@@ -35,8 +37,11 @@ export const AgreementsProvider = ({ children }: { children: ReactNode }) => {
   } = useApi<TemplateAgreement[]>(BackendEndpoints.GetTemplateAgreements);
 
   useEffect(() => {
-    fetchAgreements({ method: "GET", params: { user_id: user?.id } });
-    fetchTemplateAgreements({ method: "GET", params: { user_id: user?.id } });
+    if (user?.id && !hasFetchedRef.current) {
+      fetchAgreements({ method: "GET", params: { user_id: user.id } });
+      fetchTemplateAgreements({ method: "GET", params: { user_id: user.id } });
+      hasFetchedRef.current = true;
+    }
   }, []);
 
   return (
