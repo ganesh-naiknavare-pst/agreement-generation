@@ -24,12 +24,14 @@ async def create_user_agreement_status(db, user_id: int, agreement_id: int, stat
         )
         await notify_clients({"userId": user_id, "status": status})
 
-async def store_final_pdf(db, agreement_id: int, pdf_path: str):
+async def store_final_pdf(db, agreement_id: int, pdf_path: str, is_template: bool = False):
     """Encodes the final PDF and stores it in the database."""
+    table = db.templateagreement if is_template else db.agreement
+
     with open(pdf_path, "rb") as pdf_file:
         pdf_base64 = Base64.encode(pdf_file.read())
 
-    await db.agreement.update(
+    await table.update(
         where={"id": agreement_id},
         data={"pdf": pdf_base64, "status": AgreementStatus.APPROVED},
     )
