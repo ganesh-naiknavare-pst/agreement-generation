@@ -191,7 +191,7 @@ async def template_based_agreement(
                         True,
                     )
                     # Stores final agreement pdf in db
-                    await store_final_pdf(db, agreement_id, template_agreement_state.pdf_file_path)
+                    await store_final_pdf(db, agreement_id, template_agreement_state.pdf_file_path, True)
                     delete_temp_file()
                     if os.path.exists("./utils"):
                         shutil.rmtree("./utils")
