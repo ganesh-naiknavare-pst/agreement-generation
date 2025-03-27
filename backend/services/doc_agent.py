@@ -123,7 +123,12 @@ def save_base64_image(photo_data: str, user_id: str, is_signature: bool = False)
 def log_before_retry(retry_state):
     attempt = retry_state.attempt_number
     logging.info(f"Retry attempt {attempt}: Retrying agreement generation...")
-    # delete_temp_file(current_state)
+
+    if retry_state.args:
+        agreement_id = retry_state.args[2]
+        current_state = state_manager.get_agreement_state(agreement_id)
+        delete_temp_file(current_state)
+
 
 
 def log_after_failure(retry_state):

@@ -144,7 +144,6 @@ def create_pdf(state: State):
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
     temp_pdf_path = temp_pdf.name
 
-    print(f"PDF Content -----> \n {content}")
     pypandoc.convert_text(
         content, "pdf", "md", encoding="utf-8", outputfile=temp_pdf_path
     )
