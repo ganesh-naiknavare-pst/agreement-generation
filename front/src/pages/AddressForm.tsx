@@ -1,10 +1,12 @@
+import { Card, Group, SimpleGrid, TextInput, Text } from "@mantine/core";
 import {
-  Box,
-  Card,
-  TextInput,
-} from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
-import { IconBuildingCommunity, IconBuildingStore, IconMapSearch, IconLocation, IconMapPin } from "@tabler/icons-react";
+  IconBuildingCommunity,
+  IconBuildingStore,
+  IconMapSearch,
+  IconLocation,
+  IconMapPin,
+} from "@tabler/icons-react";
+import { COLORS } from "../colors";
 
 interface AddressDetails {
   flatFloor: string;
@@ -27,91 +29,64 @@ export const AddressForm = ({
   formPrefix,
   errors = {},
 }: AddressFormProps) => {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const addressFields = [
+    {
+      key: "flatFloor",
+      label: "Flat No. & Floor",
+      icon: IconBuildingCommunity,
+      placeholder: "Eg: 101, 1st Floor",
+    },
+    {
+      key: "buildingName",
+      label: "Building Name",
+      icon: IconBuildingStore,
+      placeholder: "Eg: ABC Apartment",
+    },
+    {
+      key: "area",
+      label: "Area",
+      icon: IconMapSearch,
+      placeholder: "Eg: HSR Layout",
+    },
+    {
+      key: "city",
+      label: "City",
+      icon: IconLocation,
+      placeholder: "Eg: Bangalore",
+    },
+    {
+      key: "pincode",
+      label: "Pincode",
+      icon: IconMapPin,
+      placeholder: "Eg: 560102",
+    },
+  ];
 
   return (
-    <Card
-      padding="lg"
-      withBorder
-      style={{
-        maxWidth: "920px",
-        margin: "0 auto",
-        width: "100%",
-      }}
-    >
-      <Box
-        style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(250px, 1fr))",
-          gap: "16px",
-        }}
-      >
-        <TextInput
-          label={
-            <>
-              <IconBuildingCommunity size={16} style={{ marginRight: 8, paddingTop:2}} />
-              Flat No. & Floor
-            </>
-          }
-          value={addressDetails.flatFloor || ""}
-          placeholder="Eg: 101, 1st Floor"
-          onChange={(e) => onChange(`flatFloor`, e.currentTarget.value)}
-          error={errors[`${formPrefix}.flatFloor`]}
-          withAsterisk
-        />
-        <TextInput
-          label={
-            <>
-              <IconBuildingStore size={16} style={{ marginRight: 8 , paddingTop:2}} />
-              Building Name
-            </>
-          }
-          value={addressDetails.buildingName || ""}
-          placeholder="Eg: ABC Apartment"
-          onChange={(e) => onChange(`buildingName`, e.currentTarget.value)}
-          error={errors[`${formPrefix}.buildingName`]}
-          withAsterisk
-        />
-        <TextInput
-          label={
-            <>
-              <IconMapSearch size={16} style={{ marginRight: 8 , paddingTop:2}} />
-              Area
-            </>
-          }
-          value={addressDetails.area || ""}
-          placeholder="Eg: HSR Layout"
-          onChange={(e) => onChange(`area`, e.currentTarget.value)}
-          error={errors[`${formPrefix}.area`]}
-          withAsterisk
-        />
-        <TextInput
-          label={
-            <>
-              <IconLocation size={16} style={{ marginRight: 8 , paddingTop:2}} />
-              City
-            </>
-          }
-          value={addressDetails.city || ""}
-          placeholder="Eg: Bangalore"
-          onChange={(e) => onChange(`city`, e.currentTarget.value)}
-          error={errors[`${formPrefix}.city`]}
-          withAsterisk
-        />
-        <TextInput
-          label={
-            <>
-              <IconMapPin size={16} style={{ marginRight: 8 , paddingTop:2}} />
-              Pincode
-            </>
-          }
-          value={addressDetails.pincode || ""}
-          placeholder="Eg: 560102"
-          onChange={(e) => onChange(`pincode`, e.currentTarget.value)}
-          error={errors[`${formPrefix}.pincode`]}
-          withAsterisk
-        />
-      </Box>
+    <Card padding="lg" withBorder radius="md" shadow="sm">
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+        {addressFields.map(({ key, label, icon: Icon, placeholder }) => (
+          <TextInput
+            key={key}
+            label={
+              <Group gap={1} align="center">
+                <Icon size={16} stroke={1.5} />
+                <Text size="sm">
+                  {label}
+                  <Text component="span" c={COLORS.asteric}>
+                    {" "}
+                    *{" "}
+                  </Text>
+                </Text>
+              </Group>
+            }
+            value={addressDetails[key as keyof typeof addressDetails] || ""}
+            placeholder={placeholder}
+            onChange={(e) => onChange(key, e.currentTarget.value)}
+            error={errors[`${formPrefix}.${key}`]}
+          />
+        ))}
+      </SimpleGrid>
     </Card>
   );
 };
