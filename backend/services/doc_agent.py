@@ -41,6 +41,7 @@ class AgreementRequest(BaseModel):
     registration_date: str
     furniture_and_appliances: List[Dict[str, str]]
     amenities: List[str]
+    user_id: str
 
 
 def run_agreement_tool(user_input: str) -> str:

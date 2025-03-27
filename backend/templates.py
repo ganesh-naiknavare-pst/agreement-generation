@@ -195,6 +195,15 @@ def generate_email_template(
         )
 
 
+def parse_datetime(date_str: str) -> datetime:
+    formats = ["%Y-%m-%dT%H:%M:%S.%f%z", "%Y-%m-%dT%H:%M:%S%z"]
+    for fmt in formats:
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            continue
+    raise ValueError(f"Date string '{date_str}' does not match expected formats.")
+
 def format_agreement_details(
     owner_name: str,
     tenant_details: list,
@@ -212,8 +221,8 @@ def format_agreement_details(
     amenities: List[str],
 ) -> str:
     start_date, end_date = agreement_period
-    start_date_obj = datetime.strptime(start_date, "%Y-%m-%dT%H:%M:%S.%f%z")
-    end_date_obj = datetime.strptime(end_date, "%Y-%m-%dT%H:%M:%S.%f%z")
+    start_date_obj = parse_datetime(start_date)
+    end_date_obj = parse_datetime(end_date)
     num_months = (
         (end_date_obj.year - start_date_obj.year) * 12
         + end_date_obj.month
