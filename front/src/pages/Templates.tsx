@@ -34,8 +34,10 @@ import {
   getFailureOtpState,
   getDefaultOtpState,
 } from "../types/otp";
+import { useUser } from "@clerk/clerk-react";
 
 export function Templates() {
+  const { user } = useUser();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [displayBanner, setDisplayBanner] = useState(false);
@@ -254,7 +256,7 @@ export function Templates() {
     setTimeout(() => {
       setLoading(false);
       setDisplayBanner(true);
-      fetchTemplateAgreements({ method: "GET" });
+      fetchTemplateAgreements({ method: "GET", params: { user_id: user?.id } });
     }, 2000);
 
     try {
@@ -263,13 +265,17 @@ export function Templates() {
       formData.append("authority_email", form.values.authorityEmail);
       formData.append("participant_email", form.values.participantsEmail);
       formData.append("file", form.values.file ? form.values.file : "");
+      formData.append("user_id", user?.id ?? "");
 
       await fetchData({
         method: "POST",
         data: formData,
       });
 
-      await fetchTemplateAgreements({ method: "GET" });
+      await fetchTemplateAgreements({
+        method: "GET",
+        params: { user_id: user?.id },
+      });
     } catch (error) {
       console.error("Error processing template:", error);
     }
