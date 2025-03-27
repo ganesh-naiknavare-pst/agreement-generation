@@ -153,7 +153,7 @@ def create_pdf(state: State):
 
 # Build graph
 graph_builder = StateGraph(State)
-graph_builder.add_node("generate", lambda state: generate_agreement(state | {"agreement_id": state["agreement_id"]}))
+graph_builder.add_node("generate", generate_agreement)
 graph_builder.add_node("create_pdf", create_pdf)
 graph_builder.add_edge(START, "generate")
 graph_builder.add_edge("generate", "create_pdf")

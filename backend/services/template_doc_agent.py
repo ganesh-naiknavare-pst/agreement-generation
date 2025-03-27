@@ -133,7 +133,7 @@ def log_after_failure(retry_state):
 
 def generate_agreement_with_retry(agent, agreement_details, agreement_id):
     try:
-        response = agent.invoke({"input": agreement_details, "agreement_id": agreement_id})
+        response = agent.invoke(agreement_details)
         if not response:
             raise ValueError("Empty response from LLM")
         return response

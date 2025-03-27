@@ -52,6 +52,7 @@ SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER = """
     - Return the Whole generated aggremenet in one go without any extra instructions
     - Don't add test like Final Answer, Final Aggrement, Final Result etc.
     - Return the whole agreement in proper formatting and structure
+    - Ensure the agreement is formatted as a properly structured document and not in monospace or code-like text.
 """
 
 USER_PROMPT_FOR_SIGNATURE_PLACEHOLDER = (
@@ -80,6 +81,7 @@ SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION = """
     - **Don't add test like Final Answer, Final Aggrement, Final Result etc.**
     - **If there are words like Agreement template or Agremment format like this then it should not be present in the final output you can generate it as a final agreement which we can directly use**
     - **Generate output in proper formatting and structure**
+    - **Ensure the agreement is formatted as a properly structured document and not in monospace or code-like text.**
 """
 
 AGREEMENT_SYSTEM_PROMPT = """You are a rental agreement generator. Your task is to fill in the rental agreement template with the provided details.

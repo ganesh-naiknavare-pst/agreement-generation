@@ -24,6 +24,7 @@ import base64
 from langchain_core.prompts.prompt import PromptTemplate
 from prompts import template
 from prisma.enums import AgreementStatus
+import uuid
 
 logging.basicConfig(level=logging.INFO)
 
@@ -109,10 +110,12 @@ def save_base64_image(photo_data: str, user_id: str, is_signature: bool = False)
     save_dir = "./utils"
     os.makedirs(save_dir, exist_ok=True)
 
+    unique_id = uuid.uuid4().hex
+    
     if is_signature:
-        photo_path = f"{save_dir}/{user_id}_signature.{file_ext}"
+        photo_path = f"{save_dir}/{user_id}_signature_{unique_id}.{file_ext}"
     else:
-        photo_path = f"{save_dir}/{user_id}_photo.{file_ext}"
+        photo_path = f"{save_dir}/{user_id}_photo_{unique_id}.{file_ext}"
 
     with open(photo_path, "wb") as photo_file:
         photo_file.write(photo_bytes)
@@ -148,7 +151,7 @@ def log_after_failure(retry_state):
 
 def generate_agreement_with_retry(agent, agreement_details, agreement_id):
     try:
-        response = agent.invoke({"input": agreement_details, "agreement_id": agreement_id})
+        response = agent.invoke(agreement_details)
         if not response:
             raise ValueError("Empty response from LLM")
         return response
