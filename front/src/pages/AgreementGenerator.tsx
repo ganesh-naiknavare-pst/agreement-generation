@@ -36,8 +36,8 @@ import {
   getFailureOtpState,
   getDefaultOtpState,
 } from "../types/otp";
-import { AddressForm } from "./AddressForm";
-import { FurnitureAppliances } from "./FurnitureAppliances";
+import { AddressForm } from "../components/AddressForm";
+import { FurnitureAppliances } from "../components/FurnitureAppliances";
 export function AgreementGenerator() {
   const { user } = useUser();
   const [active, setActive] = useState(0);
