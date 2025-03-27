@@ -69,7 +69,7 @@ def create_pdf(state: State):
     else:
         content = state["messages"][-1].content
         agreement_state.agreement_text = content
-
+    isDraft = True
     if agreement_state.is_fully_approved():
         # Replace owner signature with image
         if os.path.isfile(agreement_state.owner_signature):
@@ -121,6 +121,7 @@ def create_pdf(state: State):
                 )
             else:
                 content = content.replace(placeholder, photo)
+        isDraft = False
 
     # Ensure no Rupee symbols make it through to the PDF
     content = content.replace("₹", "Rs.")
@@ -133,7 +134,7 @@ def create_pdf(state: State):
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
     temp_pdf_path = temp_pdf.name
 
-    create_pdf_file(content, temp_pdf_path)
+    create_pdf_file(content=content, output_pdf_path=temp_pdf_path, isDraft=isDraft)
     agreement_state.pdf_file_path = temp_pdf_path
     return {"messages": content}
 

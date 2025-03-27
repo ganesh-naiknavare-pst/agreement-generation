@@ -10,11 +10,27 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, KeepTogethe
 from reportlab.lib import colors
 from PIL import Image as PILImage
 import pypandoc
-from typing import List, Tuple, Optional, Union
-import shutil
+from typing import List, Tuple, Optional
+from reportlab.lib.colors import Color
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
 
+def add_watermark(c, doc):
+    """Adds a large semi-transparent 'DRAFT' watermark at the center of each page."""
+    c.saveState()
+    
+    c.setFillColor(Color(0.85, 0.85, 0.85, alpha=0.3))
+    
+    text = "DRAFT"
+    font_name = "Helvetica-Bold"
+    font_size = 80
+    c.setFont(font_name, font_size)
+
+    c.translate(PAGE_WIDTH / 2, PAGE_HEIGHT / 2)
+    c.rotate(45)
+    c.drawCentredString(0, 0, text)
+    c.restoreState()
+    
 def extract_text_from_pdf(pdf_path: str, chunk_size: int = 1000) -> List[str]:
     """Extracts text from a PDF file and returns it in manageable chunks."""
     doc = fitz.open(pdf_path)
@@ -157,7 +173,8 @@ def create_pdf_file(
     content: str, 
     output_pdf_path: str = "output.pdf", 
     font_name: str = "Times-Roman", 
-    font_file: Optional[str] = "fonts/times.ttf"
+    font_file: Optional[str] = "fonts/times.ttf",
+    isDraft: bool = False
 ) -> str:
     """Creates a PDF file with formatted text, images, and properly styled tables, ensuring temp files are cleaned up."""
     doc = SimpleDocTemplate(output_pdf_path, pagesize=A4)
@@ -216,7 +233,11 @@ def create_pdf_file(
 
                 story.append(KeepTogether(elements))
             story.append(Spacer(1, 12))
-        doc.build(story)
+        if isDraft:
+            doc.build(story, onFirstPage=add_watermark, onLaterPages=add_watermark)
+        else:
+            doc.build(story)
+
         return output_pdf_path
 
     finally:
