@@ -100,6 +100,18 @@ def save_base64_image(photo_data: str, user_id: str, is_signature: bool = False)
 
     return photo_path
 
+from langchain_core.prompts.prompt import PromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            " You are a helpful assistant to Generate a rental agreement from the provided details. Output only the agreement text",
+        ),
+        ("user", "{input}"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ]
+)
 
 # Initialize agent
 agent = initialize_agent(
@@ -107,13 +119,14 @@ agent = initialize_agent(
     llm=llm,
     agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
     verbose=True,
-    memory=memory,
-    max_iterations=1,
+    memory=None,
+    max_iterations=3,
     early_stopping_method="generate",
     agent_kwargs={
         "prefix": PREFIX,
         "format_instructions": FORMAT_INSTRUCTIONS,
         "suffix": SUFFIX,
+        "prompt": prompt,
     },
 )
 

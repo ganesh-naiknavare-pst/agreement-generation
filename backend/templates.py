@@ -253,7 +253,6 @@ DEPOSIT: Rs. {security_deposit}
 REGISTERED DATE: {registration_date}
 PROPERTY DETAILS: Address: {property_address}, City: {city}, bhk type {bhk_type}, Area: {area} sq. ft., furnishing_type: {furnishing_type}
 
-IMPORTANT: The agreement MUST begin with a proper INTRODUCTION section that includes ALL the above mandatory data fields in agreements. This section must clearly state all owner details, tenant details, rental terms, deposit amount, registration date, and complete property details.
 
 REQUIRED SECTIONS - MUST INCLUDE 2-4 DETAILED POINTS FOR EACH,  MINIMUM 3O to 50 WORDS PER SENTANCE:
 TERMS AND CONDITIONS:
@@ -295,5 +294,4 @@ CRITICAL:
 - STRICTLY number tenants as TENANT 1, TENANT 2, etc. - NO variations permitted
 - FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE must be COMPLETELY SEPARATE SECTIONS - DO NOT merge them together or place the table within section 
 - PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present and for tenants must be replace with real time data for name and address.
-
 """
