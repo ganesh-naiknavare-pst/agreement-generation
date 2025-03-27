@@ -44,7 +44,7 @@ function WebcamComponent({
   const [rederWebCamm, setRederWebCamm] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [buttonLoading, setButtonLoading] = useState<boolean>(false);
-  const params = useParams()
+  const params = useParams();
 
   const { fetchData: validateCapturedImage, data: validationResponce } =
     useApi<ValidationData>(BackendEndpoints.ValidateImage);
@@ -59,7 +59,7 @@ function WebcamComponent({
       setButtonLoading(false);
     }
   }, [validationResponce]);
-  console.log("Prams", params)
+
   const capture = useCallback(async () => {
     setError("");
     if (webcamRef.current) {
