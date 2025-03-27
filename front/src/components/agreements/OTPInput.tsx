@@ -1,4 +1,4 @@
-import { TextInput, Button, Box, Text, Loader } from "@mantine/core";
+import { TextInput, Button, Text, Loader, Flex } from "@mantine/core";
 import { OTPTimer } from "./OTPTimer";
 import { OTPInputProps } from "../../types/otp";
 import { COLORS } from "../../colors";
@@ -13,7 +13,7 @@ export function OTPInput({
   loading = false,
 }: OTPInputProps & { loading?: boolean }) {
   return (
-    <Box mt="xs" mb="xs">
+    <Flex mt="xs" mb="xs" direction="column">
       {!otpState.isVerified && (
         <>
           {!otpState.isSent && !otpState.showResendButton ? (
@@ -75,6 +75,6 @@ export function OTPInput({
           )}
         </>
       )}
-    </Box>
+    </Flex>
   );
 }

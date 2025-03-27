@@ -1,5 +1,12 @@
-import { Button, Card, TextInput } from "@mantine/core";
-import { useState } from "react";
+import { Card, Group, SimpleGrid, TextInput, Text } from "@mantine/core";
+import {
+  IconBuildingCommunity,
+  IconBuildingStore,
+  IconMapSearch,
+  IconLocation,
+  IconMapPin,
+} from "@tabler/icons-react";
+import { COLORS } from "../colors";
 
 interface AddressDetails {
   flatFloor: string;
@@ -12,131 +19,74 @@ interface AddressDetails {
 interface AddressFormProps {
   addressDetails: AddressDetails;
   onChange: (field: string, value: string) => void;
-  onConfirm: () => void;
   formPrefix: string;
+  errors?: Record<string, string>;
 }
 
-export const AddressForm = ({ addressDetails, onChange, onConfirm, formPrefix }: AddressFormProps) => {
-  const [errors, setErrors] = useState<AddressDetails>({
-    flatFloor: '',
-    buildingName: '',
-    area: '',
-    city: '',
-    pincode: ''
-  });
-
-  const validateField = (field: string, value: string): string => {
-    let error = '';
-    switch (field) {
-      case 'flatFloor':
-        if (!/^[\d\s/,]+$/.test(value)) {
-          error = "Flat No. & Floor should contain digits only";
-        }
-        break;
-      case 'buildingName':
-        if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
-          error = 'Building Name should contain characters and numbers only';
-        }
-        break;
-      case 'area':
-        if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
-          error = 'Area should contain characters and numbers only';
-        }
-        break;
-      case 'city':
-        if (!/^[a-zA-Z\s]+$/.test(value)) {
-          error = 'City should contain characters only';
-        }
-        break;
-      case 'pincode':
-        if (!/^\d+$/.test(value)) {
-          error = 'Pincode should contain digits only';
-        } else if (value.length !== 6) {
-          error = 'Pincode should contain exactly 6 digits';
-        }
-        break;
-      default:
-        break;
-    }
-    return error;
-  };
-
-  const handleChange = (field: string, value: string) => {
-    onChange(field, value);
-  };
-
-  const handleConfirm = () => {
-    const newErrors: AddressDetails = {
-      flatFloor: validateField('flatFloor', addressDetails.flatFloor),
-      buildingName: validateField('buildingName', addressDetails.buildingName),
-      area: validateField('area', addressDetails.area),
-      city: validateField('city', addressDetails.city),
-      pincode: validateField('pincode', addressDetails.pincode),
-    };
-    setErrors(newErrors);
-    const isValid = Object.values(newErrors).every((error) => error === '');
-    if (isValid) {
-      onConfirm();
-    }
-  };
+export const AddressForm = ({
+  addressDetails,
+  onChange,
+  formPrefix,
+  errors = {},
+}: AddressFormProps) => {
+  const addressFields = [
+    {
+      key: "flatFloor",
+      label: "Flat No. & Floor",
+      icon: IconBuildingCommunity,
+      placeholder: "Eg: 101, 1st Floor",
+    },
+    {
+      key: "buildingName",
+      label: "Building Name",
+      icon: IconBuildingStore,
+      placeholder: "Eg: ABC Apartment",
+    },
+    {
+      key: "area",
+      label: "Area",
+      icon: IconMapSearch,
+      placeholder: "Eg: HSR Layout",
+    },
+    {
+      key: "city",
+      label: "City",
+      icon: IconLocation,
+      placeholder: "Eg: Bangalore",
+    },
+    {
+      key: "pincode",
+      label: "Pincode",
+      icon: IconMapPin,
+      placeholder: "Eg: 560102",
+    },
+  ];
 
   return (
-    <>
-    <Card shadow="sm" padding="lg" mt={10} withBorder style={{ backgroundColor: "#ebf2fc" }}>
-      <TextInput
-        label="Flat No. & Floor"
-        value={addressDetails.flatFloor || ''}
-        onChange={(e) => handleChange(`${formPrefix}.flatFloor`, e.currentTarget.value)}
-        mt="sm"
-        withAsterisk
-        error={errors.flatFloor}
-      />
-      <TextInput
-        label="Building Name"
-        value={addressDetails.buildingName || ''}
-        onChange={(e) => handleChange(`${formPrefix}.buildingName`, e.currentTarget.value)}
-        mt="sm"
-        withAsterisk
-        error={errors.buildingName}
-      />
-      <TextInput
-        label="Area"
-        value={addressDetails.area || ''}
-        onChange={(e) => handleChange(`${formPrefix}.area`, e.currentTarget.value)}
-        mt="sm"
-        withAsterisk
-        error={errors.area}
-      />
-      <TextInput
-        label="City"
-        value={addressDetails.city || ''}
-        onChange={(e) => handleChange(`${formPrefix}.city`, e.currentTarget.value)}
-        mt="sm"
-        withAsterisk
-        error={errors.city}
-      />
-      <TextInput
-        label="Pincode"
-        value={addressDetails.pincode || ''}
-        onChange={(e) => handleChange(`${formPrefix}.pincode`, e.currentTarget.value)}
-        mt="sm"
-        withAsterisk
-        error={errors.pincode}
-      />
-      <Button
-        mt="sm"
-        onClick={handleConfirm}
-        disabled={
-          !addressDetails.flatFloor ||
-          !addressDetails.buildingName ||
-          !addressDetails.area ||
-          !addressDetails.city ||
-          !addressDetails.pincode
-        }
-      >
-        Confirm Address
-      </Button>
+    <Card padding="lg" withBorder radius="md" shadow="sm">
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+        {addressFields.map(({ key, label, icon: Icon, placeholder }) => (
+          <TextInput
+            key={key}
+            label={
+              <Group gap={1} align="center">
+                <Icon size={16} stroke={1.5} />
+                <Text size="sm">
+                  {label}
+                  <Text component="span" c={COLORS.asteric}>
+                    {" "}
+                    *{" "}
+                  </Text>
+                </Text>
+              </Group>
+            }
+            value={addressDetails[key as keyof typeof addressDetails] || ""}
+            placeholder={placeholder}
+            onChange={(e) => onChange(key, e.currentTarget.value)}
+            error={errors[`${formPrefix}.${key}`]}
+          />
+        ))}
+      </SimpleGrid>
     </Card>
-    </>
   );
 };

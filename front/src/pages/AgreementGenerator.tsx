@@ -21,7 +21,6 @@ import {
   MultiSelect,
   Select,
   Stack,
-  Accordion,
 } from "@mantine/core";
 import { IconCheck, IconTrash } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
@@ -30,6 +29,7 @@ import { COLORS } from "../colors";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 import { useAgreements } from "../hooks/useAgreements";
 import { OTPInput } from "../components/agreements/OTPInput";
+import { useUser } from "@clerk/clerk-react";
 import {
   OTPVerificationResponse,
   OtpState,
@@ -42,6 +42,7 @@ import { AddressForm } from "./AddressForm";
 import { FurnitureTable } from "../components/agreements/FurnitureTable";
 
 export function AgreementGenerator() {
+  const { user } = useUser();
   const [active, setActive] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
@@ -68,7 +69,6 @@ export function AgreementGenerator() {
     tenants: {} as Record<number, { send: boolean; verify: boolean }>,
   });
   const ownerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const [opened, setOpened] = useState<string[]>([]);
 
   const startOwnerCountdown = () => {
     if (ownerOtpState.isCountdownActive) return;
@@ -406,6 +406,12 @@ export function AgreementGenerator() {
       const emailRegex =
         /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/;
 
+      const validateAddressFields = (addressDetails: any, prefix: string) => {
+        Object.entries(addressDetails).forEach(([field, value]) => {
+          const error = validateField(field, value as string);
+          if (error) errors[`${prefix}.${field}`] = error;
+        });
+      };
       if (active === 0) {
         if (!fullNameRegex.test(values.ownerFullName.trim())) {
           errors.ownerFullName =
@@ -414,9 +420,10 @@ export function AgreementGenerator() {
         if (!emailRegex.test(values.ownerEmailAddress)) {
           errors.ownerEmailAddress = "Please enter a valid email address";
         }
-        if (!values.ownerAddress.trim()) {
-          errors.ownerAddress = "Address is required.";
-        }
+        validateAddressFields(
+          values.ownerAddressDetails,
+          "ownerAddressDetails"
+        );
       }
       if (active === 1) {
         if (values.tenantNumber < 1) {
@@ -433,12 +440,12 @@ export function AgreementGenerator() {
             errors[`tenants.${index}.email`] =
               "Please enter a valid email address";
           }
-          if (!tenant.address.trim()) {
-            errors[`tenants.${index}.address`] = "Address is required.";
-          }
+          validateAddressFields(
+            tenant.addressDetails,
+            `tenants.${index}.addressDetails`
+          );
         });
       }
-
       if (active === 4) {
         if (values.address.trim().length < 10) {
           errors.address = "Address must be at least 10 characters";
@@ -508,18 +515,57 @@ export function AgreementGenerator() {
     form.setFieldValue("tenantNumber", value);
   };
 
+  const validateField = (field: string, value: string): string => {
+    let error = "";
+    switch (field) {
+      case "flatFloor":
+        if (!/^[\w\s/,.-]+$/.test(value)) {
+            error = "Flat No. & Floor should contain valid characters only";
+        }    
+        break;
+      case "buildingName":
+        if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
+          error = "Building Name should contain characters and numbers only";
+        }
+        break;
+      case "area":
+        if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
+          error = "Area should contain characters and numbers only";
+        }
+        break;
+      case "city":
+        if (!/^[a-zA-Z\s]+$/.test(value)) {
+          error = "City should contain characters only";
+        }
+        break;
+      case "pincode":
+        if (!/^\d+$/.test(value)) {
+          error = "Pincode should contain digits only";
+        } else if (value.length !== 6) {
+          error = "Pincode should contain exactly 6 digits";
+        }
+        break;
+      default:
+        break;
+    }
+    return error;
+  };
+
   const nextStep = () => {
     const { hasErrors } = form.validate();
 
     if (hasErrors) return;
 
     // Restrict progress on Step 1 if owner OTP is not verified
-    if (active === 0 && !ownerOtpState.isVerified) {
-      setOwnerOtpState((prev) => ({
-        ...prev,
-        error: "Please verify your OTP before proceeding.",
-      }));
-      return;
+    if (active === 0) {
+      if (!ownerOtpState.isVerified) {
+        setOwnerOtpState((prev) => ({
+          ...prev,
+          error: "Please verify your OTP before proceeding.",
+        }));
+        return;
+      }
+      handleConfirmOwnerAddress();
     }
 
     // Restrict progress on Step 3 if any tenant OTP is not verified
@@ -531,8 +577,10 @@ export function AgreementGenerator() {
         alert("All tenants must verify their OTP before proceeding.");
         return;
       }
+      form.values.tenants.forEach((_, index) =>
+        handleConfirmTenantAddress(index)
+      );
     }
-
     setActive((current) => (current < 5 ? current + 1 : current));
   };
 
@@ -548,7 +596,7 @@ export function AgreementGenerator() {
     setTimeout(() => {
       setIsSubmitting(false);
       setShowMessage(true);
-      fetchAgreements({ method: "GET" });
+      fetchAgreements({ method: "GET", params: { user_id: user?.id } });
     }, 2000);
 
     const transformedFurnitureList = furnitureList.map((item, index) => ({
@@ -579,13 +627,14 @@ export function AgreementGenerator() {
       registration_date: form.values.registrationDate.toISOString(),
       furniture_and_appliances: transformedFurnitureList,
       amenities: form.values.amenities,
+      user_id: user?.id,
     };
     try {
       await fetchData({
         method: "POST",
         data: requestData,
       });
-      await fetchAgreements({ method: "GET" });
+      await fetchAgreements({ method: "GET", params: { user_id: user?.id } });
     } catch (error) {
       console.error("Error creating agreement:", error);
     }
@@ -594,16 +643,12 @@ export function AgreementGenerator() {
   const handleConfirmOwnerAddress = () => {
     const fullAddress = `${form.values.ownerAddressDetails.flatFloor}, ${form.values.ownerAddressDetails.buildingName}, ${form.values.ownerAddressDetails.area}, ${form.values.ownerAddressDetails.city} - ${form.values.ownerAddressDetails.pincode}`;
     form.setFieldValue("ownerAddress", fullAddress);
-    setOpened([]);
   };
 
   const handleConfirmTenantAddress = (index: number) => {
     const tenantDetails = form.values.tenants[index].addressDetails;
     const fullAddress = `${tenantDetails.flatFloor}, ${tenantDetails.buildingName}, ${tenantDetails.area}, ${tenantDetails.city} - ${tenantDetails.pincode}`;
     form.setFieldValue(`tenants.${index}.address`, fullAddress);
-    setOpened((prev) =>
-      prev.filter((item) => item !== `tenantAddress-${index}`)
-    );
   };
 
   return (
@@ -663,55 +708,29 @@ export function AgreementGenerator() {
               disabledSendOtp={
                 !form.values.ownerEmailAddress ||
                 !/^\S+@\S+\.\S+$/.test(form.values.ownerEmailAddress) ||
-                (ownerOtpState.isSent && ownerOtpState.isCountdownActive) || // Disable if OTP is active
+                (ownerOtpState.isSent && ownerOtpState.isCountdownActive) ||
                 ownerOtpState.isVerified
               }
               loading={loadingStates.sendOwner || loadingStates.verifyOwner}
             />
-            <div>
+            <Box>
               <Text size="sm" fw={500} style={{ marginBottom: 4 }}>
                 Address <span style={{ color: "red" }}>*</span>
               </Text>
 
-              <Accordion
-                value={opened}
-                onChange={setOpened}
-                multiple
-                variant="contained"
-              >
-                <Accordion.Item value="ownerAddress">
-                  <Accordion.Control
-                    style={{
-                      borderColor: "#ced4da",
-                      borderRadius: "4px",
-                      width: "100%",
-                      cursor: "pointer",
-                      textAlign: "start",
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: form.values.ownerAddress ? "inherit" : "#b6bcd0",
-                      }}
-                    >
-                      {form.values.ownerAddress ||
-                        "Click to enter detailed address"}
-                    </span>
-                  </Accordion.Control>
-
-                  <Accordion.Panel>
-                    <AddressForm
-                      addressDetails={form.values.ownerAddressDetails}
-                      onChange={(field, value) =>
-                        form.setFieldValue(field, value)
-                      }
-                      onConfirm={handleConfirmOwnerAddress}
-                      formPrefix="ownerAddressDetails"
-                    />
-                  </Accordion.Panel>
-                </Accordion.Item>
-              </Accordion>
-            </div>
+              <AddressForm
+                addressDetails={form.values.ownerAddressDetails}
+                onChange={(field, value) => {
+                  form.setFieldValue(`ownerAddressDetails.${field}`, value);
+                }}
+                formPrefix="ownerAddressDetails"
+                errors={Object.fromEntries(
+                  Object.entries(form.errors)
+                    .filter(([key]) => key.startsWith("ownerAddressDetails"))
+                    .map(([key, value]) => [key, String(value)])
+                )}
+              />
+            </Box>
           </Stepper.Step>
 
           <Stepper.Step label="Step 2" description="No. of Tenants">
@@ -797,57 +816,29 @@ export function AgreementGenerator() {
                     loadingStates.tenants[index]?.verify
                   }
                 />
-                <div>
+                <Box>
                   <Text size="sm" fw={500} style={{ marginBottom: 4 }}>
                     Address <span style={{ color: "red" }}>*</span>
                   </Text>
 
-                  <Accordion
-                    value={opened}
-                    onChange={setOpened}
-                    multiple
-                    variant="contained"
-                  >
-                    <Accordion.Item value={`tenantAddress-${index}`}>
-                      <Accordion.Control
-                        style={{
-                          borderColor: "#ced4da",
-                          borderRadius: "4px",
-                          width: "100%",
-                          cursor: "pointer",
-                          textAlign: "start",
-                        }}
-                      >
-                        <span
-                          style={{
-                            color: form.values.tenants[index].address
-                              ? "inherit"
-                              : "#b6bcd0",
-                          }}
-                        >
-                          {form.values.tenants[index].address ||
-                            "Click to enter detailed address"}
-                        </span>
-                      </Accordion.Control>
-
-                      <Accordion.Panel>
-                        <AddressForm
-                          addressDetails={
-                            form.values.tenants[index].addressDetails
-                          }
-                          onChange={(field, value) => {
-                            form.setFieldValue(
-                              `tenants.${index}.${field}`,
-                              value
-                            );
-                          }}
-                          onConfirm={() => handleConfirmTenantAddress(index)}
-                          formPrefix="addressDetails"
-                        />
-                      </Accordion.Panel>
-                    </Accordion.Item>
-                  </Accordion>
-                </div>
+                  <AddressForm
+                    addressDetails={form.values.tenants[index].addressDetails}
+                    onChange={(field, value) => {
+                      form.setFieldValue(
+                        `tenants.${index}.addressDetails.${field}`,
+                        value
+                      );
+                    }}
+                    formPrefix={`tenants.${index}.addressDetails`}
+                    errors={Object.fromEntries(
+                      Object.entries(form.errors)
+                        .filter(([key]) =>
+                          key.startsWith(`tenants.${index}.addressDetails`)
+                        )
+                        .map(([key, value]) => [key, String(value)])
+                    )}
+                  />
+                </Box>
               </Box>
             ))}
           </Stepper.Step>
@@ -907,7 +898,7 @@ export function AgreementGenerator() {
                 <Box>
                   <Group gap={30}>
                     <TextInput
-                      label="furniture and appliances"
+                      label="Furniture and Appliances"
                       placeholder="Enter furniture name"
                       key={form.key("furnitureName")}
                       style={{ textAlign: "start", flex: 1, minWidth: 200 }}
