@@ -224,7 +224,7 @@ async def template_based_agreement(
                         True,
                     )
                     # Stores final agreement pdf in db
-                    await store_final_pdf(db, agreement_id, current_state.pdf_file_path)
+                    await store_final_pdf(db, agreement_id, current_state.pdf_file_path, True)
                     delete_temp_file(current_state)
                     delete_template_temp_images(current_state)
                     delete_template_file(current_state)
