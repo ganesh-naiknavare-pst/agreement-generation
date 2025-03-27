@@ -29,7 +29,8 @@ async def create_agreement(
             "city": agreement.city,
             "rentAmount": agreement.rent_amount,
             "agreementPeriod": agreement.agreement_period,
-            "status": AgreementStatus.PROCESSING
+            "status": AgreementStatus.PROCESSING,
+            "clerkUserIds": [agreement.user_id],
         }
     )
 
@@ -60,6 +61,7 @@ async def create_template_based_agreement(
     authority_email: str = Form(...),
     participant_email: str = Form(...),
     file: UploadFile = File(...),
+    user_id: str = Form(...),
     db: Prisma = Depends(get_db),
 ):
     req = TemplateAgreementRequest(
@@ -68,9 +70,7 @@ async def create_template_based_agreement(
         participant_email=participant_email,
     )
     agreements = await db.templateagreement.create(
-        data={
-            "status": AgreementStatus.PROCESSING,
-        }
+        data={"status": AgreementStatus.PROCESSING, "clerkUserIds": [user_id]}
     )
 
     await db.authority.create(
@@ -90,12 +90,13 @@ async def create_template_based_agreement(
 
 @router.get("/agreements")
 @requires_auth
-async def get_agreements(request: Request, db: Prisma = Depends(get_db)):
+async def get_agreements(user_id: str, request: Request, db: Prisma = Depends(get_db)):
     agreements = await db.agreement.find_many(
         include={
             "owner": True,
             "tenants": True,
         },
+        where={"clerkUserIds": {"has": user_id}},
         order={"createdAt": "desc"},
     )
     return agreements
@@ -103,12 +104,13 @@ async def get_agreements(request: Request, db: Prisma = Depends(get_db)):
 
 @router.get("/template-agreements")
 @requires_auth
-async def get_agreements(request: Request, db: Prisma = Depends(get_db)):
+async def get_agreements(user_id: str, request: Request, db: Prisma = Depends(get_db)):
     agreements = await db.templateagreement.find_many(
         include={
             "authority": True,
             "participant": True,
         },
+        where={"clerkUserIds": {"has": user_id}},
         order={"createdAt": "desc"},
     )
     return agreements

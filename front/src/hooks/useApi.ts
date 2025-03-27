@@ -15,6 +15,7 @@ export enum BackendEndpoints {
   GetRentAgreementUser = "rent-agreement-user",
   GetTemplateAgreementUSer = "template-agreement-user",
   ContactUs = "contact-us",
+  UpdateClerkUserIds = "update-user-ids",
 }
 
 interface ApiResponse<T> {

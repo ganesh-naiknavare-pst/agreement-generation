@@ -20,6 +20,7 @@ model Agreement {
   agreementPeriod  DateTime[]
   owner            Owner[]
   tenants          Tenant[]
+  clerkUserIds     String[]
 }
 
 model Owner {
@@ -63,6 +64,7 @@ model TemplateAgreement {
   pdf           Bytes?
   authority     Authority[]
   participant   Participant[]
+  clerkUserIds  String[]
 }
 
 model Authority {
