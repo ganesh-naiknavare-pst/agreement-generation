@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 class State(TypedDict):
     messages: Annotated[list, add_messages]
     agreement_id: int
+
+
 @dataclass
 class AgreementState:
     owner_id: str = field(default_factory=lambda: str(uuid.uuid4()))

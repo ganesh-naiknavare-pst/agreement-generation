@@ -185,7 +185,7 @@ def generate_email_template(
     if is_rejection:
         message = f"The agreement has been rejected by {rejected_by}."
         return REJECTION_NOTIFICATION_TEMPLATE.format(message=message)
-    elif (current_state.is_fully_approved()):
+    elif current_state.is_fully_approved():
         message = (
             "The agreement has been approved"
             if is_template

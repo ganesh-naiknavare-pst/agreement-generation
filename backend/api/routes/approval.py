@@ -6,7 +6,10 @@ from api.routes.websocket import notify_clients
 from helpers.email_helper import send_rejection_email
 from helpers.state_manager import state_manager
 from services.doc_agent import delete_temp_file, delete_temp_images
-from services.template_doc_agent import delete_template_file, delete_template_temp_images
+from services.template_doc_agent import (
+    delete_template_file,
+    delete_template_temp_images,
+)
 from services.image_sign_upload import (
     Data,
     image_and_sign_upload,
@@ -82,7 +85,9 @@ async def reject_user(data: Data, request: Request, db: Prisma = Depends(get_db)
     rejected_by_name = None
     rejected_by_role = None
 
-    current_state = state_manager.get_agreement_state(data.agreement_id) or state_manager.get_template_agreement_state(data.agreement_id)
+    current_state = state_manager.get_agreement_state(
+        data.agreement_id
+    ) or state_manager.get_template_agreement_state(data.agreement_id)
 
     if data.user == current_state.owner_id:
         rejected_by_name = current_state.owner_name
@@ -106,7 +111,11 @@ async def reject_user(data: Data, request: Request, db: Prisma = Depends(get_db)
         delete_temp_file(current_state)
         delete_temp_images(current_state)
     elif rejected_by_name:
-        send_rejection_email(agreement_id=data.agreement_id, rejected_by_name=rejected_by_name, is_template=True)
+        send_rejection_email(
+            agreement_id=data.agreement_id,
+            rejected_by_name=rejected_by_name,
+            is_template=True,
+        )
         delete_temp_file(current_state)
         delete_template_file(current_state)
         delete_template_temp_images(current_state)

@@ -7,14 +7,18 @@ from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from helpers.state_manager import State, state_manager
 from helpers.agreement_generator_helper import extract_text_from_pdf
-from prompts import SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER, USER_PROMPT_FOR_SIGNATURE_PLACEHOLDER, SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION
+from prompts import (
+    SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER,
+    USER_PROMPT_FOR_SIGNATURE_PLACEHOLDER,
+    SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION,
+)
 import os
 
 os.environ["OPENAI_API_KEY"] = "XXX"
 
 memory = ConversationBufferMemory(memory_key="chat_history")
 llm = ChatOpenAI(
-    model= Model.GPT_MODEL.value,
+    model=Model.GPT_MODEL.value,
     temperature=0,
     max_tokens=None,
     timeout=None,
@@ -23,11 +27,14 @@ llm = ChatOpenAI(
     base_url=CHAT_OPENAI_BASE_URL,
 )
 
+
 def add_signature(agreement_text: str):
     messages = [
         {
             "role": "system",
-            "content": SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER.format(agreement_text=agreement_text),
+            "content": SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER.format(
+                agreement_text=agreement_text
+            ),
         },
         {
             "role": "user",
@@ -36,6 +43,7 @@ def add_signature(agreement_text: str):
     ]
 
     return llm.invoke(messages)
+
 
 def generate_agreement(state: State):
     agreement_id = state["agreement_id"]
@@ -53,7 +61,9 @@ def generate_agreement(state: State):
     for chunk in template_chunks:
         system_msg = {
             "role": "system",
-            "content": SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION.format(template_text=chunk),
+            "content": SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION.format(
+                template_text=chunk
+            ),
         }
         messages = [system_msg] + state["messages"]
         response = llm.invoke(messages)
@@ -63,6 +73,7 @@ def generate_agreement(state: State):
     current_state.agreement_text = response_sign.content
 
     return {"messages": response_sign}
+
 
 def create_pdf(state: State):
     if isinstance(state, dict):
@@ -74,7 +85,7 @@ def create_pdf(state: State):
     else:
         content = state.agreement_text
 
-    content = content.encode('ascii', 'ignore').decode()
+    content = content.encode("ascii", "ignore").decode()
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
@@ -85,6 +96,7 @@ def create_pdf(state: State):
     )
     state.pdf_file_path = temp_pdf_path
     return {"messages": content}
+
 
 def update_pdf_with_signatures(agreement_id: str):
     """Updates the existing agreement PDF by replacing placeholders with actual signatures."""
@@ -98,7 +110,8 @@ def update_pdf_with_signatures(agreement_id: str):
                 current_state.authority_signature, 60, 30
             )
             content = content.replace(
-                "[AUTHORITY_SIGNATURE]", f" ![AUTHORITY_SIGNATURE]({authority_signature_data})"
+                "[AUTHORITY_SIGNATURE]",
+                f" ![AUTHORITY_SIGNATURE]({authority_signature_data})",
             )
         else:
             content = content.replace(
@@ -111,7 +124,8 @@ def update_pdf_with_signatures(agreement_id: str):
                 current_state.participant_signature, 60, 30
             )
             content = content.replace(
-                "[PARTICIPANT_SIGNATURE]", f" ![PARTICIPANT_SIGNATURE]({participant_signature_data})"
+                "[PARTICIPANT_SIGNATURE]",
+                f" ![PARTICIPANT_SIGNATURE]({participant_signature_data})",
             )
         else:
             content = content.replace(
@@ -121,6 +135,7 @@ def update_pdf_with_signatures(agreement_id: str):
     # Convert updated content to PDF
     temp_pdf_path = current_state.pdf_file_path
     pypandoc.convert_text(content, "pdf", format="md", outputfile=temp_pdf_path)
+
 
 # Build graph
 graph_builder = StateGraph(State)

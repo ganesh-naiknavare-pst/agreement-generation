@@ -27,7 +27,10 @@ class ApprovalResult(Enum):
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
-async def listen_for_approval(timeout_seconds: int = 300, is_template: bool = False, agreement_id: str = None) -> ApprovalResult:
+
+async def listen_for_approval(
+    timeout_seconds: int = 300, is_template: bool = False, agreement_id: str = None
+) -> ApprovalResult:
     """
     Listen for approval messages with a timeout.
     Args:
@@ -51,28 +54,46 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool = Fa
 
                     user_id = data.get("user_id")
                     if is_template:
-                        current_template_state = state_manager.get_template_agreement_state(agreement_id)
+                        current_template_state = (
+                            state_manager.get_template_agreement_state(agreement_id)
+                        )
                         if user_id == current_template_state.participant_id:
-                            current_template_state.participant_approved = data.get("approved", False)
+                            current_template_state.participant_approved = data.get(
+                                "approved", False
+                            )
                             if current_template_state.participant_approved:
-                                participant_signature_path = current_template_state.participant_signature
+                                participant_signature_path = (
+                                    current_template_state.participant_signature
+                                )
                                 if os.path.isfile(participant_signature_path):
-                                    current_template_state.participant_signature = participant_signature_path
+                                    current_template_state.participant_signature = (
+                                        participant_signature_path
+                                    )
                                 else:
-                                    current_template_state.participant_signature = (f"APPROVED BY PARTICIPANT - {datetime.now()}")
+                                    current_template_state.participant_signature = (
+                                        f"APPROVED BY PARTICIPANT - {datetime.now()}"
+                                    )
                                 print("Participant has approved!")
                             else:
                                 print("Participant has rejected!")
                                 return ApprovalResult.REJECTED
 
                         elif user_id == current_template_state.authority_id:
-                            current_template_state.authority_approved = data.get("approved", False)
+                            current_template_state.authority_approved = data.get(
+                                "approved", False
+                            )
                             if current_template_state.authority_approved:
-                                authority_signature_path = current_template_state.authority_signature
+                                authority_signature_path = (
+                                    current_template_state.authority_signature
+                                )
                                 if os.path.isfile(authority_signature_path):
-                                    current_template_state.authority_signature = authority_signature_path
+                                    current_template_state.authority_signature = (
+                                        authority_signature_path
+                                    )
                                 else:
-                                    current_template_state.authority_signature = (f"APPROVED BY AUTHORITY - {datetime.now()}")
+                                    current_template_state.authority_signature = (
+                                        f"APPROVED BY AUTHORITY - {datetime.now()}"
+                                    )
                                 print("Authority has approved!")
                             else:
                                 print("Authority has rejected!")
@@ -86,7 +107,9 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool = Fa
                                 logging.info(
                                     f"Tenant {tenant_name} ({user_id}) has approved the agreement."
                                 )
-                                tenant_signature_path = current_state.tenant_signatures[user_id]
+                                tenant_signature_path = current_state.tenant_signatures[
+                                    user_id
+                                ]
                                 if os.path.isfile(tenant_signature_path):
                                     current_state.tenant_signatures[user_id] = (
                                         tenant_signature_path
@@ -135,11 +158,15 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool = Fa
                     # Check if both parties have responded
                     if is_template:
                         if current_template_state.is_fully_approved():
-                            logging.info("Agreement successfully approved by Authority and Participant.")
+                            logging.info(
+                                "Agreement successfully approved by Authority and Participant."
+                            )
                             return ApprovalResult.APPROVED
                     else:
                         if current_state.is_fully_approved():
-                            logging.info("Agreement successfully approved by Owner and Tenants.")
+                            logging.info(
+                                "Agreement successfully approved by Owner and Tenants."
+                            )
                             return ApprovalResult.APPROVED
 
                 except asyncio.TimeoutError:
@@ -157,4 +184,3 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool = Fa
     except Exception as e:
         logging.error(f"Unexpected error: {str(e)}")
         return ApprovalResult.CONNECTION_CLOSED
-

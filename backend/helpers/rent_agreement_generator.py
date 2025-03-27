@@ -58,7 +58,9 @@ def resize_image(image_path, max_width, max_height):
             original_format = "jpeg" if img.format == "JPEG" else "png"
             file_extension = ".jpg" if original_format == "jpeg" else ".png"
 
-            temp_image = tempfile.NamedTemporaryFile(delete=False, suffix=file_extension)
+            temp_image = tempfile.NamedTemporaryFile(
+                delete=False, suffix=file_extension
+            )
             temp_image_path = temp_image.name
             img.save(temp_image_path, format=img.format)
             temp_image.close()
@@ -84,16 +86,12 @@ def create_pdf(state: State):
     if state.is_fully_approved():
         # Replace owner signature with image
         if os.path.isfile(state.owner_signature):
-            owner_signature_data, _ = resize_image(
-                state.owner_signature, 60, 30
-            )
+            owner_signature_data, _ = resize_image(state.owner_signature, 60, 30)
             content = content.replace(
                 "[OWNER SIGNATURE]", f" ![Owner Signature]({owner_signature_data})"
             )
         else:
-            content = content.replace(
-                "[OWNER SIGNATURE]", state.owner_signature
-            )
+            content = content.replace("[OWNER SIGNATURE]", state.owner_signature)
 
         # Replace owner photos with image
         if os.path.isfile(state.owner_photo):
@@ -105,9 +103,7 @@ def create_pdf(state: State):
             content = content.replace("[OWNER PHOTO]", state.owner_photo)
 
         # Replace tenant signatures with numbered placeholders and images
-        for i, (tenant_id, signature) in enumerate(
-            state.tenant_signatures.items(), 1
-        ):
+        for i, (tenant_id, signature) in enumerate(state.tenant_signatures.items(), 1):
             placeholder = f"[TENANT {i} SIGNATURE]"
             tenant_name = state.tenant_names.get(tenant_id, f"Tenant {i}")
 
@@ -120,9 +116,7 @@ def create_pdf(state: State):
                 content = content.replace(placeholder, signature)
 
         # Replace tenant photos with numbered placeholders and images
-        for i, (tenant_id, photo) in enumerate(
-            state.tenant_photos.items(), 1
-        ):
+        for i, (tenant_id, photo) in enumerate(state.tenant_photos.items(), 1):
             placeholder = f"[TENANT {i} PHOTO]"
             tenant_name = state.tenant_names.get(tenant_id, f"Tenant {i}")
             if os.path.isfile(photo):

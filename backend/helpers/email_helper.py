@@ -7,7 +7,10 @@ from templates import generate_email_template
 
 
 def send_rejection_email(
-    agreement_id: str, rejected_by_name: str, rejected_by_role: str = None, is_template: bool = False
+    agreement_id: str,
+    rejected_by_name: str,
+    rejected_by_role: str = None,
+    is_template: bool = False,
 ):
     """Send rejection notification emails to all parties involved in the agreement."""
     # Get all email addresses
@@ -15,10 +18,7 @@ def send_rejection_email(
 
     if is_template:
         current_state = state_manager.get_template_agreement_state(agreement_id)
-        if (
-            hasattr(current_state, "authority_email")
-            and current_state.authority_email
-        ):
+        if hasattr(current_state, "authority_email") and current_state.authority_email:
             emails_to_notify.append(
                 (
                     current_state.authority_email,
@@ -53,9 +53,7 @@ def send_rejection_email(
     success_list = []
     failed_list = {}
     agreement_id = (
-        current_state.agreement_id
-        if is_template
-        else current_state.agreement_id
+        current_state.agreement_id if is_template else current_state.agreement_id
     )
 
     for email, role, user_id in emails_to_notify:
@@ -120,9 +118,7 @@ def send_email_with_attachment(
         if role == "owner" or user_id is None:
             user_id = current_state.owner_id
     agreement_id = (
-        current_state.agreement_id
-        if is_template
-        else current_state.agreement_id
+        current_state.agreement_id if is_template else current_state.agreement_id
     )
     email_body = generate_email_template(role, user_id, agreement_id, is_template)
 

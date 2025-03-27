@@ -8,6 +8,7 @@ from helpers.image_validation import are_faces_different, validate_uploaded_imag
 
 router = APIRouter()
 
+
 @router.post("/validate-image")
 @requires_auth
 async def validate_image(request: Request):
@@ -25,7 +26,10 @@ async def validate_image(request: Request):
         file_ext = "png"
         image_url = image_url.replace("data:image/png;base64,", "")
     else:
-        raise HTTPException(status_code=400, detail="Invalid image format. Only JPEG and PNG are supported.")
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid image format. Only JPEG and PNG are supported.",
+        )
 
     save_dir = "./utils"
     os.makedirs(save_dir, exist_ok=True)
@@ -44,8 +48,9 @@ async def validate_image(request: Request):
     if current_state.owner_photo:
         image_paths.append(current_state.owner_photo)
     if current_state.tenant_photos:
-        image_paths.extend(photo for photo in current_state.tenant_photos.values() if photo)
-
+        image_paths.extend(
+            photo for photo in current_state.tenant_photos.values() if photo
+        )
 
     image_paths.append(photo_path)
     try:

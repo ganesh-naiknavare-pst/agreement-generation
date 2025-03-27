@@ -35,11 +35,16 @@ async def image_and_sign_upload(agreement: Data):
             tenant_signature_path, tenant_photo_path, agreement.user
         )
 
+
 async def image_and_sign_upload_for_template(agreement: Data):
-    current_template_state = state_manager.get_template_agreement_state(agreement.agreement_id)
+    current_template_state = state_manager.get_template_agreement_state(
+        agreement.agreement_id
+    )
     if agreement.user == current_template_state.authority_id:
         current_template_state.authority_signature = save_base64_image(
-            agreement.signature, current_template_state.authority_email, is_signature=True
+            agreement.signature,
+            current_template_state.authority_email,
+            is_signature=True,
         )
 
     elif agreement.user == current_template_state.participant_id:
