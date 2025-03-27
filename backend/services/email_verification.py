@@ -40,8 +40,8 @@ EMAIL_TEMPLATE = """
 
                             <!-- OTP Box -->
                             <div style="text-align: center; margin: 10px 0;">
-                                <input type="text" value="{otp}" id="otpInput" 
-                                       style="font-size: 20px; text-align: center; font-weight: bold; border: 2px solid #007bff; border-radius: 5px; padding: 5px; width: 150px; background-color: #f8f9fa; color: #007bff;" 
+                                <input type="text" value="{otp}" id="otpInput"
+                                       style="font-size: 20px; text-align: center; font-weight: bold; border: 2px solid #007bff; border-radius: 5px; padding: 5px; width: 150px; background-color: #f8f9fa; color: #007bff;"
                                        readonly>
                             </div>
 

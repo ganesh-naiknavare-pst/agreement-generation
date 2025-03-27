@@ -5,16 +5,20 @@ import pypandoc
 from langgraph.graph import StateGraph, START, END
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from helpers.state_manager import State, template_agreement_state
+from helpers.state_manager import State, state_manager
 from helpers.agreement_generator_helper import extract_text_from_pdf
-from prompts import SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER, USER_PROMPT_FOR_SIGNATURE_PLACEHOLDER, SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION
+from prompts import (
+    SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER,
+    USER_PROMPT_FOR_SIGNATURE_PLACEHOLDER,
+    SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION,
+)
 import os
 
 os.environ["OPENAI_API_KEY"] = "XXX"
 
 memory = ConversationBufferMemory(memory_key="chat_history")
 llm = ChatOpenAI(
-    model= Model.GPT_MODEL.value,
+    model=Model.GPT_MODEL.value,
     temperature=0,
     max_tokens=None,
     timeout=None,
@@ -23,11 +27,14 @@ llm = ChatOpenAI(
     base_url=CHAT_OPENAI_BASE_URL,
 )
 
+
 def add_signature(agreement_text: str):
     messages = [
         {
             "role": "system",
-            "content": SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER.format(agreement_text=agreement_text),
+            "content": SYSTEM_PROMPT_FOR_SIGNATURE_PLACEHOLDER.format(
+                agreement_text=agreement_text
+            ),
         },
         {
             "role": "user",
@@ -37,35 +44,48 @@ def add_signature(agreement_text: str):
 
     return llm.invoke(messages)
 
-def generate_agreement(state: State):
-    if template_agreement_state.is_pdf_generated:
-        return {"messages": template_agreement_state.agreement_text}
 
-    template_chunks = extract_text_from_pdf(template_agreement_state.template_file_path)
+def generate_agreement(state: State):
+    agreement_id = state["agreement_id"]
+    current_state = state_manager.get_template_agreement_state(agreement_id)
+    if not current_state:
+        raise ValueError("No active agreement state found")
+
+    memory.clear()
+    if current_state.is_pdf_generated:
+        return {"messages": current_state.agreement_text}
+
+    template_chunks = extract_text_from_pdf(current_state.template_file_path)
 
     generated_text = ""
     for chunk in template_chunks:
         system_msg = {
             "role": "system",
-            "content": SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION.format(template_text=chunk),
+            "content": SYSTEM_PROMPT_FOR_AGGREMENT_GENERATION.format(
+                template_text=chunk
+            ),
         }
         messages = [system_msg] + state["messages"]
         response = llm.invoke(messages)
         generated_text += response.content + "\n"
 
     response_sign = add_signature(generated_text)
-    template_agreement_state.agreement_text = response_sign.content
+    current_state.agreement_text = response_sign.content
 
     return {"messages": response_sign}
 
-def create_pdf(state: State):
-    if template_agreement_state.is_pdf_generated:
-        content= template_agreement_state.agreement_text
-    else:
-        content = state["messages"][-1].content
-    content = content.replace("₹", "Rs.")
 
-    content = content.encode('ascii', 'ignore').decode()
+def create_pdf(state: State):
+    if isinstance(state, dict):
+        content = state["messages"][-1].content
+        content = content.replace("₹", "Rs.")
+        agreement_id = state["agreement_id"]
+        state = state_manager.get_template_agreement_state(agreement_id)
+        state.agreement_text = content
+    else:
+        content = state.agreement_text
+
+    content = content.encode("ascii", "ignore").decode()
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
@@ -74,43 +94,48 @@ def create_pdf(state: State):
     pypandoc.convert_text(
         content, "pdf", "md", encoding="utf-8", outputfile=temp_pdf_path
     )
-    template_agreement_state.pdf_file_path = temp_pdf_path
+    state.pdf_file_path = temp_pdf_path
     return {"messages": content}
 
-def update_pdf_with_signatures():
+
+def update_pdf_with_signatures(agreement_id: str):
     """Updates the existing agreement PDF by replacing placeholders with actual signatures."""
-    content = template_agreement_state.agreement_text
-    if template_agreement_state.is_fully_approved():
+    current_state = state_manager.get_template_agreement_state(agreement_id)
+    content = current_state.agreement_text
+    if current_state.is_fully_approved():
 
         # Replace authority signature with image
-        if os.path.isfile(template_agreement_state.authority_signature):
+        if os.path.isfile(current_state.authority_signature):
             authority_signature_data, _ = resize_image(
-                template_agreement_state.authority_signature, 60, 30
+                current_state.authority_signature, 60, 30
             )
             content = content.replace(
-                "[AUTHORITY_SIGNATURE]", f" ![AUTHORITY_SIGNATURE]({authority_signature_data})"
+                "[AUTHORITY_SIGNATURE]",
+                f" ![AUTHORITY_SIGNATURE]({authority_signature_data})",
             )
         else:
             content = content.replace(
-                "[AUTHORITY_SIGNATURE]", template_agreement_state.authority_signature
+                "[AUTHORITY_SIGNATURE]", current_state.authority_signature
             )
 
         # Replace participant signature with image
-        if os.path.isfile(template_agreement_state.participant_signature):
+        if os.path.isfile(current_state.participant_signature):
             participant_signature_data, _ = resize_image(
-                template_agreement_state.participant_signature, 60, 30
+                current_state.participant_signature, 60, 30
             )
             content = content.replace(
-                "[PARTICIPANT_SIGNATURE]", f" ![PARTICIPANT_SIGNATURE]({participant_signature_data})"
+                "[PARTICIPANT_SIGNATURE]",
+                f" ![PARTICIPANT_SIGNATURE]({participant_signature_data})",
             )
         else:
             content = content.replace(
-                "[PARTICIPANT_SIGNATURE]", template_agreement_state.participant_signature
+                "[PARTICIPANT_SIGNATURE]", current_state.participant_signature
             )
 
     # Convert updated content to PDF
-    temp_pdf_path = template_agreement_state.pdf_file_path
+    temp_pdf_path = current_state.pdf_file_path
     pypandoc.convert_text(content, "pdf", format="md", outputfile=temp_pdf_path)
+
 
 # Build graph
 graph_builder = StateGraph(State)

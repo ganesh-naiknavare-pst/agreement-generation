@@ -4,7 +4,7 @@ import pypandoc
 from langgraph.graph import StateGraph, START, END
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from helpers.state_manager import State, agreement_state
+from helpers.state_manager import State, state_manager
 import os
 from PIL import Image
 import io
@@ -25,18 +25,23 @@ from prompts import AGREEMENT_SYSTEM_PROMPT
 
 
 def generate_agreement(state: State):
+    agreement_id = state["agreement_id"]
+    current_state = state_manager.get_agreement_state(agreement_id)
+    if not current_state:
+        raise ValueError("No active agreement state found")
+
     # Reset memory for fresh conversation
     memory.clear()
 
-    if agreement_state.is_pdf_generated:
-        return {"messages": agreement_state.agreement_text}
+    if current_state.is_pdf_generated:
+        return {"messages": current_state.agreement_text, "agreement_id": agreement_id}
     messages = [
         {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
         {"role": "user", "content": state["messages"][-1].content},
     ]
     response = llm.invoke(messages)
-    agreement_state.agreement_text = response.content
-    return {"messages": response}
+    current_state.agreement_text = response.content
+    return {"messages": response, "agreement_id": agreement_id}
 
 
 def resize_image(image_path, max_width, max_height):
@@ -53,7 +58,9 @@ def resize_image(image_path, max_width, max_height):
             original_format = "jpeg" if img.format == "JPEG" else "png"
             file_extension = ".jpg" if original_format == "jpeg" else ".png"
 
-            temp_image = tempfile.NamedTemporaryFile(delete=False, suffix=file_extension)
+            temp_image = tempfile.NamedTemporaryFile(
+                delete=False, suffix=file_extension
+            )
             temp_image_path = temp_image.name
             img.save(temp_image_path, format=img.format)
             temp_image.close()
@@ -65,41 +72,40 @@ def resize_image(image_path, max_width, max_height):
 
 
 def create_pdf(state: State):
-    if agreement_state.is_pdf_generated:
-        content = agreement_state.agreement_text
-    else:
+    if isinstance(state, dict):
         content = state["messages"][-1].content
-        agreement_state.agreement_text = content
+        agreement_id = state["agreement_id"]
+        state = state_manager.get_agreement_state(agreement_id)
+        state.agreement_text = content
+    else:
+        content = state.agreement_text
 
-    if agreement_state.is_fully_approved():
+    if not state:
+        raise ValueError("No active agreement state found")
+
+    if state.is_fully_approved():
         # Replace owner signature with image
-        if os.path.isfile(agreement_state.owner_signature):
-            owner_signature_data, _ = resize_image(
-                agreement_state.owner_signature, 60, 30
-            )
+        if os.path.isfile(state.owner_signature):
+            owner_signature_data, _ = resize_image(state.owner_signature, 60, 30)
             content = content.replace(
                 "[OWNER SIGNATURE]", f" ![Owner Signature]({owner_signature_data})"
             )
         else:
-            content = content.replace(
-                "[OWNER SIGNATURE]", agreement_state.owner_signature
-            )
+            content = content.replace("[OWNER SIGNATURE]", state.owner_signature)
 
         # Replace owner photos with image
-        if os.path.isfile(agreement_state.owner_photo):
-            owner_photo_data, _ = resize_image(agreement_state.owner_photo, 60, 60)
+        if os.path.isfile(state.owner_photo):
+            owner_photo_data, _ = resize_image(state.owner_photo, 60, 60)
             content = content.replace(
                 "[OWNER PHOTO]", f" ![Owner PHOTO]({owner_photo_data})"
             )
         else:
-            content = content.replace("[OWNER PHOTO]", agreement_state.owner_photo)
+            content = content.replace("[OWNER PHOTO]", state.owner_photo)
 
         # Replace tenant signatures with numbered placeholders and images
-        for i, (tenant_id, signature) in enumerate(
-            agreement_state.tenant_signatures.items(), 1
-        ):
+        for i, (tenant_id, signature) in enumerate(state.tenant_signatures.items(), 1):
             placeholder = f"[TENANT {i} SIGNATURE]"
-            tenant_name = agreement_state.tenant_names.get(tenant_id, f"Tenant {i}")
+            tenant_name = state.tenant_names.get(tenant_id, f"Tenant {i}")
 
             if os.path.isfile(signature):
                 tenant_signature_data, _ = resize_image(signature, 60, 30)
@@ -110,11 +116,9 @@ def create_pdf(state: State):
                 content = content.replace(placeholder, signature)
 
         # Replace tenant photos with numbered placeholders and images
-        for i, (tenant_id, photo) in enumerate(
-            agreement_state.tenant_photos.items(), 1
-        ):
+        for i, (tenant_id, photo) in enumerate(state.tenant_photos.items(), 1):
             placeholder = f"[TENANT {i} PHOTO]"
-            tenant_name = agreement_state.tenant_names.get(tenant_id, f"Tenant {i}")
+            tenant_name = state.tenant_names.get(tenant_id, f"Tenant {i}")
             if os.path.isfile(photo):
                 tenant_photos_data, _ = resize_image(photo, 60, 60)
                 content = content.replace(
@@ -137,7 +141,7 @@ def create_pdf(state: State):
     pypandoc.convert_text(
         content, "pdf", "md", encoding="utf-8", outputfile=temp_pdf_path
     )
-    agreement_state.pdf_file_path = temp_pdf_path
+    state.pdf_file_path = temp_pdf_path
     return {"messages": content}
 
 
