@@ -14,6 +14,7 @@ import { IconEye } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
 import { useAgreements } from "../../hooks/useAgreements";
 import { useState } from "react";
+import { statusTooltips } from "../../constants";
 
 export function RentAgreements() {
   const { agreements } = useAgreements();
@@ -48,8 +49,10 @@ export function RentAgreements() {
         return COLORS.blue;
       case "REJECTED":
         return COLORS.red;
-      case "FAILED":
+      case "EXPIRED":
         return COLORS.yellow;
+      case "FAILED":
+        return COLORS.gray;
       default:
         return COLORS.grayDark;
     }
@@ -88,7 +91,7 @@ export function RentAgreements() {
                   {new Date(agreement.agreementPeriod[0]).toLocaleDateString()} - {new Date(agreement.agreementPeriod[1]).toLocaleDateString()}
                 </Table.Td>
                 <Table.Td style={{ textAlign: "left" }}>
-                  <Tooltip label={agreement.status} withArrow>
+                  <Tooltip label={statusTooltips[agreement.status]} withArrow>
                     <Badge size="sm" color={getStatusColor(agreement.status)}>
                       {agreement.status}
                     </Badge>

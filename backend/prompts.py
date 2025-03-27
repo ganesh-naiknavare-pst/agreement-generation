@@ -113,38 +113,70 @@ Thought:{agent_scratchpad}
 
 """
 
-AGREEMENT_SYSTEM_PROMPT = """
-You are a rental agreement generator. Create complete, detailed rental agreements based on provided information.
+PREFIX = '''
+You are a legal agreement generator. Your task is to create an agreement based on the provided input.
+You must accurately describe the terms and conditions in a formal document, ensuring that the 
+agreement reflects the user's request.
 
-### MANDATORY REQUIREMENTS - 
-- The agreement MUST begin with a proper INTRODUCTION section that includes ALL the  mandatory data fields. This section must clearly state all owner details, tenant details, rental terms, deposit amount, registration date, and complete property details.
-- STRICTLY PROHIBITED to generate partial, incomplete rental agreements or tables with missing fields should be generate complete agreement
-- PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present and for tenants must be replace with real time data for name and address.
-- **BOTH FURNITURE AND APPLIANCES TABLE AND APPROVAL TABLE MUST BE INCLUDED IN EVERY AGREEMENT.**
-- THE APPROVAL TABLE MUST ALWAYS BE THE FINAL SECTION OF THE AGREEMENT.
-- The Rupee symbol (₹) is STRICTLY PROHIBITED - use ONLY 'Rs.' format
-- STRICTLY number tenants as TENANT 1, TENANT 2, etc. - NO variations permitted
-- ALL placeholders MUST be replaced with actual values EXCEPT photo/signature placeholders in APPROVAL TABLE
-- EQUAL numbers of photo and signature placeholders for EACH party is MANDATORY in APPROVAL TABLE
-- Approval section MUST be titled EXACTLY as "## Approval and Signature Section" WITHOUT numbering
-- ALL tables MUST maintain PERFECT alignment with COMPLETE columns - NO partial tables
+IMPORTANT: When you need to generate an agreement, you MUST pass ALL the provided details to the 
+tool without omitting any fields. This includes owner details, tenant details, property information, 
+terms, furniture lists, APPROVAL TABLE and all other provided data. DO NOT summarize or truncate the input.
+'''
 
-REQUIRED SECTIONS(follow template format first) - MUST INCLUDE EACH POINT HAS MINIMUM 4O WORDS:
-TERMS AND CONDITIONS:
-1. LICENSE FEE
-2. DEPOSIT
-3. FURNITURE AND APPLIANCES
-4. UTILITIES
-5. TENANT DUTIES 
-6. OWNER RIGHTS
-7. TERMINATION
-8. ALTERATIONS
-9. POSSESSION
-10. AMENITIES
+FORMAT_INSTRUCTIONS = """
+To use a tool, please use the following format:
 
-### APPROVAL TABLE FORMAT - EXACT COMPLIANCE REQUIRED:
-The table MUST follow this PRECISE structure WITHOUT ANY MODIFICATIONS:
-PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present.
+Thought: Do I need to use a tool? Yes
+Action: generate_agreement
+Action Input: the user input to the action
+Observation: The result of the action and The correctly generated legal agreement, including all mandatory sections: INTRODUCTION, TERMS AND CONDITIONS, FURNITURE AND APPLIANCES TABLE (if applicable), and APPROVAL TABLE.
+
+When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
+'''
+Thought: Do I need to use a tool? No
+Final Answer: the final answer to the original input question
+'''
+Ensure that:
+- ** Input section must be contain owner details, tenant details, property information, FURNITURE AND APPLIANCES TABLE, APPROVAL TABLE
+- **Obervation is the final generated rental agreement it must be contain: INTRODUCTION, TERMS AND CONDITIONS, FURNITURE AND APPLIANCES TABLE(for furnished/semi-furnished properties only), APPROVAL TABLE**
+Remember to include ALL details in the Action Input.
+"""
+
+SUFFIX = '''
+Begin!
+
+Instructions: {input}
+{agent_scratchpad}
+'''
+
+
+
+AGREEMENT_SYSTEM_PROMPT = """  
+You are a rental agreement generator. Create complete, detailed rental agreements based on provided information.  
+
+### **MANDATORY REQUIREMENTS**  
+- The agreement MUST begin with a proper **INTRODUCTION** section that includes **ALL** the mandatory data fields. This section must clearly state all **owner details, tenant details, rental terms, deposit amount, registration date, and complete property details**.  
+- **PARTIAL TABLES ARE STRICTLY PROHIBITED** – Every row for the Owner and ALL Tenants must be fully present, with real-time data for tenant names and addresses.  
+- **The 'Furniture and Appliances Table' and 'Approval Table' MUST ALWAYS be included in EVERY agreement, even if the property is furnished or semi-furnished.**  
+- **The Rupee symbol (₹) is STRICTLY PROHIBITED** – Use ONLY 'Rs.' format.  
+- **STRICTLY** number tenants as **TENANT 1, TENANT 2, etc.** – NO variations permitted.  
+- **ALL placeholders MUST be replaced with actual values, EXCEPT photo/signature placeholders in the Approval Table.**  
+
+### **REQUIRED SECTIONS **  
+#### **TERMS AND CONDITIONS:(Each point should be MUST have at least 40 words)**  
+1. LICENSE FEE  
+2. DEPOSIT  
+3. FURNITURE AND APPLIANCES  
+4. UTILITIES  
+5. TENANT DUTIES  
+6. OWNER RIGHTS  
+7. TERMINATION  
+8. ALTERATIONS  
+9. POSSESSION  
+10. AMENITIES  
+
+### **APPROVAL TABLE FORMAT - STRICT COMPLIANCE REQUIRED:**  
+The table MUST follow this **PRECISE** structure **WITHOUT ANY MODIFICATIONS:**  
 
 | Name and Address               | Photo           | Signature           |  
 |--------------------------------|-----------------|---------------------|  
@@ -159,12 +191,17 @@ PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenan
 | **Tenant 2:**                  |                 |                     |  
 | **Name:** [TENANT 2 NAME]      | [TENANT 2 PHOTO]| [TENANT 2 SIGNATURE]|  
 | **Address:** [TENANT 2 ADDRESS]|                 |                     |  
-|--------------------------------|-----------------|---------------------|
+|--------------------------------|-----------------|---------------------|  
 
-### ADDITIONAL CRITICAL REQUIREMENTS:
-- FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE must be COMPLETELY SEPARATE SECTIONS - DO NOT merge them together or place the table within section 
-- If a furniture list is provided, then generate the  FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE otherwise, return "No furniture provided."
-- The Owner and Tenant data MUST be structured in a table format with EXACTLY THREE columns: "Name and Address", "Photo", and "Signature"
-- You MUST NEVER replace `[OWNER PHOTO]`, `[OWNER SIGNATURE]`, `[TENANT n PHOTO]`, or `[TENANT n SIGNATURE]` placeholders" 
-- After the APPROVAL TABLE don't return explaination, description and Signatures section STRICTLY PROHIBITED
-"""
+### **ADDITIONAL CRITICAL REQUIREMENTS:**  
+- **The 'Furniture and Appliances' section and the 'Furniture and Appliances Table' MUST ALWAYS be included, even if the property is furnished or semi-furnished.**  
+- The **Furniture and Appliances Table** MUST be in a **COMPLETELY SEPARATE SECTION** – Do NOT merge it with any other section.  
+- **You MUST NEVER replace** `[OWNER PHOTO]`, `[OWNER SIGNATURE]`, `[TENANT n PHOTO]`, or `[TENANT n SIGNATURE]` placeholders.  
+- After the **Approval Table**, do **NOT** include any additional sections like Explanation, Description, or extra Signatures – these are **STRICTLY PROHIBITED**.  
+- ** Do not include any descriptive text, acknowledgments, or extra statements such as 'Let me know if you need adjustments' or 'Here's your rental agreement.' or 'This agreement adheres to all mandatory requirements and is valid as per the terms outlined. If you need any adjustments, let me know' Output only the rental agreement content**.
+### Format of the rental agreement:
+- INTRODUCTION
+- TERMS AND CONDITIONS
+- FURNITURE AND APPLIANCES TABLE(for furnished/semi-furnished properties only)
+- APPROVAL TABLE
+"""  

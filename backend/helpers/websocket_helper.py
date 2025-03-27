@@ -20,6 +20,7 @@ class ConnectionClosedError(Exception):
 class ApprovalResult(Enum):
     APPROVED = "approved"
     REJECTED = "rejected"
+    EXPIRED = "expired"
     CONNECTION_CLOSED = "connection_closed"
 
 
@@ -142,7 +143,7 @@ async def listen_for_approval(timeout_seconds: int = 300, is_template: bool=Fals
 
                 except asyncio.TimeoutError:
                     logging.error("Approval process timed out")
-                    return ApprovalResult.CONNECTION_CLOSED
+                    return ApprovalResult.EXPIRED
                 except json.JSONDecodeError as e:
                     logging.error(f"Invalid JSON received: {e}")
                     continue

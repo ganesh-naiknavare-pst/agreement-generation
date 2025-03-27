@@ -13,7 +13,7 @@ os.environ["OPENAI_API_KEY"] = "XXX"
 memory = ConversationBufferMemory(memory_key="chat_history")
 llm = ChatOpenAI(
     model=Model.GPT_MODEL.value,
-    temperature=0,
+    temperature=0.7,
     max_tokens=None,
     timeout=None,
     max_retries=2,
@@ -29,11 +29,10 @@ def generate_agreement(state: State):
 
     if agreement_state.is_pdf_generated:
         return {"messages": agreement_state.agreement_text}
-    system_msg = {
-        "role": "system",
-        "content": AGREEMENT_SYSTEM_PROMPT,
-    }
-    messages = [system_msg] + state["messages"]
+    messages = [
+        {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
+        {"role": "user", "content": state["messages"][-1].content},
+    ]
     response = llm.invoke(messages)
     agreement_state.agreement_text = response.content
     return {"messages": response}
