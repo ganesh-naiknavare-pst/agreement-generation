@@ -23,6 +23,7 @@ import { COLORS } from "../colors";
 import useApi, { BackendEndpoints } from "../hooks/useApi";
 import { useAgreements } from "../hooks/useAgreements";
 import { OTPInput } from "../components/agreements/OTPInput";
+import { useUser } from "@clerk/clerk-react";
 import {
   OTPVerificationResponse,
   OtpState,
@@ -33,6 +34,7 @@ import {
 } from "../types/otp";
 
 export function AgreementGenerator() {
+  const { user } = useUser();
   const [active, setActive] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMessage, setShowMessage] = useState(false);
@@ -437,7 +439,7 @@ export function AgreementGenerator() {
     setTimeout(() => {
       setIsSubmitting(false);
       setShowMessage(true);
-      fetchAgreements({ method: "GET" });
+      fetchAgreements({ method: "GET", params: { user_id: user?.id } });
     }, 2000);
     const requestData = {
       owner_name: form.values.ownerFullName,
@@ -452,13 +454,14 @@ export function AgreementGenerator() {
       agreement_period: form.values.agreementPeriod.map((date) =>
         date.toISOString()
       ),
+      user_id: user?.id,
     };
     try {
       await fetchData({
         method: "POST",
         data: requestData,
       });
-      await fetchAgreements({ method: "GET" });
+      await fetchAgreements({ method: "GET", params: { user_id: user?.id } });
     } catch (error) {
       console.error("Error creating agreement:", error);
     }
