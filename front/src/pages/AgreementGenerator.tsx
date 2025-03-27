@@ -15,6 +15,10 @@ import {
   Title,
   Divider,
   Container,
+  Radio,
+  MultiSelect,
+  Select,
+  Stack,
 } from "@mantine/core";
 import { IconCheck } from "@tabler/icons-react";
 import { useForm } from "@mantine/form";
@@ -32,7 +36,8 @@ import {
   getFailureOtpState,
   getDefaultOtpState,
 } from "../types/otp";
-
+import { AddressForm } from "../components/AddressForm";
+import { FurnitureAppliances } from "../components/FurnitureAppliances";
 export function AgreementGenerator() {
   const { user } = useUser();
   const [active, setActive] = useState(0);
@@ -46,6 +51,10 @@ export function AgreementGenerator() {
   );
   const { fetchData: sendOTP } = useApi(BackendEndpoints.SentOTP);
   const [otpIndex, setOtpIndex] = useState<number | null>(null);
+  const [furnitureList, setFurnitureList] = useState<
+    { name: string; quantity: number }[]
+  >([]);
+  const [furnishingType, setFurnishingType] = useState("");
   const [ownerOtpState, setOwnerOtpState] = useState<OtpState>(
     getDefaultOtpState()
   );
@@ -172,6 +181,42 @@ export function AgreementGenerator() {
       setOtpIndex(null);
     }
   }, [data]);
+
+  const addFurniture = () => {
+    const errors: Record<string, string> = {};
+    const furnitureName = form.values.furnitureName.trim();
+
+    if (!furnitureName) {
+      errors.furnitureName = "Please enter a furniture name";
+    } else if (/^\d+$/.test(furnitureName)) {
+      errors.furnitureName = "Furniture name cannot be only numbers";
+    }
+
+    if (form.values.furnitureQuantity < 1) {
+      errors.furnitureQuantity = "Please enter a valid furniture quantity";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      form.setErrors({
+        furnitureName: errors.furnitureName,
+        furnitureQuantity: errors.furnitureQuantity,
+      });
+      return;
+    }
+    setFurnitureList((prev) => [
+      ...prev,
+      {
+        name: form.values.furnitureName,
+        quantity: form.values.furnitureQuantity,
+      },
+    ]);
+    form.setFieldValue("furnitureName", "");
+    form.setFieldValue("furnitureQuantity", 1);
+  };
+
+  const removeFurniture = (index: number) => {
+    setFurnitureList((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleSendOTP = async () => {
     setLoadingStates((prev) => ({ ...prev, sendOwner: true }));
@@ -306,21 +351,50 @@ export function AgreementGenerator() {
   const form = useForm({
     mode: "controlled",
     initialValues: {
+      // Owner Details
+      ownerAddress: "",
       ownerFullName: "",
+      ownerAddressConfirmed: false,
       ownerEmailAddress: "",
-      tenantNumber: 2,
+      ownerAddressDetails: {
+        flatFloor: "",
+        buildingName: "",
+        area: "",
+        city: "",
+        pincode: "",
+      },
+
+      // Tenant Details
       tenants: Array.from({ length: 2 }, () => ({
         fullName: "",
         email: "",
+        address: "",
+        AddressConfirmed: false,
+        addressDetails: {
+          flatFloor: "",
+          buildingName: "",
+          area: "",
+          city: "",
+          pincode: "",
+        },
       })),
+      tenantNumber: 2,
+      // Agreement Details
       address: "",
       city: "",
-      date: new Date(),
+      registrationDate: new Date(),
       rentAmount: 0,
+      securityAmount: 0,
       agreementPeriod: [
         new Date(),
         new Date(new Date().setMonth(new Date().getMonth() + 6)),
       ],
+      // Property Details
+      amenities: [],
+      propertyArea: "",
+      bhkType: "",
+      furnitureName: "",
+      furnitureQuantity: 1,
     },
 
     validate: (values) => {
@@ -329,6 +403,12 @@ export function AgreementGenerator() {
       const emailRegex =
         /^(?!\.)[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9-]+(\.[a-zA-Z]{2,63})+$/;
 
+      const validateAddressFields = (addressDetails: any, prefix: string) => {
+        Object.entries(addressDetails).forEach(([field, value]) => {
+          const error = validateField(field, value as string);
+          if (error) errors[`${prefix}.${field}`] = error;
+        });
+      };
       if (active === 0) {
         if (!fullNameRegex.test(values.ownerFullName.trim())) {
           errors.ownerFullName =
@@ -337,12 +417,16 @@ export function AgreementGenerator() {
         if (!emailRegex.test(values.ownerEmailAddress)) {
           errors.ownerEmailAddress = "Please enter a valid email address";
         }
+        validateAddressFields(
+          values.ownerAddressDetails,
+          "ownerAddressDetails"
+        );
       }
-
-      if (active === 1 && values.tenantNumber < 1) {
-        errors.tenantNumber = "At least one tenant is required";
+      if (active === 1) {
+        if (values.tenantNumber < 1) {
+          errors.tenantNumber = "Number of tenants must be at least 1";
+        }
       }
-
       if (active === 2) {
         values.tenants.forEach((tenant, index) => {
           if (!fullNameRegex.test(tenant.fullName.trim())) {
@@ -353,18 +437,26 @@ export function AgreementGenerator() {
             errors[`tenants.${index}.email`] =
               "Please enter a valid email address";
           }
+          validateAddressFields(
+            tenant.addressDetails,
+            `tenants.${index}.addressDetails`
+          );
         });
       }
-
-      if (active === 3) {
+      if (active === 4) {
         if (values.address.trim().length < 10) {
           errors.address = "Address must be at least 10 characters";
         }
         if (!values.city.trim()) {
           errors.city = "City is required";
+        } else if (!/^[a-zA-Z\s]+$/.test(values.city.trim())) {
+          errors.city = "City should contain characters only";
         }
         if (values.rentAmount <= 0) {
           errors.rentAmount = "Rent amount must be greater than 0";
+        }
+        if (values.securityAmount <= 0) {
+          errors.securityAmount = "Security amount must be greater than 0";
         }
         if (values.agreementPeriod.length !== 2) {
           errors.agreementPeriod =
@@ -379,7 +471,21 @@ export function AgreementGenerator() {
           }
         }
       }
-
+      if (active === 3) {
+        if (
+          (furnishingType === "furnished" ||
+            furnishingType === "semi-furnished") &&
+          furnitureList.length === 0
+        ) {
+          errors.furnitureName = "Please add at least one furniture item";
+        }
+        if (!values.propertyArea || Number(values.propertyArea) <= 0) {
+          errors.propertyArea = "Please enter a valid area in square feet";
+        }
+        if (!values.bhkType) {
+          errors.bhkType = "Please select a BHK type";
+        }
+      }
       return errors;
     },
   });
@@ -393,10 +499,55 @@ export function AgreementGenerator() {
           form.values.tenants[index] || {
             fullName: "",
             email: "",
+            Address: "",
+            AddressConfirmed: false,
+            addressDetails: {
+              flatFloor: "",
+              buildingName: "",
+              area: "",
+              city: "",
+              pincode: "",
+            },
           }
       )
     );
     form.setFieldValue("tenantNumber", value);
+  };
+
+  const validateField = (field: string, value: string): string => {
+    let error = "";
+    switch (field) {
+      case "flatFloor":
+        if (!/^[\w\s/,.-]+$/.test(value)) {
+          error = "Flat No. & Floor should contain valid characters only";
+        }
+        break;
+      case "buildingName":
+        if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
+          error = "Building Name should contain characters and numbers only";
+        }
+        break;
+      case "area":
+        if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
+          error = "Area should contain characters and numbers only";
+        }
+        break;
+      case "city":
+        if (!/^[a-zA-Z\s]+$/.test(value)) {
+          error = "City should contain characters only";
+        }
+        break;
+      case "pincode":
+        if (!/^\d+$/.test(value)) {
+          error = "Pincode should contain digits only";
+        } else if (value.length !== 6) {
+          error = "Pincode should contain exactly 6 digits";
+        }
+        break;
+      default:
+        break;
+    }
+    return error;
   };
 
   const nextStep = () => {
@@ -405,12 +556,15 @@ export function AgreementGenerator() {
     if (hasErrors) return;
 
     // Restrict progress on Step 1 if owner OTP is not verified
-    if (active === 0 && !ownerOtpState.isVerified) {
-      setOwnerOtpState((prev) => ({
-        ...prev,
-        error: "Please verify your OTP before proceeding.",
-      }));
-      return;
+    if (active === 0) {
+      if (!ownerOtpState.isVerified) {
+        setOwnerOtpState((prev) => ({
+          ...prev,
+          error: "Please verify your OTP before proceeding.",
+        }));
+        return;
+      }
+      handleConfirmOwnerAddress();
     }
 
     // Restrict progress on Step 3 if any tenant OTP is not verified
@@ -422,9 +576,11 @@ export function AgreementGenerator() {
         alert("All tenants must verify their OTP before proceeding.");
         return;
       }
+      form.values.tenants.forEach((_, index) =>
+        handleConfirmTenantAddress(index)
+      );
     }
-
-    setActive((current) => (current < 3 ? current + 1 : current));
+    setActive((current) => (current < 5 ? current + 1 : current));
   };
 
   const prevStep = () =>
@@ -433,7 +589,7 @@ export function AgreementGenerator() {
   const handleSubmit = async () => {
     const { hasErrors } = form.validate();
     if (hasErrors) return;
-    setActive((current) => (current < 4 ? current + 1 : current));
+    setActive((current) => (current < 5 ? current + 1 : current));
     setIsSubmitting(true);
     setShowMessage(false);
     setTimeout(() => {
@@ -465,6 +621,17 @@ export function AgreementGenerator() {
     } catch (error) {
       console.error("Error creating agreement:", error);
     }
+  };
+
+  const handleConfirmOwnerAddress = () => {
+    const fullAddress = `${form.values.ownerAddressDetails.flatFloor}, ${form.values.ownerAddressDetails.buildingName}, ${form.values.ownerAddressDetails.area}, ${form.values.ownerAddressDetails.city} - ${form.values.ownerAddressDetails.pincode}`;
+    form.setFieldValue("ownerAddress", fullAddress);
+  };
+
+  const handleConfirmTenantAddress = (index: number) => {
+    const tenantDetails = form.values.tenants[index].addressDetails;
+    const fullAddress = `${tenantDetails.flatFloor}, ${tenantDetails.buildingName}, ${tenantDetails.area}, ${tenantDetails.city} - ${tenantDetails.pincode}`;
+    form.setFieldValue(`tenants.${index}.address`, fullAddress);
   };
 
   return (
@@ -509,7 +676,6 @@ export function AgreementGenerator() {
                 ) : null
               }
             />
-
             <OTPInput
               otpState={ownerOtpState}
               onOtpChange={(otp) =>
@@ -525,11 +691,29 @@ export function AgreementGenerator() {
               disabledSendOtp={
                 !form.values.ownerEmailAddress ||
                 !/^\S+@\S+\.\S+$/.test(form.values.ownerEmailAddress) ||
-                (ownerOtpState.isSent && ownerOtpState.isCountdownActive) || // Disable if OTP is active
+                (ownerOtpState.isSent && ownerOtpState.isCountdownActive) ||
                 ownerOtpState.isVerified
               }
               loading={loadingStates.sendOwner || loadingStates.verifyOwner}
             />
+            <Box>
+              <Text size="sm" fw={500} style={{ marginBottom: 4 }}>
+                Address <span style={{ color: "red" }}>*</span>
+              </Text>
+
+              <AddressForm
+                addressDetails={form.values.ownerAddressDetails}
+                onChange={(field, value) => {
+                  form.setFieldValue(`ownerAddressDetails.${field}`, value);
+                }}
+                formPrefix="ownerAddressDetails"
+                errors={Object.fromEntries(
+                  Object.entries(form.errors)
+                    .filter(([key]) => key.startsWith("ownerAddressDetails"))
+                    .map(([key, value]) => [key, String(value)])
+                )}
+              />
+            </Box>
           </Stepper.Step>
 
           <Stepper.Step label="Step 2" description="No. of Tenants">
@@ -615,11 +799,95 @@ export function AgreementGenerator() {
                     loadingStates.tenants[index]?.verify
                   }
                 />
+                <Box>
+                  <Text size="sm" fw={500} style={{ marginBottom: 4 }}>
+                    Address <span style={{ color: "red" }}>*</span>
+                  </Text>
+
+                  <AddressForm
+                    addressDetails={form.values.tenants[index].addressDetails}
+                    onChange={(field, value) => {
+                      form.setFieldValue(
+                        `tenants.${index}.addressDetails.${field}`,
+                        value
+                      );
+                    }}
+                    formPrefix={`tenants.${index}.addressDetails`}
+                    errors={Object.fromEntries(
+                      Object.entries(form.errors)
+                        .filter(([key]) =>
+                          key.startsWith(`tenants.${index}.addressDetails`)
+                        )
+                        .map(([key, value]) => [key, String(value)])
+                    )}
+                  />
+                </Box>
               </Box>
             ))}
           </Stepper.Step>
 
-          <Stepper.Step label="Step 4" description="Agreement Details">
+          <Stepper.Step label="Step 4" description="Lease property Details">
+            <Stack gap="md">
+              <NumberInput
+                label="Area (sq. ft.)"
+                placeholder="Enter area in square feet"
+                key={form.key("propertyArea")}
+                style={{ textAlign: "start" }}
+                {...form.getInputProps("propertyArea")}
+                withAsterisk
+              />
+
+              <MultiSelect
+                label="Amenities (Optional)"
+                placeholder="Select amenities available"
+                key={form.key("amenities")}
+                style={{ textAlign: "start" }}
+                data={["Electricity", "Water", "Gas", "Internet", "Parking"]}
+                {...form.getInputProps("amenities")}
+                clearable
+                searchable
+              />
+
+              <Select
+                label="BHK Type"
+                placeholder="Select BHK type"
+                key={form.key("bhkType")}
+                style={{ textAlign: "start" }}
+                data={[
+                  { value: "1BHK", label: "1 BHK" },
+                  { value: "2BHK", label: "2 BHK" },
+                  { value: "3BHK", label: "3 BHK" },
+                  { value: "4BHK", label: "4 BHK" },
+                ]}
+                {...form.getInputProps("bhkType")}
+                withAsterisk
+              />
+
+              <Radio.Group
+                label="Furnishing Type"
+                value={furnishingType}
+                onChange={setFurnishingType}
+                withAsterisk
+                style={{ marginBottom: 10 }}
+              >
+                <Group mt="xs">
+                  <Radio value="furnished" label="Furnished" />
+                  <Radio value="semi-furnished" label="Semi-Furnished" />
+                  <Radio value="not-furnished" label="Not Furnished" />
+                </Group>
+              </Radio.Group>
+              {(furnishingType === "furnished" ||
+                furnishingType === "semi-furnished") && (
+                <FurnitureAppliances
+                  furnitureList={furnitureList}
+                  form={form}
+                  addFurniture={addFurniture}
+                  removeFurniture={removeFurniture}
+                />
+              )}
+            </Stack>
+          </Stepper.Step>
+          <Stepper.Step label="Step 5" description="Agreement Details">
             <TextInput
               label="Address"
               placeholder="Address"
@@ -636,6 +904,15 @@ export function AgreementGenerator() {
               {...form.getInputProps("city")}
               withAsterisk
             />
+            <DatePickerInput
+              label="Registration date"
+              placeholder="Select registration date"
+              minDate={new Date()}
+              key={form.key("registrationDate")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("registrationDate")}
+              withAsterisk
+            />
             <NumberInput
               label="Rent Amount"
               placeholder="Enter rent amount"
@@ -643,6 +920,15 @@ export function AgreementGenerator() {
               key={form.key("rentAmount")}
               style={{ textAlign: "start" }}
               {...form.getInputProps("rentAmount")}
+              withAsterisk
+            />
+            <NumberInput
+              label="Security Desposit "
+              placeholder="Enter Security desposit amount"
+              min={0}
+              key={form.key("securityAmount")}
+              style={{ textAlign: "start" }}
+              {...form.getInputProps("securityAmount")}
               withAsterisk
             />
             <DatePickerInput
@@ -726,6 +1012,8 @@ export function AgreementGenerator() {
 
                         setOwnerOtpState(getDefaultOtpState());
                         setTenantsOtpState({});
+                        setFurnitureList([]);
+                        setFurnishingType("");
                       }}
                     >
                       Finish
@@ -738,14 +1026,14 @@ export function AgreementGenerator() {
         </Stepper>
 
         <Group justify="flex-end" mt="xl">
-          {active > 0 && active < 4 && !isSubmitting && (
+          {active > 0 && active < 5 && !isSubmitting && (
             <Button variant="default" onClick={prevStep}>
               Back
             </Button>
           )}
-          {active < 4 && (
+          {active < 5 && (
             <Button
-              onClick={active < 3 ? nextStep : handleSubmit}
+              onClick={active < 4 ? nextStep : handleSubmit}
               disabled={
                 (active === 0 && !ownerOtpState.isVerified) ||
                 (active === 2 &&
@@ -754,10 +1042,14 @@ export function AgreementGenerator() {
                 (active === 2 &&
                   Object.values(tenantsOtpState).some(
                     (state) => !state?.isVerified
-                  ))
+                  )) ||
+                (active === 3 &&
+                  (furnishingType === "furnished" ||
+                    furnishingType === "semi-furnished") &&
+                  furnitureList.length === 0)
               }
             >
-              {active < 3 ? "Continue" : "Generate Agreement"}
+              {active < 4 ? "Continue" : "Generate Agreement"}
             </Button>
           )}
         </Group>
