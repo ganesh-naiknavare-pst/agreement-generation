@@ -1,5 +1,10 @@
-import { Button, Card, TextInput } from "@mantine/core";
-import { useState } from "react";
+import {
+  Box,
+  Card,
+  TextInput,
+} from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
+import { IconBuildingCommunity, IconBuildingStore, IconMapSearch, IconLocation, IconMapPin } from "@tabler/icons-react";
 
 interface AddressDetails {
   flatFloor: string;
@@ -12,131 +17,101 @@ interface AddressDetails {
 interface AddressFormProps {
   addressDetails: AddressDetails;
   onChange: (field: string, value: string) => void;
-  onConfirm: () => void;
   formPrefix: string;
+  errors?: Record<string, string>;
 }
 
-export const AddressForm = ({ addressDetails, onChange, onConfirm, formPrefix }: AddressFormProps) => {
-  const [errors, setErrors] = useState<AddressDetails>({
-    flatFloor: '',
-    buildingName: '',
-    area: '',
-    city: '',
-    pincode: ''
-  });
-
-  const validateField = (field: string, value: string): string => {
-    let error = '';
-    switch (field) {
-      case 'flatFloor':
-        if (!/^[\d\s/,]+$/.test(value)) {
-          error = "Flat No. & Floor should contain digits only";
-        }
-        break;
-      case 'buildingName':
-        if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
-          error = 'Building Name should contain characters and numbers only';
-        }
-        break;
-      case 'area':
-        if (!/^[a-zA-Z0-9\s]+$/.test(value)) {
-          error = 'Area should contain characters and numbers only';
-        }
-        break;
-      case 'city':
-        if (!/^[a-zA-Z\s]+$/.test(value)) {
-          error = 'City should contain characters only';
-        }
-        break;
-      case 'pincode':
-        if (!/^\d+$/.test(value)) {
-          error = 'Pincode should contain digits only';
-        } else if (value.length !== 6) {
-          error = 'Pincode should contain exactly 6 digits';
-        }
-        break;
-      default:
-        break;
-    }
-    return error;
-  };
-
-  const handleChange = (field: string, value: string) => {
-    onChange(field, value);
-  };
-
-  const handleConfirm = () => {
-    const newErrors: AddressDetails = {
-      flatFloor: validateField('flatFloor', addressDetails.flatFloor),
-      buildingName: validateField('buildingName', addressDetails.buildingName),
-      area: validateField('area', addressDetails.area),
-      city: validateField('city', addressDetails.city),
-      pincode: validateField('pincode', addressDetails.pincode),
-    };
-    setErrors(newErrors);
-    const isValid = Object.values(newErrors).every((error) => error === '');
-    if (isValid) {
-      onConfirm();
-    }
-  };
+export const AddressForm = ({
+  addressDetails,
+  onChange,
+  formPrefix,
+  errors = {},
+}: AddressFormProps) => {
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   return (
-    <>
-    <Card shadow="sm" padding="lg" mt={10} withBorder style={{ backgroundColor: "#ebf2fc" }}>
-      <TextInput
-        label="Flat No. & Floor"
-        value={addressDetails.flatFloor || ''}
-        onChange={(e) => handleChange(`${formPrefix}.flatFloor`, e.currentTarget.value)}
-        mt="sm"
-        withAsterisk
-        error={errors.flatFloor}
-      />
-      <TextInput
-        label="Building Name"
-        value={addressDetails.buildingName || ''}
-        onChange={(e) => handleChange(`${formPrefix}.buildingName`, e.currentTarget.value)}
-        mt="sm"
-        withAsterisk
-        error={errors.buildingName}
-      />
-      <TextInput
-        label="Area"
-        value={addressDetails.area || ''}
-        onChange={(e) => handleChange(`${formPrefix}.area`, e.currentTarget.value)}
-        mt="sm"
-        withAsterisk
-        error={errors.area}
-      />
-      <TextInput
-        label="City"
-        value={addressDetails.city || ''}
-        onChange={(e) => handleChange(`${formPrefix}.city`, e.currentTarget.value)}
-        mt="sm"
-        withAsterisk
-        error={errors.city}
-      />
-      <TextInput
-        label="Pincode"
-        value={addressDetails.pincode || ''}
-        onChange={(e) => handleChange(`${formPrefix}.pincode`, e.currentTarget.value)}
-        mt="sm"
-        withAsterisk
-        error={errors.pincode}
-      />
-      <Button
-        mt="sm"
-        onClick={handleConfirm}
-        disabled={
-          !addressDetails.flatFloor ||
-          !addressDetails.buildingName ||
-          !addressDetails.area ||
-          !addressDetails.city ||
-          !addressDetails.pincode
-        }
+    <Card
+      padding="lg"
+      withBorder
+      style={{
+        maxWidth: "920px",
+        margin: "0 auto",
+        width: "100%",
+      }}
+    >
+      <Box
+        style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(250px, 1fr))",
+          gap: "16px",
+        }}
       >
-        Confirm Address
-      </Button>
+        <TextInput
+          label={
+            <>
+              <IconBuildingCommunity size={16} style={{ marginRight: 8, paddingTop:2}} />
+              Flat No. & Floor
+            </>
+          }
+          value={addressDetails.flatFloor || ""}
+          placeholder="Eg: 101, 1st Floor"
+          onChange={(e) => onChange(`flatFloor`, e.currentTarget.value)}
+          error={errors[`${formPrefix}.flatFloor`]}
+          withAsterisk
+        />
+        <TextInput
+          label={
+            <>
+              <IconBuildingStore size={16} style={{ marginRight: 8 , paddingTop:2}} />
+              Building Name
+            </>
+          }
+          value={addressDetails.buildingName || ""}
+          placeholder="Eg: ABC Apartment"
+          onChange={(e) => onChange(`buildingName`, e.currentTarget.value)}
+          error={errors[`${formPrefix}.buildingName`]}
+          withAsterisk
+        />
+        <TextInput
+          label={
+            <>
+              <IconMapSearch size={16} style={{ marginRight: 8 , paddingTop:2}} />
+              Area
+            </>
+          }
+          value={addressDetails.area || ""}
+          placeholder="Eg: HSR Layout"
+          onChange={(e) => onChange(`area`, e.currentTarget.value)}
+          error={errors[`${formPrefix}.area`]}
+          withAsterisk
+        />
+        <TextInput
+          label={
+            <>
+              <IconLocation size={16} style={{ marginRight: 8 , paddingTop:2}} />
+              City
+            </>
+          }
+          value={addressDetails.city || ""}
+          placeholder="Eg: Bangalore"
+          onChange={(e) => onChange(`city`, e.currentTarget.value)}
+          error={errors[`${formPrefix}.city`]}
+          withAsterisk
+        />
+        <TextInput
+          label={
+            <>
+              <IconMapPin size={16} style={{ marginRight: 8 , paddingTop:2}} />
+              Pincode
+            </>
+          }
+          value={addressDetails.pincode || ""}
+          placeholder="Eg: 560102"
+          onChange={(e) => onChange(`pincode`, e.currentTarget.value)}
+          error={errors[`${formPrefix}.pincode`]}
+          withAsterisk
+        />
+      </Box>
     </Card>
-    </>
   );
 };
