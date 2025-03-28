@@ -1,4 +1,5 @@
 import tempfile
+from templates import generate_introduction_section, generate_terms_conditions_section
 from constants import Model, CHAT_OPENAI_BASE_URL
 import pypandoc
 from langgraph.graph import StateGraph, START, END
@@ -23,8 +24,37 @@ llm = ChatOpenAI(
 )
 from prompts import AGREEMENT_SYSTEM_PROMPT
 
+def generate_table(owner_name, owner_address, tenants):
+    table = "\nAppoval and signature :\n\n"
+    table += "| Name and Address               | Photo           | Signature           |  \n"
+    table += "|--------------------------------|-----------------|---------------------|  \n"
+
+    # Owner details
+    table += f"| **Owner:**                     |                 |                     |  \n"
+    table += f"| **Name:** {owner_name}       | [OWNER PHOTO]   | [OWNER SIGNATURE]   |  \n"
+    table += f"| **Address:** {owner_address} |                 |                     |  \n"
+    table += "|--------------------------------|-----------------|---------------------|  \n"
+
+    # Tenant details
+    for idx, tenant in enumerate(tenants, start=1):
+        table += f"| **Tenant {idx}:**                  |                 |                     |  \n"
+        table += f"| **Name:** {tenant['name']}      | [TENANT {idx} PHOTO]| [TENANT {idx} SIGNATURE]|  \n"
+        table += f"| **Address:** {tenant['address']} |                 |                     |  \n"
+        table += "|--------------------------------|-----------------|---------------------|  \n"
+
+    return table
+
+def generate_furniture_table(furniture):
+    table = "\nFurniture and Appliances :\n\n"
+    table += "| Sr. No. | Name              | Units |\n"
+    table += "|---------|-------------------|-------|\n"
+    for item in furniture:
+        table += f"| {item['sr_no']}       | {item['name']}       | {item['units']}     |\n"
+
+    return table
 
 def generate_agreement(state: State):
+    """Generates the complete rental agreement by combining all sections."""
     agreement_id = state["agreement_id"]
     current_state = state_manager.get_agreement_state(agreement_id)
     if not current_state:
@@ -33,16 +63,72 @@ def generate_agreement(state: State):
     # Reset memory for fresh conversation
     memory.clear()
 
-    if current_state.is_pdf_generated:
-        return {"messages": current_state.agreement_text, "agreement_id": agreement_id}
+    # Extract details from the current state
+    owner = current_state.owner_name
+    owner_address = current_state.owner_address
+    tenant_details = current_state.tenant_details
+    property_address = current_state.property_address
+    city = current_state.city
+    bhk_type = current_state.bhk_type
+    area = current_state.area
+    furnishing_type = current_state.furnishing_type
+    rent_amount = current_state.rent_amount
+    agreement_period = current_state.agreement_period
+    security_deposit = current_state.security_deposit
+    registration_date = current_state.registration_date
+    amenities = current_state.amenities
+    furniture_and_appliances = current_state.furniture_and_appliances
+
+    # Generate the Introduction Section
+    introduction_section = generate_introduction_section(
+        owner_name=owner,
+        owner_address=owner_address,
+        tenants=tenant_details,
+        property_address=property_address,
+        city=city,
+        bhk_type=bhk_type,
+        area=area,
+        furnishing_type=furnishing_type,
+        rent_amount=rent_amount,
+        agreement_period=agreement_period,
+        security_deposit=security_deposit,
+        registration_date=registration_date,
+    )
+    print(f"Introduction Section: {introduction_section}")
+    # Generate the Terms and Conditions Section
+    terms_conditions_section = generate_terms_conditions_section(
+        rent_amount=rent_amount,
+        security_deposit=security_deposit,
+        amenities=amenities,
+    )
+    print(f"Terms and Conditions Section: {terms_conditions_section}")
+    # Call LLM for the Introduction Section
     messages = [
         {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
-        {"role": "user", "content": state["messages"][-1].content},
+        {"role": "user", "content": introduction_section},
     ]
-    response = llm.invoke(messages)
-    current_state.agreement_text = response.content
-    return {"messages": response, "agreement_id": agreement_id}
+    introduction_response = llm.invoke(messages)
+    introduction_content = introduction_response.content
 
+    # Call LLM for the Terms and Conditions Section
+    messages = [
+        {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
+        {"role": "user", "content": terms_conditions_section},
+    ]
+    terms_conditions_response = llm.invoke(messages)
+    terms_conditions_content = terms_conditions_response.content
+
+    # Combine all sections into the final agreement
+    final_agreement = "\n\n".join([
+        introduction_content,
+        terms_conditions_content,
+        generate_furniture_table(furniture_and_appliances),
+        generate_table(owner, owner_address, tenant_details),
+    ])
+
+    current_state.agreement_text = final_agreement
+
+    return {"messages": final_agreement, "agreement_id": agreement_id}
 
 def resize_image(image_path, max_width, max_height):
     try:

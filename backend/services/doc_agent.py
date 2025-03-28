@@ -184,6 +184,7 @@ async def create_agreement_details(
         state_manager.set_current_agreement_id(agreement_id)
         current_state = state_manager.get_agreement_state(agreement_id)
         current_state.set_owner(request.owner_name, request.owner_email)
+        current_state.set_agreement_details(request)
         tools = create_tool_with_agreement_id(agreement_id)
 
         agent = initialize_agent(
@@ -195,11 +196,12 @@ async def create_agreement_details(
             max_iterations=1,
             early_stopping_method="generate",
             agent_kwargs={
-        "prefix": PREFIX,
-        "format_instructions": FORMAT_INSTRUCTIONS,
-        "suffix": SUFFIX,
-        "prompt": prompt,
-    },        )
+                "prefix": PREFIX,
+                "format_instructions": FORMAT_INSTRUCTIONS,
+                "suffix": SUFFIX,
+                "prompt": prompt,
+            },
+        )
 
 
         # Store tenant details

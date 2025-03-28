@@ -182,6 +182,7 @@ def generate_email_template(
     agreement_type_str = "template" if is_template else "rent"
 
     url = f"{CORS_ALLOWED_ORIGIN}/review-agreement/{user_id}/{agreement_id}?type={agreement_type_str}"
+    print(f"URL---> {url}")
 
     if is_rejection:
         message = f"The agreement has been rejected by {rejected_by}."
@@ -238,77 +239,125 @@ def format_agreement_details(
     )
 
     furniture_list = ", ".join(
-        f"{item['name']}{'s' if int(item['units']) > 1 else 'Not provided any furniture'} {item['units']}"
-        for item in furniture_and_appliances
+        f"{item['name']} ({item['units']} units)" for item in furniture_and_appliances
+    ) if furniture_and_appliances else "No furniture provided."
+
+    amenities_list = ", ".join(amenities) if amenities else "No amenities provided."
+
+    tenants_info = "\n".join(
+        f"{i+1}. Name: {t['name']}, Address: {t['address']}" for i, t in enumerate(tenant_details)
     )
 
-    amenities_list = (
-        "\n".join(f"  - {amenity}" for amenity in amenities)
-        if amenities
-        else "No aminities"
+    tenants_approval = "\n".join(
+        f"    {i+1}. Name: {t['name']}, Address: {t['address']}" for i, t in enumerate(tenant_details)
     )
-    furniture_table = (
-        "\n".join(
-            f"| {item['sr_no']}  | {item['name']} | {item['units']} |"
-            for item in furniture_and_appliances
-        )
-        if furniture_and_appliances
-        else "Not provided any furniture."
-    )
+
     return f"""
-RENTAL AGREEMENT REQUIREMENTS:
+RENTAL AGREEMENT DETAILS
 
-MANDATORY DATA- REQUIRED (MUST BE INCLUDED):
-OWNER DETAILS:
-    NAME: {owner_name}
-    ADDRESS: {owner_address}
-TENANTS DETAILS:
-    Name: {chr(10).join(f'{i+1}. {t["name"]}' for i, t in enumerate(tenant_details))}
-    Address: {chr(10).join(f'{i+1}. {t["address"]}' for i, t in enumerate(tenant_details))}
-TERMS: Rs. {rent_amount}/month, {num_months} months ({start_date} to {end_date})
-DEPOSIT: Rs. {security_deposit}
-REGISTERED DATE: {registration_date}
-PROPERTY DETAILS: Address: {property_address}, City: {city}, bhk type {bhk_type}, Area: {area} sq. ft., furnishing_type: {furnishing_type}
+INTRODUCTION:
+    Owner Name: {owner_name}
+    Owner Address: {owner_address}
+    Tenants:
+{tenants_info}
+    Property Address: {property_address}, City: {city}
+    BHK Type: {bhk_type}, Area: {area} sq. ft.
+    Furnishing Type: {furnishing_type}
+    Rent Amount: Rs. {rent_amount}/month
+    Duration: {num_months} months ({start_date} to {end_date})
+    Security Deposit: Rs. {security_deposit}
+    Registration Date: {registration_date}
 
-
-REQUIRED SECTIONS - MUST INCLUDE 2-4 DETAILED POINTS FOR EACH,  MINIMUM 3O to 50 WORDS PER SENTANCE:
 TERMS AND CONDITIONS:
-1. LICENSE FEE: MUST cover payment of Rs. {rent_amount}, due dates, escalation
-2. DEPOSIT: MUST specify Rs. {security_deposit} amount, refund process, deductions, timeline
-3. FURNITURE AND APPLIANCES: Tenants shall maintain all items in good condition  and MUST explain complete furniture list {furniture_list},damage reporting procedure, replacement responsibility
-4. UTILITIES: MUST detail all bill responsibilities, payment methods, connections, shared costs
-5. TENANT DUTIES: MUST list maintenance requirements, prohibitions, cleanliness, occupancy
-6. OWNER RIGHTS: MUST outline inspection protocols, notice periods, access conditions, showings
-7. TERMINATION: MUST define notice periods, early exit penalties, inspection process, deposit rules
-8. ALTERATIONS: MUST prohibit unauthorized changes, permission process, restoration, fixtures
-9. AMENITIES: MUST describe access to {amenities_list}, usage rules, restrictions, maintenance
+    License Fee: Payment details including Rs. {rent_amount}, due dates, and escalation terms.
+    Deposit: Refund process, deductions, and timelines for Rs. {security_deposit}.
+    Utilities: Responsibilities for bill payments, shared costs, and connection setup.
+    Tenant Duties: Maintenance requirements, prohibitions, cleanliness, and occupancy rules.
+    Owner Rights: Inspection protocols, notice periods, and property access conditions.
+    Termination: Notice periods, penalties for early exit, and deposit refund conditions.
+    Alterations: Restrictions on modifications, approval process, and restoration requirements.
+    Amenities: Access to facilities - {amenities_list}, including rules and maintenance.
 
-### FURNITURE AND APPLIANCES TABLE - REQUIRED (MUST BE INCLUDED):
-   * The premises contain the following **furniture and appliances** provided by the owner. Tenants shall maintain all items in good condition and will be responsible for any **damages beyond normal wear and tear**.  
-    | Sr. No | Item                 | Count  |
-    |--------|----------------------|--------|
-    {furniture_table}
+FURNITURE AND APPLIANCES:
+    Items provided: {furniture_list}
+    Maintenance responsibility lies with tenants, covering damages beyond normal wear and tear.
 
-### APPROVAL TABLE - REQUIRED (MUST BE THE FINAL SECTION):
-Note: The table MUST follow this PRECISE structure WITHOUT ANY MODIFICATIONS:
-PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present dont add extra or miss the filed.
-
-| Name and Address               | Photo           | Signature           |  
-|--------------------------------|-----------------|---------------------|  
-| **Owner:**                     |                 |                     |  
-| **Name:** {owner_name}         | [OWNER PHOTO]   | [OWNER SIGNATURE]   |  
-| **Address:** {owner_address}   |                 |                     |  
-|--------------------------------|-----------------|---------------------|  
-| **Tenant 1:**                  |                 |                     |  
-| **Name:** [TENANT 1 NAME]      | [TENANT 1 PHOTO]| [TENANT 1 SIGNATURE]|  
-| **Address:** [TENANT 1 ADDRESS]|                 |                     |  
-|--------------------------------|-----------------|---------------------|
-CRITICAL: 
-- STRICTLY PROHIBITED to generate partial, incomplete rental agreements or tables with missing fields
-- Replace [TENANT n NAME] and [TENANT n ADDRESS] with real data for all tenants
-- BOTH FURNITURE TABLE AND APPROVAL TABLE MUST BE INCLUDED IN EVERY AGREEMENT AND THE APPROVAL TABLE MUST ALWAYS BE THE FINAL SECTION OF THE AGREEMENT.
-- If a furniture list is provided, generate the **FURNITURE AND APPLIANCES** section and table; otherwise, return **"No furniture provided."** without an empty table.
-- STRICTLY number tenants as TENANT 1, TENANT 2, etc. - NO variations permitted
-- FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE must be COMPLETELY SEPARATE SECTIONS - DO NOT merge them together or place the table within section 
-- PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present and for tenants must be replace with real time data for name and address.
+APPROVAL SECTION:
+    Owner Name: {owner_name}
+    Owner Address: {owner_address}
+    Tenants:
+{tenants_approval}
+    All parties must review and sign the agreement before proceeding.
 """
+
+def generate_introduction_section(owner_name, owner_address, tenants, property_address, city, bhk_type, area, furnishing_type, rent_amount, agreement_period, security_deposit, registration_date):
+    """Generates the Introduction & Basic Details section with strict formatting and validation."""
+    
+    print(f"Agreement Period: {agreement_period}")
+    start_date, end_date = agreement_period
+    print(f"Start Date: {start_date}, End Date: {end_date}")
+    
+    # Convert datetime objects to formatted strings if necessary
+    if isinstance(start_date, datetime):
+        start_date = start_date.strftime("%Y-%m-%dT%H:%M:%S%z")
+    if isinstance(end_date, datetime):
+        end_date = end_date.strftime("%Y-%m-%dT%H:%M:%S%z")
+    
+    # Parse date strings to datetime objects for calculations
+    start_date_obj = parse_datetime(start_date)
+    end_date_obj = parse_datetime(end_date)
+    
+    # Calculate the number of months in the agreement period
+    num_months = (end_date_obj.year - start_date_obj.year) * 12 + (end_date_obj.month - start_date_obj.month)
+    
+    # Format tenant details
+    tenant_details = "\n".join(f"{i+1}. {t['name']}, Address: {t['address']}" for i, t in enumerate(tenants))
+
+    data = f"""
+    ### RENTAL AGREEMENT - MANDATORY DETAILS  
+
+    **REQUIRED SECTIONS - MUST INCLUDE ALL DETAILS AS SPECIFIED:**  
+    - The agreement must contain complete and accurate **Owner Details, Tenant Details, Agreement Terms, and Property Details**.  
+    - **Dates must be in the correct format (YYYY-MM-DDTHH:MM:SS±HHMM).**  
+    - **No section should be omitted or modified.** Ensure all details are properly structured.  
+    - The agreement period must be calculated in months and clearly specified.  
+
+    **OWNER DETAILS:**  
+    - **Name:** {owner_name}  
+    - **Address:** {owner_address}  
+
+    **TENANT DETAILS:**  
+    {tenant_details}  
+
+    **AGREEMENT TERMS:**  
+    - **Rent:** Rs. {rent_amount}/month  
+    - **Duration:** {num_months} months ({start_date} to {end_date})  
+    - **Security Deposit:** Rs. {security_deposit}  
+    - **Registration Date:** {registration_date}  
+
+    **PROPERTY DETAILS:**  
+    - **Address:** {property_address}  
+    - **City:** {city}  
+    - **BHK Type:** {bhk_type}  
+    - **Area:** {area} sq. ft.  
+    - **Furnishing Type:** {furnishing_type}  
+    """
+
+    return data
+
+def generate_terms_conditions_section(rent_amount, security_deposit, amenities):
+    """Generates the Terms & Conditions section with detailed instructions."""
+    data = f"""
+    ### TERMS & CONDITIONS - REQUIRED SECTIONS  
+    **Each section MUST include 2-4 detailed points, with a minimum of 30 to 50 words per point.**  
+
+    1. **LICENSE FEE**: Must clearly define the payment of Rs. {rent_amount}, including due dates, escalation terms, and any applicable late fees.  
+    2. **SECURITY DEPOSIT**: Must specify the amount (Rs. {security_deposit}), refund process, permissible deductions, and the expected timeline for returns.  
+    3. **UTILITIES**: Must outline tenant responsibilities for electricity, water, gas, internet, and other utilities, including payment methods, shared costs, and connection details.  
+    4. **TENANT RESPONSIBILITIES**: Must list maintenance obligations, restrictions on alterations, cleanliness expectations, and occupancy limits.  
+    5. **OWNER RIGHTS**: Must describe inspection protocols, required notice periods for entry, conditions for access, and procedures for property showings.  
+    6. **TERMINATION POLICY**: Must define notice periods for lease termination, early exit penalties, final inspection requirements, and security deposit refund rules.  
+    7. **PROPERTY ALTERATIONS**: Must prohibit unauthorized modifications, define the approval process for changes, outline restoration responsibilities, and specify handling of fixtures.  
+    8. **AMENITIES**: Must provide a clear description of available amenities ({', '.join(amenities)}), along with their usage rules, restrictions, and maintenance responsibilities.  
+    """
+    return data
