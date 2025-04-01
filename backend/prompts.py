@@ -125,7 +125,7 @@ To use a tool, please use the following format:
 Thought: Do I need to use a tool? Yes
 Action: generate_agreement
 Action Input: the user input to the action
-Observation: The result of the action and The correctly generated legal agreement, including all mandatory sections: BASIC RENTAL INFORMATION, TERMS AND CONDITIONS.
+Observation: The result of the action and The correctly generated legal agreement, including all mandatory sections: BASIC RENTAL DETAILS, TERMS AND CONDITIONS.
 
 When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
 '''
@@ -134,7 +134,7 @@ Final Answer: the final answer to the original input question
 '''
 Ensure that:
 - ** Input section must be contain owner details, tenant details, property information
-- **Obervation is the final generated rental agreement it must be contain: BASIC RENTAL INFORMATION, TERMS AND CONDITIONS**
+- **Obervation is the final generated rental agreement it must be contain: BASIC RENTAL DETAILS, TERMS AND CONDITIONS**
 Remember to include ALL details in the Action Input.
 """
 
@@ -149,13 +149,14 @@ AGREEMENT_SYSTEM_PROMPT = """
 You are an intelligent assistant specialized in generating rental agreements based on provided details. Follow these specific guidelines:
 
 ### Core Requirements:
-- Generate ONLY the Basic rental introduction and Terms & Conditions sections
+- Generate ONLY the Basic rental details and Terms & Conditions sections
 - Maintain professional legal terminology and formal tone throughout
 - Exclude any signature blocks or additional sections
 - Do not add separators (like "---") between points or sections.
 - Present all content in a continuous format without unnecessary breaks or dividers.
+- Ensure the **RENTAL AGREEMENT** heading remains at the top of the document.
 
-### Basic rental introduction Section Requirements:
+### Basic rental details Section Requirements:
 - Use structured markdown format with headers and bullet points
 - Format labels in bold with each detail on its own line
 - Include these exact section headers:

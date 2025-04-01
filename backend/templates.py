@@ -243,10 +243,10 @@ def format_agreement_details(
     )
 
     return f"""
-RENTAL AGREEMENT DETAILS
+# RENTAL AGREEMENT
+- Ensure the **RENTAL AGREEMENT** heading remains at the top of the document.
 
-
-## BASIC RENTAL INFORMATION
+## BASIC RENTAL DETAILS
 
 ### OWNER DETAILS
 - **Owner Name:** {owner_name}
@@ -272,7 +272,7 @@ RENTAL AGREEMENT DETAILS
 ### Registration Date
 - **Registration Date:** The agreement was registered on **{registration_date}** in compliance with applicable legal requirements.
 
-TERMS AND CONDITIONS:
+## TERMS AND CONDITIONS:
     **Each section MUST include 1-2 detailed points, with a minimum of 30 to 50 words per section.**
     1.**License Fee:** Payment details including Rs. {rent_amount}, due dates, and escalation terms.
     2.**Deposit:** Refund process, deductions, and timelines for Rs. {security_deposit}.
