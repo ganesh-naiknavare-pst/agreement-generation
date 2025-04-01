@@ -1,5 +1,4 @@
 import tempfile
-from templates import generate_introduction_section, generate_terms_conditions_section
 from constants import Model, CHAT_OPENAI_BASE_URL
 import pypandoc
 from langgraph.graph import StateGraph, START, END
@@ -8,7 +7,8 @@ from langchain.memory import ConversationBufferMemory
 from helpers.state_manager import State, state_manager
 import os
 from PIL import Image
-import io
+from templates import format_agreement_details
+from prompts import AGREEMENT_SYSTEM_PROMPT
 
 os.environ["OPENAI_API_KEY"] = "XXX"
 
@@ -22,7 +22,6 @@ llm = ChatOpenAI(
     api_key="",
     base_url=CHAT_OPENAI_BASE_URL,
 )
-from prompts import AGREEMENT_SYSTEM_PROMPT
 
 
 def generate_table(owner_name, owner_address, tenants):
@@ -71,7 +70,6 @@ def generate_furniture_table(furniture):
     return table
 
 
-
 def generate_agreement(state: State):
     """Generates the complete rental agreement by combining all sections."""
     agreement_id = state["agreement_id"]
@@ -98,32 +96,26 @@ def generate_agreement(state: State):
     amenities = current_state.amenities
     furniture_and_appliances = current_state.furniture_and_appliances
 
-    # Generate the Introduction Section
-    introduction_section = generate_introduction_section(
+    agreement_details = format_agreement_details(
         owner_name=owner,
-        owner_address=owner_address,
-        tenants=tenant_details,
+        tenant_details=tenant_details,
         property_address=property_address,
         city=city,
+        rent_amount=rent_amount,
+        agreement_period=[date.isoformat() for date in agreement_period],
+        owner_address=owner_address,
+        furnishing_type=furnishing_type,
+        security_deposit=security_deposit,
         bhk_type=bhk_type,
         area=area,
-        furnishing_type=furnishing_type,
-        rent_amount=rent_amount,
-        agreement_period=agreement_period,
-        security_deposit=security_deposit,
         registration_date=registration_date,
-    )
-    # Generate the Terms and Conditions Section
-    terms_conditions_section = generate_terms_conditions_section(
-        rent_amount=rent_amount,
-        security_deposit=security_deposit,
         amenities=amenities,
     )
-    combined_section = introduction_section + "\n\n" + terms_conditions_section
+
     messages = [
         {"role": "system", "content": state["messages"][-1].content},
         {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
-        {"role": "user", "content": combined_section},
+        {"role": "user", "content": agreement_details},
     ]
     response = llm.invoke(messages)
     content_response = response.content

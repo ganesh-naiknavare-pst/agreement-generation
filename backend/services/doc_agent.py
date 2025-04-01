@@ -227,7 +227,6 @@ async def create_agreement_details(
             bhk_type=request.bhk_type,
             area=request.area,
             registration_date=request.registration_date,
-            furniture_and_appliances=request.furniture_and_appliances,
             amenities=request.amenities,
         )
 

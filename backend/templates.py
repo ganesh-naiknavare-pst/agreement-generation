@@ -212,6 +212,7 @@ def parse_datetime(date_str: str) -> datetime:
             continue
     raise ValueError(f"Date string '{date_str}' does not match expected formats.")
 
+
 def format_agreement_details(
     owner_name: str,
     tenant_details: list,
@@ -225,7 +226,6 @@ def format_agreement_details(
     bhk_type: str,
     area: int,
     registration_date: str,
-    furniture_and_appliances: List[Dict[str, str]],
     amenities: List[str],
 ) -> str:
     start_date, end_date = agreement_period
@@ -237,127 +237,49 @@ def format_agreement_details(
         - start_date_obj.month
     )
 
-    furniture_list = ", ".join(
-        f"{item['name']} ({item['units']} units)" for item in furniture_and_appliances
-    ) if furniture_and_appliances else "No furniture provided."
-
-    amenities_list = ", ".join(amenities) if amenities else "No amenities provided."
-
     tenants_info = "\n".join(
-        f"{i+1}. Name: {t['name']}, Address: {t['address']}" for i, t in enumerate(tenant_details)
-    )
-
-    tenants_approval = "\n".join(
-        f"    {i+1}. Name: {t['name']}, Address: {t['address']}" for i, t in enumerate(tenant_details)
+        f"- **Name:** {t['name']}\n  **Address:** {t['address']}"
+        for i, t in enumerate(tenant_details)
     )
 
     return f"""
 RENTAL AGREEMENT DETAILS
 
-INTRODUCTION:
-    Owner Name: {owner_name}
-    Owner Address: {owner_address}
-    Tenants:
+
+## BASIC RENTAL INFORMATION
+
+### OWNER DETAILS
+- **Owner Name:** {owner_name}
+- **Owner Address:** {owner_address}
+
+### TENANT DETAILS
 {tenants_info}
-    Property Address: {property_address}, City: {city}
-    BHK Type: {bhk_type}, Area: {area} sq. ft.
-    Furnishing Type: {furnishing_type}
-    Rent Amount: Rs. {rent_amount}/month
-    Duration: {num_months} months ({start_date} to {end_date})
-    Security Deposit: Rs. {security_deposit}
-    Registration Date: {registration_date}
+
+### PROPERTY DETAILS
+- **Property Address:** {property_address}
+- **City:** {city}
+- **BHK Type:** {bhk_type}
+- **Area:** {area} sq. ft.
+- **Furnishing Type:** {furnishing_type}
+
+### Financial Details
+- **Rent Amount:** Rs. {rent_amount}/month
+- **Security Deposit:** Rs. {security_deposit}
+
+### Term of Agreement
+- The agreement is valid for {num_months} months, from {start_date} to {end_date}.
+
+### Registration Date
+- **Registration Date:** The agreement was registered on **{registration_date}** in compliance with applicable legal requirements.
 
 TERMS AND CONDITIONS:
-    License Fee: Payment details including Rs. {rent_amount}, due dates, and escalation terms.
-    Deposit: Refund process, deductions, and timelines for Rs. {security_deposit}.
-    Utilities: Responsibilities for bill payments, shared costs, and connection setup.
-    Tenant Duties: Maintenance requirements, prohibitions, cleanliness, and occupancy rules.
-    Owner Rights: Inspection protocols, notice periods, and property access conditions.
-    Termination: Notice periods, penalties for early exit, and deposit refund conditions.
-    Alterations: Restrictions on modifications, approval process, and restoration requirements.
-    Amenities: Access to facilities - {amenities_list}, including rules and maintenance.
-"""
-
-def generate_introduction_section(
-    owner_name: str,
-    owner_address: str,
-    tenants: List[Dict[str, str]],
-    property_address: str,
-    city: str,
-    bhk_type: str,
-    area: Union[int, float],
-    furnishing_type: str,
-    rent_amount: Union[int, float],
-    agreement_period: List[datetime],
-    security_deposit: Union[int, float],
-    registration_date: str,
-) -> str:
-    """Generates the Introduction & Basic Details section with strict formatting and validation."""
-    start_date, end_date = agreement_period
-    
-    if isinstance(start_date, datetime):
-        start_date = start_date.strftime("%Y-%m-%dT%H:%M:%S%z")
-    if isinstance(end_date, datetime):
-        end_date = end_date.strftime("%Y-%m-%dT%H:%M:%S%z")
-    
-    start_date_obj = parse_datetime(start_date)
-    end_date_obj = parse_datetime(end_date)
-    
-    num_months = (end_date_obj.year - start_date_obj.year) * 12 + (end_date_obj.month - start_date_obj.month)
-    
-    tenant_details = "\n".join(f"{i+1}. {t['name']}, Address: {t['address']}" for i, t in enumerate(tenants))
-
-    data = f"""
-    ### RENTAL AGREEMENT
-
-    **REQUIRED SECTIONS - MUST INCLUDE ALL DETAILS AS SPECIFIED:**  
-    - Add proper heading at the start of the section.
-    - The agreement must contain complete and accurate **Owner Details, Tenant Details, Agreement Terms, and Property Details**.  
-    - **Dates must be in the correct format (YYYY-MM-DDTHH:MM:SS±HHMM).**  
-    - **No section should be omitted or modified.** Ensure all details are properly structured.  
-    - The agreement period must be calculated in months and clearly specified.  
-
-    **OWNER DETAILS:**  
-    - **Name:** {owner_name}  
-    - **Address:** {owner_address}  
-
-    **TENANT DETAILS:**  
-    {tenant_details}  
-
-    **AGREEMENT TERMS:**  
-    - **Rent:** Rs. {rent_amount}/month  
-    - **Duration:** {num_months} months ({start_date} to {end_date})  
-    - **Security Deposit:** Rs. {security_deposit}  
-    - **Registration Date:** {registration_date}  
-
-    **PROPERTY DETAILS:**  
-    - **Address:** {property_address}  
-    - **City:** {city}  
-    - **BHK Type:** {bhk_type}  
-    - **Area:** {area} sq. ft.  
-    - **Furnishing Type:** {furnishing_type}  
+    **Each section MUST include 1-2 detailed points, with a minimum of 30 to 50 words per section.**
+    1.**License Fee:** Payment details including Rs. {rent_amount}, due dates, and escalation terms.
+    2.**Deposit:** Refund process, deductions, and timelines for Rs. {security_deposit}.
+    3.**Utilities:** Responsibilities for bill payments, shared costs, and connection setup.
+    4.**Tenant Duties:** Maintenance requirements, prohibitions, cleanliness, and occupancy rules.
+    5.**Owner Rights:** Inspection protocols, notice periods, and property access conditions.
+    6.**Termination:** Notice periods, penalties for early exit, and deposit refund conditions.
+    7.**Alterations:** Restrictions on modifications, approval process, and restoration requirements.
+    8.**AMENITIES**: Must provide a clear description of available amenities ({', '.join(amenities)}), along with their usage rules, restrictions, and maintenance responsibilities.
     """
-
-    return data
-
-def generate_terms_conditions_section(
-    rent_amount: Union[int, float],
-    security_deposit: Union[int, float],
-    amenities: List[str],
-) -> str:
-    """Generates the Terms & Conditions section with detailed instructions."""
-    data = f"""
-    **Add proper heading at the start of the section.**
-    **Each section MUST include 1-2 detailed points, with a minimum of 30 to 50 words per section.**  
-    ### TERMS & CONDITIONS
-
-    1. **LICENSE FEE**: Must clearly define the payment of Rs. {rent_amount}, including due dates, escalation terms, and any applicable late fees.  
-    2. **SECURITY DEPOSIT**: Must specify the amount (Rs. {security_deposit}), refund process, permissible deductions, and the expected timeline for returns.  
-    3. **UTILITIES**: Must outline tenant responsibilities for electricity, water, gas, internet, and other utilities, including payment methods, shared costs, and connection details.  
-    4. **TENANT RESPONSIBILITIES**: Must list maintenance obligations, restrictions on alterations, cleanliness expectations, and occupancy limits.  
-    5. **OWNER RIGHTS**: Must describe inspection protocols, required notice periods for entry, conditions for access, and procedures for property showings.  
-    6. **TERMINATION POLICY**: Must define notice periods for lease termination, early exit penalties, final inspection requirements, and security deposit refund rules.  
-    7. **PROPERTY ALTERATIONS**: Must prohibit unauthorized modifications, define the approval process for changes, outline restoration responsibilities, and specify handling of fixtures.  
-    8. **AMENITIES**: Must provide a clear description of available amenities ({', '.join(amenities)}), along with their usage rules, restrictions, and maintenance responsibilities.  
-    """
-    return data
