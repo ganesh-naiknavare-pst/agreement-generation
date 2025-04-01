@@ -1,7 +1,7 @@
 from config import BASE_APPROVAL_URL, CORS_ALLOWED_ORIGIN
 from helpers.state_manager import state_manager
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 import logging
 
 REJECTION_NOTIFICATION_TEMPLATE = """
@@ -182,7 +182,6 @@ def generate_email_template(
     agreement_type_str = "template" if is_template else "rent"
 
     url = f"{CORS_ALLOWED_ORIGIN}/review-agreement/{user_id}/{agreement_id}?type={agreement_type_str}"
-    print(f"URL---> {url}")
 
     if is_rejection:
         message = f"The agreement has been rejected by {rejected_by}."
@@ -279,12 +278,22 @@ TERMS AND CONDITIONS:
     Amenities: Access to facilities - {amenities_list}, including rules and maintenance.
 """
 
-def generate_introduction_section(owner_name, owner_address, tenants, property_address, city, bhk_type, area, furnishing_type, rent_amount, agreement_period, security_deposit, registration_date):
+def generate_introduction_section(
+    owner_name: str,
+    owner_address: str,
+    tenants: List[Dict[str, str]],
+    property_address: str,
+    city: str,
+    bhk_type: str,
+    area: Union[int, float],
+    furnishing_type: str,
+    rent_amount: Union[int, float],
+    agreement_period: List[datetime],
+    security_deposit: Union[int, float],
+    registration_date: str,
+) -> str:
     """Generates the Introduction & Basic Details section with strict formatting and validation."""
-    
-    print(f"Agreement Period: {agreement_period}")
     start_date, end_date = agreement_period
-    print(f"Start Date: {start_date}, End Date: {end_date}")
     
     if isinstance(start_date, datetime):
         start_date = start_date.strftime("%Y-%m-%dT%H:%M:%S%z")
@@ -331,7 +340,11 @@ def generate_introduction_section(owner_name, owner_address, tenants, property_a
 
     return data
 
-def generate_terms_conditions_section(rent_amount, security_deposit, amenities):
+def generate_terms_conditions_section(
+    rent_amount: Union[int, float],
+    security_deposit: Union[int, float],
+    amenities: List[str],
+) -> str:
     """Generates the Terms & Conditions section with detailed instructions."""
     data = f"""
     **Add proper heading at the start of the section.**

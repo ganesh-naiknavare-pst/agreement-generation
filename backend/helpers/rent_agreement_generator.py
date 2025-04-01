@@ -26,7 +26,7 @@ from prompts import AGREEMENT_SYSTEM_PROMPT
 
 
 def generate_table(owner_name, owner_address, tenants):
-    table = "\nAppoval and signature :\n\n"
+    table = "\n## Approval and Signature\n\n"
     table += (
         "| Name and Address               | Photo           | Signature           |  \n"
     )
@@ -55,11 +55,12 @@ def generate_table(owner_name, owner_address, tenants):
 
     return table
 
+
 def generate_furniture_table(furniture):
     if not furniture:
-        return "\nFurniture and Appliances:\n\nNo furniture or appliances provided.\n"
+        return "\n## Furniture and Appliances\n\nNo furniture or appliances included."
 
-    table = "\nFurniture and Appliances:\n\n"
+    table = "\n## Furniture and Appliances\n\n"
     table += "| Sr. No. | Name              | Units |\n"
     table += "|---------|-------------------|-------|\n"
     for item in furniture:
