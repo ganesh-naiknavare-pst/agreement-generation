@@ -9,6 +9,7 @@ import os
 from PIL import Image
 from templates import format_agreement_details
 from prompts import AGREEMENT_SYSTEM_PROMPT
+from typing import List, Dict
 
 os.environ["OPENAI_API_KEY"] = "XXX"
 
@@ -24,7 +25,7 @@ llm = ChatOpenAI(
 )
 
 
-def generate_table(owner_name, owner_address, tenants):
+def generate_table(owner_name: str, owner_address: str, tenants: List[Dict[str, str]]) -> str:
     table = "\n## Approval and Signature\n\n"
     table += (
         "| Name and Address               | Photo           | Signature           |  \n"
@@ -55,7 +56,7 @@ def generate_table(owner_name, owner_address, tenants):
     return table
 
 
-def generate_furniture_table(furniture):
+def generate_furniture_table(furniture: List[Dict[str, str]]) -> str:
     if not furniture:
         return "\n## Furniture and Appliances\n\nNo furniture or appliances included."
 

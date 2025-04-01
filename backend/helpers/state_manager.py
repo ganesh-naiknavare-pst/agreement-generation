@@ -4,7 +4,7 @@ from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
 from dataclasses import dataclass, field
 from datetime import datetime
-
+from models.rental_agreement import AgreementRequest
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
@@ -64,7 +64,7 @@ class AgreementState:
         self.owner_name = owner_name
         self.owner_email = owner_email
         
-    def set_agreement_details(self, request):
+    def set_agreement_details(self, request: AgreementRequest) -> None:
         """
         Sets only the required agreement details from the request object.
         """
