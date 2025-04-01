@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from api.routes.websocket import notify_clients
 from helpers.email_helper import send_rejection_email
-from helpers.state_manager import state_manager
+from helpers.state_manager import AgreementState, TemplateAgreementState, state_manager
 from services.doc_agent import delete_temp_file, delete_temp_images
 from services.template_doc_agent import (
     delete_template_file,
@@ -85,20 +85,24 @@ async def reject_user(data: Data, request: Request, db: Prisma = Depends(get_db)
     rejected_by_name = None
     rejected_by_role = None
 
-    current_state = state_manager.get_agreement_state(
-        data.agreement_id
-    ) or state_manager.get_template_agreement_state(data.agreement_id)
+    current_state = (
+        state_manager.get_agreement_state(data.agreement_id) 
+        if data.agreement_type == "rent" 
+        else state_manager.get_template_agreement_state(data.agreement_id)
+    )
 
-    if data.user == current_state.owner_id:
-        rejected_by_name = current_state.owner_name
-        rejected_by_role = "owner"
-    elif data.user in current_state.tenants:
-        rejected_by_name = current_state.tenant_names[data.user]
-        rejected_by_role = "tenant"
-    elif data.user == current_state.authority_id:
-        rejected_by_name = "Authority"
-    elif data.user == current_state.participant_id:
-        rejected_by_name = "Participant"
+    if isinstance(current_state, AgreementState):
+        if data.user == current_state.owner_id:
+            rejected_by_name = current_state.owner_name
+            rejected_by_role = "owner"
+        elif data.user in current_state.tenants:
+            rejected_by_name = current_state.tenant_names[data.user]
+            rejected_by_role = "tenant"
+    elif isinstance(current_state, TemplateAgreementState):
+        if data.user == current_state.authority_id:
+            rejected_by_name = "Authority"
+        elif data.user == current_state.participant_id:
+            rejected_by_name = "Participant"
 
     # Send rejection notifications to all parties
     if rejected_by_name and rejected_by_role:
