@@ -297,26 +297,23 @@ def generate_introduction_section(owner_name, owner_address, tenants, property_a
     start_date, end_date = agreement_period
     print(f"Start Date: {start_date}, End Date: {end_date}")
     
-    # Convert datetime objects to formatted strings if necessary
     if isinstance(start_date, datetime):
         start_date = start_date.strftime("%Y-%m-%dT%H:%M:%S%z")
     if isinstance(end_date, datetime):
         end_date = end_date.strftime("%Y-%m-%dT%H:%M:%S%z")
     
-    # Parse date strings to datetime objects for calculations
     start_date_obj = parse_datetime(start_date)
     end_date_obj = parse_datetime(end_date)
     
-    # Calculate the number of months in the agreement period
     num_months = (end_date_obj.year - start_date_obj.year) * 12 + (end_date_obj.month - start_date_obj.month)
     
-    # Format tenant details
     tenant_details = "\n".join(f"{i+1}. {t['name']}, Address: {t['address']}" for i, t in enumerate(tenants))
 
     data = f"""
-    ### RENTAL AGREEMENT - MANDATORY DETAILS  
+    ### RENTAL AGREEMENT
 
     **REQUIRED SECTIONS - MUST INCLUDE ALL DETAILS AS SPECIFIED:**  
+    - Add proper heading at the start of the section.
     - The agreement must contain complete and accurate **Owner Details, Tenant Details, Agreement Terms, and Property Details**.  
     - **Dates must be in the correct format (YYYY-MM-DDTHH:MM:SS±HHMM).**  
     - **No section should be omitted or modified.** Ensure all details are properly structured.  
@@ -348,8 +345,9 @@ def generate_introduction_section(owner_name, owner_address, tenants, property_a
 def generate_terms_conditions_section(rent_amount, security_deposit, amenities):
     """Generates the Terms & Conditions section with detailed instructions."""
     data = f"""
-    ### TERMS & CONDITIONS - REQUIRED SECTIONS  
-    **Each section MUST include 2-4 detailed points, with a minimum of 30 to 50 words per point.**  
+    **Add proper heading at the start of the section.**
+    **Each section MUST include 1-2 detailed points, with a minimum of 30 to 50 words per section.**  
+    ### TERMS & CONDITIONS
 
     1. **LICENSE FEE**: Must clearly define the payment of Rs. {rent_amount}, including due dates, escalation terms, and any applicable late fees.  
     2. **SECURITY DEPOSIT**: Must specify the amount (Rs. {security_deposit}), refund process, permissible deductions, and the expected timeline for returns.  

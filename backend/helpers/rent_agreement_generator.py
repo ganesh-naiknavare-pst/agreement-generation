@@ -104,7 +104,7 @@ def generate_agreement(state: State):
     print(f"Terms and Conditions Section: {terms_conditions_section}")
     # Call LLM for the Introduction Section
     messages = [
-        {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
+        {"role": "system", "content": state["messages"][-1].content},
         {"role": "user", "content": introduction_section},
     ]
     introduction_response = llm.invoke(messages)
@@ -112,7 +112,7 @@ def generate_agreement(state: State):
 
     # Call LLM for the Terms and Conditions Section
     messages = [
-        {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
+        {"role": "system", "content": state["messages"][-1].content},
         {"role": "user", "content": terms_conditions_section},
     ]
     terms_conditions_response = llm.invoke(messages)

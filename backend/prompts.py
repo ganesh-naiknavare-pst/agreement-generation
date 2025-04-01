@@ -116,7 +116,7 @@ agreement reflects the user's request.
 
 IMPORTANT: When you need to generate an agreement, you MUST pass ALL the provided details to the 
 tool without omitting any fields. This includes owner details, tenant details, property information, 
-terms, furniture lists, APPROVAL TABLE and all other provided data. DO NOT summarize or truncate the input.
+terms, furniture lists and all other provided data. DO NOT summarize or truncate the input.
 '''
 
 FORMAT_INSTRUCTIONS = """
@@ -125,7 +125,7 @@ To use a tool, please use the following format:
 Thought: Do I need to use a tool? Yes
 Action: generate_agreement
 Action Input: the user input to the action
-Observation: The result of the action and The correctly generated legal agreement, including all mandatory sections: INTRODUCTION, TERMS AND CONDITIONS, FURNITURE AND APPLIANCES TABLE (if applicable), and APPROVAL TABLE.
+Observation: The result of the action and The correctly generated legal agreement, including all mandatory sections: INTRODUCTION, TERMS AND CONDITIONS.
 
 When you have a response to say to the Human, or if you do not need to use a tool, you MUST use the format:
 '''
@@ -133,8 +133,8 @@ Thought: Do I need to use a tool? No
 Final Answer: the final answer to the original input question
 '''
 Ensure that:
-- ** Input section must be contain owner details, tenant details, property information, FURNITURE AND APPLIANCES TABLE, APPROVAL TABLE
-- **Obervation is the final generated rental agreement it must be contain: INTRODUCTION, TERMS AND CONDITIONS, FURNITURE AND APPLIANCES TABLE(for furnished/semi-furnished properties only), APPROVAL TABLE**
+- ** Input section must be contain owner details, tenant details, property information
+- **Obervation is the final generated rental agreement it must be contain: INTRODUCTION, TERMS AND CONDITIONS**
 Remember to include ALL details in the Action Input.
 """
 
