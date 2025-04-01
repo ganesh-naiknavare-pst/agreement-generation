@@ -24,16 +24,27 @@ llm = ChatOpenAI(
 )
 from prompts import AGREEMENT_SYSTEM_PROMPT
 
+
 def generate_table(owner_name, owner_address, tenants):
     table = "\nAppoval and signature :\n\n"
-    table += "| Name and Address               | Photo           | Signature           |  \n"
-    table += "|--------------------------------|-----------------|---------------------|  \n"
+    table += (
+        "| Name and Address               | Photo           | Signature           |  \n"
+    )
+    table += (
+        "|--------------------------------|-----------------|---------------------|  \n"
+    )
 
     # Owner details
     table += f"| **Owner:**                     |                 |                     |  \n"
-    table += f"| **Name:** {owner_name}       | [OWNER PHOTO]   | [OWNER SIGNATURE]   |  \n"
-    table += f"| **Address:** {owner_address} |                 |                     |  \n"
-    table += "|--------------------------------|-----------------|---------------------|  \n"
+    table += (
+        f"| **Name:** {owner_name}       | [OWNER PHOTO]   | [OWNER SIGNATURE]   |  \n"
+    )
+    table += (
+        f"| **Address:** {owner_address} |                 |                     |  \n"
+    )
+    table += (
+        "|--------------------------------|-----------------|---------------------|  \n"
+    )
 
     # Tenant details
     for idx, tenant in enumerate(tenants, start=1):
@@ -45,13 +56,20 @@ def generate_table(owner_name, owner_address, tenants):
     return table
 
 def generate_furniture_table(furniture):
-    table = "\nFurniture and Appliances :\n\n"
+    if not furniture:
+        return "\nFurniture and Appliances:\n\nNo furniture or appliances provided.\n"
+
+    table = "\nFurniture and Appliances:\n\n"
     table += "| Sr. No. | Name              | Units |\n"
     table += "|---------|-------------------|-------|\n"
     for item in furniture:
-        table += f"| {item['sr_no']}       | {item['name']}       | {item['units']}     |\n"
+        table += (
+            f"| {item['sr_no']}       | {item['name']}       | {item['units']}     |\n"
+        )
 
     return table
+
+
 
 def generate_agreement(state: State):
     """Generates the complete rental agreement by combining all sections."""
@@ -94,41 +112,34 @@ def generate_agreement(state: State):
         security_deposit=security_deposit,
         registration_date=registration_date,
     )
-    print(f"Introduction Section: {introduction_section}")
     # Generate the Terms and Conditions Section
     terms_conditions_section = generate_terms_conditions_section(
         rent_amount=rent_amount,
         security_deposit=security_deposit,
         amenities=amenities,
     )
-    print(f"Terms and Conditions Section: {terms_conditions_section}")
-    # Call LLM for the Introduction Section
+    combined_section = introduction_section + "\n\n" + terms_conditions_section
     messages = [
         {"role": "system", "content": state["messages"][-1].content},
-        {"role": "user", "content": introduction_section},
+        {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
+        {"role": "user", "content": combined_section},
     ]
-    introduction_response = llm.invoke(messages)
-    introduction_content = introduction_response.content
-
-    # Call LLM for the Terms and Conditions Section
-    messages = [
-        {"role": "system", "content": state["messages"][-1].content},
-        {"role": "user", "content": terms_conditions_section},
-    ]
-    terms_conditions_response = llm.invoke(messages)
-    terms_conditions_content = terms_conditions_response.content
+    response = llm.invoke(messages)
+    content_response = response.content
 
     # Combine all sections into the final agreement
-    final_agreement = "\n\n".join([
-        introduction_content,
-        terms_conditions_content,
-        generate_furniture_table(furniture_and_appliances),
-        generate_table(owner, owner_address, tenant_details),
-    ])
+    final_agreement = "\n\n".join(
+        [
+            content_response,
+            generate_furniture_table(furniture_and_appliances),
+            generate_table(owner, owner_address, tenant_details),
+        ]
+    )
 
     current_state.agreement_text = final_agreement
 
     return {"messages": final_agreement, "agreement_id": agreement_id}
+
 
 def resize_image(image_path, max_width, max_height):
     try:

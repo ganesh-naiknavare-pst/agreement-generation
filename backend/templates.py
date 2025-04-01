@@ -277,17 +277,6 @@ TERMS AND CONDITIONS:
     Termination: Notice periods, penalties for early exit, and deposit refund conditions.
     Alterations: Restrictions on modifications, approval process, and restoration requirements.
     Amenities: Access to facilities - {amenities_list}, including rules and maintenance.
-
-FURNITURE AND APPLIANCES:
-    Items provided: {furniture_list}
-    Maintenance responsibility lies with tenants, covering damages beyond normal wear and tear.
-
-APPROVAL SECTION:
-    Owner Name: {owner_name}
-    Owner Address: {owner_address}
-    Tenants:
-{tenants_approval}
-    All parties must review and sign the agreement before proceeding.
 """
 
 def generate_introduction_section(owner_name, owner_address, tenants, property_address, city, bhk_type, area, furnishing_type, rent_amount, agreement_period, security_deposit, registration_date):
