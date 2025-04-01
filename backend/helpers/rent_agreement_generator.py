@@ -79,7 +79,8 @@ def generate_agreement(state: State):
 
     # Reset memory for fresh conversation
     memory.clear()
-
+    if current_state.is_pdf_generated:
+        return {"messages": current_state.agreement_text, "agreement_id": agreement_id}
     # Extract details from the current state
     owner = current_state.owner_name
     owner_address = current_state.owner_address
