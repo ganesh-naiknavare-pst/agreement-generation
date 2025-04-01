@@ -94,34 +94,26 @@ def generate_agreement(state: State):
         security_deposit=security_deposit,
         registration_date=registration_date,
     )
-    print(f"Introduction Section: {introduction_section}")
     # Generate the Terms and Conditions Section
     terms_conditions_section = generate_terms_conditions_section(
         rent_amount=rent_amount,
         security_deposit=security_deposit,
         amenities=amenities,
     )
-    print(f"Terms and Conditions Section: {terms_conditions_section}")
     # Call LLM for the Introduction Section
+    combined_section = introduction_section + "\n\n" + terms_conditions_section
     messages = [
         {"role": "system", "content": state["messages"][-1].content},
-        {"role": "user", "content": introduction_section},
+        {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
+        {"role": "user", "content": combined_section},
     ]
-    introduction_response = llm.invoke(messages)
-    introduction_content = introduction_response.content
+    response = llm.invoke(messages)
+    content_response = response.content
 
-    # Call LLM for the Terms and Conditions Section
-    messages = [
-        {"role": "system", "content": state["messages"][-1].content},
-        {"role": "user", "content": terms_conditions_section},
-    ]
-    terms_conditions_response = llm.invoke(messages)
-    terms_conditions_content = terms_conditions_response.content
 
     # Combine all sections into the final agreement
     final_agreement = "\n\n".join([
-        introduction_content,
-        terms_conditions_content,
+        content_response,
         generate_furniture_table(furniture_and_appliances),
         generate_table(owner, owner_address, tenant_details),
     ])
