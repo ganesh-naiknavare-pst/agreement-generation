@@ -3,10 +3,12 @@ from constants import Model, CHAT_OPENAI_BASE_URL
 from langgraph.graph import StateGraph, START, END
 from langchain_openai import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
-from helpers.state_manager import State, agreement_state
+from helpers.state_manager import State, state_manager
 import os
 from PIL import Image
-from helpers.agreement_generator_helper import create_pdf_file
+from templates import format_agreement_details
+from prompts import AGREEMENT_SYSTEM_PROMPT
+from typing import List, Dict
 
 os.environ["OPENAI_API_KEY"] = "XXX"
 
@@ -20,22 +22,117 @@ llm = ChatOpenAI(
     api_key="",
     base_url=CHAT_OPENAI_BASE_URL,
 )
-from prompts import AGREEMENT_SYSTEM_PROMPT
+
+
+def generate_table(owner_name: str, owner_address: str, tenants: List[Dict[str, str]]) -> str:
+    table = "\n## Approval and Signature\n\n"
+    table += (
+        "| Name and Address               | Photo           | Signature           |  \n"
+    )
+    table += (
+        "|--------------------------------|-----------------|---------------------|  \n"
+    )
+
+    # Owner details
+    table += f"| **Owner:**                     |                 |                     |  \n"
+    table += (
+        f"| **Name:** {owner_name}       | [OWNER PHOTO]   | [OWNER SIGNATURE]   |  \n"
+    )
+    table += (
+        f"| **Address:** {owner_address} |                 |                     |  \n"
+    )
+    table += (
+        "|--------------------------------|-----------------|---------------------|  \n"
+    )
+
+    # Tenant details
+    for idx, tenant in enumerate(tenants, start=1):
+        table += f"| **Tenant {idx}:**                  |                 |                     |  \n"
+        table += f"| **Name:** {tenant['name']}      | [TENANT {idx} PHOTO]| [TENANT {idx} SIGNATURE]|  \n"
+        table += f"| **Address:** {tenant['address']} |                 |                     |  \n"
+        table += "|--------------------------------|-----------------|---------------------|  \n"
+
+    return table
+
+
+def generate_furniture_table(furniture: List[Dict[str, str]]) -> str:
+    if not furniture:
+        return "\n## Furniture and Appliances\n\nNo furniture or appliances included."
+
+    table = "\n## Furniture and Appliances\n\n"
+    table += "| Sr. No. | Name              | Units |\n"
+    table += "|---------|-------------------|-------|\n"
+    for item in furniture:
+        table += (
+            f"| {item['sr_no']}       | {item['name']}       | {item['units']}     |\n"
+        )
+
+    return table
 
 
 def generate_agreement(state: State):
+    """Generates the complete rental agreement by combining all sections."""
+    agreement_id = state["agreement_id"]
+    current_state = state_manager.get_agreement_state(agreement_id)
+    if not current_state:
+        raise ValueError("No active agreement state found")
+
     # Reset memory for fresh conversation
     memory.clear()
+    if current_state.is_pdf_generated:
+        return {"messages": current_state.agreement_text, "agreement_id": agreement_id}
+    # Extract details from the current state
+    owner = current_state.owner_name
+    owner_address = current_state.owner_address
+    tenant_details = current_state.tenant_details
+    property_address = current_state.property_address
+    city = current_state.city
+    bhk_type = current_state.bhk_type
+    area = current_state.area
+    furnishing_type = current_state.furnishing_type
+    rent_amount = current_state.rent_amount
+    agreement_period = current_state.agreement_period
+    security_deposit = current_state.security_deposit
+    registration_date = current_state.registration_date
+    amenities = current_state.amenities
+    furniture_and_appliances = current_state.furniture_and_appliances
 
-    if agreement_state.is_pdf_generated:
-        return {"messages": agreement_state.agreement_text}
+    agreement_details = format_agreement_details(
+        owner_name=owner,
+        tenant_details=tenant_details,
+        property_address=property_address,
+        city=city,
+        rent_amount=rent_amount,
+        agreement_period=[date.isoformat() for date in agreement_period],
+        owner_address=owner_address,
+        furnishing_type=furnishing_type,
+        security_deposit=security_deposit,
+        bhk_type=bhk_type,
+        area=area,
+        registration_date=registration_date,
+        amenities=amenities,
+    )
+
     messages = [
+        {"role": "system", "content": state["messages"][-1].content},
         {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
-        {"role": "user", "content": state["messages"][-1].content},
+        {"role": "user", "content": agreement_details},
     ]
     response = llm.invoke(messages)
-    agreement_state.agreement_text = response.content
-    return {"messages": response}
+    content_response = response.content
+
+    # Combine all sections into the final agreement
+    final_agreement = "\n\n".join(
+        [
+            content_response,
+            generate_furniture_table(furniture_and_appliances),
+            generate_table(owner, owner_address, tenant_details),
+        ]
+    )
+
+    current_state.agreement_text = final_agreement
+
+    return {"messages": final_agreement, "agreement_id": agreement_id}
 
 
 def resize_image(image_path, max_width, max_height):
@@ -52,7 +149,9 @@ def resize_image(image_path, max_width, max_height):
             original_format = "jpeg" if img.format == "JPEG" else "png"
             file_extension = ".jpg" if original_format == "jpeg" else ".png"
 
-            temp_image = tempfile.NamedTemporaryFile(delete=False, suffix=file_extension)
+            temp_image = tempfile.NamedTemporaryFile(
+                delete=False, suffix=file_extension
+            )
             temp_image_path = temp_image.name
             img.save(temp_image_path, format=img.format)
             temp_image.close()
@@ -64,41 +163,40 @@ def resize_image(image_path, max_width, max_height):
 
 
 def create_pdf(state: State):
-    if agreement_state.is_pdf_generated:
-        content = agreement_state.agreement_text
-    else:
+    if isinstance(state, dict):
         content = state["messages"][-1].content
-        agreement_state.agreement_text = content
-    isDraft = True
-    if agreement_state.is_fully_approved():
+        agreement_id = state["agreement_id"]
+        state = state_manager.get_agreement_state(agreement_id)
+        state.agreement_text = content
+    else:
+        content = state.agreement_text
+
+    if not state:
+        raise ValueError("No active agreement state found")
+
+    if state.is_fully_approved():
         # Replace owner signature with image
-        if os.path.isfile(agreement_state.owner_signature):
-            owner_signature_data, _ = resize_image(
-                agreement_state.owner_signature, 60, 30
-            )
+        if os.path.isfile(state.owner_signature):
+            owner_signature_data, _ = resize_image(state.owner_signature, 60, 30)
             content = content.replace(
                 "[OWNER SIGNATURE]", f" ![Owner Signature]({owner_signature_data})"
             )
         else:
-            content = content.replace(
-                "[OWNER SIGNATURE]", agreement_state.owner_signature
-            )
+            content = content.replace("[OWNER SIGNATURE]", state.owner_signature)
 
         # Replace owner photos with image
-        if os.path.isfile(agreement_state.owner_photo):
-            owner_photo_data, _ = resize_image(agreement_state.owner_photo, 60, 60)
+        if os.path.isfile(state.owner_photo):
+            owner_photo_data, _ = resize_image(state.owner_photo, 60, 60)
             content = content.replace(
                 "[OWNER PHOTO]", f" ![Owner PHOTO]({owner_photo_data})"
             )
         else:
-            content = content.replace("[OWNER PHOTO]", agreement_state.owner_photo)
+            content = content.replace("[OWNER PHOTO]", state.owner_photo)
 
         # Replace tenant signatures with numbered placeholders and images
-        for i, (tenant_id, signature) in enumerate(
-            agreement_state.tenant_signatures.items(), 1
-        ):
+        for i, (tenant_id, signature) in enumerate(state.tenant_signatures.items(), 1):
             placeholder = f"[TENANT {i} SIGNATURE]"
-            tenant_name = agreement_state.tenant_names.get(tenant_id, f"Tenant {i}")
+            tenant_name = state.tenant_names.get(tenant_id, f"Tenant {i}")
 
             if os.path.isfile(signature):
                 tenant_signature_data, _ = resize_image(signature, 60, 30)
@@ -109,11 +207,9 @@ def create_pdf(state: State):
                 content = content.replace(placeholder, signature)
 
         # Replace tenant photos with numbered placeholders and images
-        for i, (tenant_id, photo) in enumerate(
-            agreement_state.tenant_photos.items(), 1
-        ):
+        for i, (tenant_id, photo) in enumerate(state.tenant_photos.items(), 1):
             placeholder = f"[TENANT {i} PHOTO]"
-            tenant_name = agreement_state.tenant_names.get(tenant_id, f"Tenant {i}")
+            tenant_name = state.tenant_names.get(tenant_id, f"Tenant {i}")
             if os.path.isfile(photo):
                 tenant_photos_data, _ = resize_image(photo, 60, 60)
                 content = content.replace(
@@ -134,8 +230,10 @@ def create_pdf(state: State):
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
     temp_pdf_path = temp_pdf.name
 
-    create_pdf_file(content=content, output_pdf_path=temp_pdf_path, isDraft=isDraft)
-    agreement_state.pdf_file_path = temp_pdf_path
+    pypandoc.convert_text(
+        content, "pdf", "md", encoding="utf-8", outputfile=temp_pdf_path
+    )
+    state.pdf_file_path = temp_pdf_path
     return {"messages": content}
 
 

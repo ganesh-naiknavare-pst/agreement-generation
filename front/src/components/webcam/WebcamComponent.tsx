@@ -18,6 +18,7 @@ import {
 } from "@tabler/icons-react";
 import { COLORS } from "../../colors";
 import useApi, { BackendEndpoints } from "../../hooks/useApi";
+import { useParams } from "react-router-dom";
 
 interface WebcamComponentProps {
   imageUrl: string;
@@ -43,6 +44,7 @@ function WebcamComponent({
   const [rederWebCamm, setRederWebCamm] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [buttonLoading, setButtonLoading] = useState<boolean>(false);
+  const params = useParams();
 
   const { fetchData: validateCapturedImage, data: validationResponce } =
     useApi<ValidationData>(BackendEndpoints.ValidateImage);
@@ -68,7 +70,7 @@ function WebcamComponent({
       if (imageSrc) {
         await validateCapturedImage({
           method: "POST",
-          data: { image_url: imageSrc },
+          data: { image_url: imageSrc, agreement_id: params.agreementId },
         });
       }
     }

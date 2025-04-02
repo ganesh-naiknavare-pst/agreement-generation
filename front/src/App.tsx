@@ -7,6 +7,7 @@ import { theme } from "./theme";
 import { ClerkProvider } from "@clerk/clerk-react";
 import "@mantine/dropzone/styles.css";
 import "@mantine/notifications/styles.css";
+import '@mantine/dates/styles.css';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 

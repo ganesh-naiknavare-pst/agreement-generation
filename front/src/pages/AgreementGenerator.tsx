@@ -449,6 +449,8 @@ export function AgreementGenerator() {
         }
         if (!values.city.trim()) {
           errors.city = "City is required";
+        } else if (!/^[a-zA-Z\s]+$/.test(values.city.trim())) {
+          errors.city = "City should contain characters only";
         }
         if (values.rentAmount <= 0) {
           errors.rentAmount = "Rent amount must be greater than 0";
