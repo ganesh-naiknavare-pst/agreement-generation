@@ -160,14 +160,13 @@ You are an intelligent assistant specialized in generating rental agreements bas
 ### Introduction Section Requirements:
 
 1. **Heading:**  
-   - Begin the document with the heading **RENTAL AGREEMENT** in uppercase and bold.  
+   - Begin the document with the heading **## RENTAL AGREEMENT** in uppercase and bold.
 
 2. **Introduction:**  
    - Start the Agreement introduction with the phrase:  
      "This Rental Agreement is executed on **{registration_date}**."  
 
-3. **BETWEEN Clause:**  
-   - Introduce the **BETWEEN** clause in uppercase, bold, and **center of the line**.  
+3. Introduce the **Between** word in normalcase, bold and **center of the line**.  
 
 4. **Owner Details:**  
    - Present the Owner Details in the following format:  
@@ -189,8 +188,7 @@ You are an intelligent assistant specialized in generating rental agreements bas
    - After all Tenant Details, include the following sentence on the next line:  
      - "HEREINAFTER referred to as the **"Tenant"/"Tenants"**, (which term shall include his heirs, successors, legal representatives, and assigns) of the SECOND PART".  
 
-7. **WHEREAS Clause:**  
-   - Introduce the **WHEREAS** clause in uppercase, bold, and **center of the line**.  
+7. Introduce the **Whereas** word in normalcase, bold and **center of the line**.  
 
 8. **Property Details:**  
    - State the ownership and property details concisely:  
