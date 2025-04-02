@@ -26,7 +26,7 @@ llm = ChatOpenAI(
 
 
 def generate_table(owner_name: str, owner_address: str, tenants: List[Dict[str, str]]) -> str:
-    table = "\n## Approval and Signature\n\n"
+    table = "\n## In acknowledgment of the terms and conditions stated herein, both Owner and the Tenant(s) have set their respective hands and signatures on this Agreement on the day, month, and year first above written.\n\n"
     table += (
         "| Name and Address               | Photo           | Signature           |  \n"
     )
