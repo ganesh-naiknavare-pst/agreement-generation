@@ -25,28 +25,10 @@ from prisma.enums import AgreementStatus
 from typing import List, Dict
 from prompts import PREFIX, FORMAT_INSTRUCTIONS, SUFFIX
 import uuid
+from models.rental_agreement import AgreementRequest
 
 logging.basicConfig(level=logging.INFO)
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-
-class AgreementRequest(BaseModel):
-    owner_name: str
-    owner_email: str
-    tenant_details: list[dict]
-    property_address: str
-    city: str
-    rent_amount: int
-    agreement_period: list[datetime]
-    owner_address: str
-    furnishing_type: str
-    security_deposit: int
-    bhk_type: str
-    area: int
-    registration_date: str
-    furniture_and_appliances: List[Dict[str, str]]
-    amenities: List[str]
-    user_id: str
-
 
 def run_agreement_tool(user_input: str, agreement_id: int) -> str:
     state = {
@@ -184,6 +166,7 @@ async def create_agreement_details(
         state_manager.set_current_agreement_id(agreement_id)
         current_state = state_manager.get_agreement_state(agreement_id)
         current_state.set_owner(request.owner_name, request.owner_email)
+        current_state.set_agreement_details(request)
         tools = create_tool_with_agreement_id(agreement_id)
 
         agent = initialize_agent(
@@ -195,11 +178,12 @@ async def create_agreement_details(
             max_iterations=1,
             early_stopping_method="generate",
             agent_kwargs={
-        "prefix": PREFIX,
-        "format_instructions": FORMAT_INSTRUCTIONS,
-        "suffix": SUFFIX,
-        "prompt": prompt,
-    },        )
+                "prefix": PREFIX,
+                "format_instructions": FORMAT_INSTRUCTIONS,
+                "suffix": SUFFIX,
+                "prompt": prompt,
+            },
+        )
 
 
         # Store tenant details
@@ -225,7 +209,6 @@ async def create_agreement_details(
             bhk_type=request.bhk_type,
             area=request.area,
             registration_date=request.registration_date,
-            furniture_and_appliances=request.furniture_and_appliances,
             amenities=request.amenities,
         )
 

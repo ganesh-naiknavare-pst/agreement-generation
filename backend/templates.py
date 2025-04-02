@@ -1,7 +1,7 @@
 from config import BASE_APPROVAL_URL, CORS_ALLOWED_ORIGIN
 from helpers.state_manager import state_manager
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 import logging
 
 REJECTION_NOTIFICATION_TEMPLATE = """
@@ -212,6 +212,7 @@ def parse_datetime(date_str: str) -> datetime:
             continue
     raise ValueError(f"Date string '{date_str}' does not match expected formats.")
 
+
 def format_agreement_details(
     owner_name: str,
     tenant_details: list,
@@ -225,7 +226,6 @@ def format_agreement_details(
     bhk_type: str,
     area: int,
     registration_date: str,
-    furniture_and_appliances: List[Dict[str, str]],
     amenities: List[str],
 ) -> str:
     start_date, end_date = agreement_period
@@ -237,78 +237,49 @@ def format_agreement_details(
         - start_date_obj.month
     )
 
-    furniture_list = ", ".join(
-        f"{item['name']}{'s' if int(item['units']) > 1 else 'Not provided any furniture'} {item['units']}"
-        for item in furniture_and_appliances
+    tenants_info = "\n".join(
+        f"- **Name:** {t['name']}\n  **Address:** {t['address']}"
+        for i, t in enumerate(tenant_details)
     )
 
-    amenities_list = (
-        "\n".join(f"  - {amenity}" for amenity in amenities)
-        if amenities
-        else "No aminities"
-    )
-    furniture_table = (
-        "\n".join(
-            f"| {item['sr_no']}  | {item['name']} | {item['units']} |"
-            for item in furniture_and_appliances
-        )
-        if furniture_and_appliances
-        else "Not provided any furniture."
-    )
     return f"""
-RENTAL AGREEMENT REQUIREMENTS:
+# RENTAL AGREEMENT
+- Ensure the **RENTAL AGREEMENT** heading remains at the top of the document.
 
-MANDATORY DATA- REQUIRED (MUST BE INCLUDED):
-OWNER DETAILS:
-    NAME: {owner_name}
-    ADDRESS: {owner_address}
-TENANTS DETAILS:
-    Name: {chr(10).join(f'{i+1}. {t["name"]}' for i, t in enumerate(tenant_details))}
-    Address: {chr(10).join(f'{i+1}. {t["address"]}' for i, t in enumerate(tenant_details))}
-TERMS: Rs. {rent_amount}/month, {num_months} months ({start_date} to {end_date})
-DEPOSIT: Rs. {security_deposit}
-REGISTERED DATE: {registration_date}
-PROPERTY DETAILS: Address: {property_address}, City: {city}, bhk type {bhk_type}, Area: {area} sq. ft., furnishing_type: {furnishing_type}
+## BASIC RENTAL DETAILS
 
+### OWNER DETAILS
+- **Owner Name:** {owner_name}
+- **Owner Address:** {owner_address}
 
-REQUIRED SECTIONS - MUST INCLUDE 2-4 DETAILED POINTS FOR EACH,  MINIMUM 3O to 50 WORDS PER SENTANCE:
-TERMS AND CONDITIONS:
-1. LICENSE FEE: MUST cover payment of Rs. {rent_amount}, due dates, escalation
-2. DEPOSIT: MUST specify Rs. {security_deposit} amount, refund process, deductions, timeline
-3. FURNITURE AND APPLIANCES: Tenants shall maintain all items in good condition  and MUST explain complete furniture list {furniture_list},damage reporting procedure, replacement responsibility
-4. UTILITIES: MUST detail all bill responsibilities, payment methods, connections, shared costs
-5. TENANT DUTIES: MUST list maintenance requirements, prohibitions, cleanliness, occupancy
-6. OWNER RIGHTS: MUST outline inspection protocols, notice periods, access conditions, showings
-7. TERMINATION: MUST define notice periods, early exit penalties, inspection process, deposit rules
-8. ALTERATIONS: MUST prohibit unauthorized changes, permission process, restoration, fixtures
-9. AMENITIES: MUST describe access to {amenities_list}, usage rules, restrictions, maintenance
+### TENANT DETAILS
+{tenants_info}
 
-### FURNITURE AND APPLIANCES TABLE - REQUIRED (MUST BE INCLUDED):
-   * The premises contain the following **furniture and appliances** provided by the owner. Tenants shall maintain all items in good condition and will be responsible for any **damages beyond normal wear and tear**.  
-    | Sr. No | Item                 | Count  |
-    |--------|----------------------|--------|
-    {furniture_table}
+### PROPERTY DETAILS
+- **Property Address:** {property_address}
+- **City:** {city}
+- **BHK Type:** {bhk_type}
+- **Area:** {area} sq. ft.
+- **Furnishing Type:** {furnishing_type}
 
-### APPROVAL TABLE - REQUIRED (MUST BE THE FINAL SECTION):
-Note: The table MUST follow this PRECISE structure WITHOUT ANY MODIFICATIONS:
-PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present dont add extra or miss the filed.
+### Financial Details
+- **Rent Amount:** Rs. {rent_amount}/month
+- **Security Deposit:** Rs. {security_deposit}
 
-| Name and Address               | Photo           | Signature           |  
-|--------------------------------|-----------------|---------------------|  
-| **Owner:**                     |                 |                     |  
-| **Name:** {owner_name}         | [OWNER PHOTO]   | [OWNER SIGNATURE]   |  
-| **Address:** {owner_address}   |                 |                     |  
-|--------------------------------|-----------------|---------------------|  
-| **Tenant 1:**                  |                 |                     |  
-| **Name:** [TENANT 1 NAME]      | [TENANT 1 PHOTO]| [TENANT 1 SIGNATURE]|  
-| **Address:** [TENANT 1 ADDRESS]|                 |                     |  
-|--------------------------------|-----------------|---------------------|
-CRITICAL: 
-- STRICTLY PROHIBITED to generate partial, incomplete rental agreements or tables with missing fields
-- Replace [TENANT n NAME] and [TENANT n ADDRESS] with real data for all tenants
-- BOTH FURNITURE TABLE AND APPROVAL TABLE MUST BE INCLUDED IN EVERY AGREEMENT AND THE APPROVAL TABLE MUST ALWAYS BE THE FINAL SECTION OF THE AGREEMENT.
-- If a furniture list is provided, generate the **FURNITURE AND APPLIANCES** section and table; otherwise, return **"No furniture provided."** without an empty table.
-- STRICTLY number tenants as TENANT 1, TENANT 2, etc. - NO variations permitted
-- FURNITURE AND APPLIANCES section and FURNITURE AND APPLIANCES TABLE must be COMPLETELY SEPARATE SECTIONS - DO NOT merge them together or place the table within section 
-- PARTIAL TABLES ARE STRICTLY PROHIBITED – every row for the Owner and ALL Tenants must be fully present and for tenants must be replace with real time data for name and address.
-"""
+### Term of Agreement
+- The agreement is valid for {num_months} months, from {start_date} to {end_date}.
+
+### Registration Date
+- **Registration Date:** The agreement was registered on **{registration_date}** in compliance with applicable legal requirements.
+
+## TERMS AND CONDITIONS:
+    **Each section MUST include 1-2 detailed points, with a minimum of 30 to 50 words per section.**
+    1.**License Fee:** Payment details including Rs. {rent_amount}, due dates, and escalation terms.
+    2.**Deposit:** Refund process, deductions, and timelines for Rs. {security_deposit}.
+    3.**Utilities:** Responsibilities for bill payments, shared costs, and connection setup.
+    4.**Tenant Duties:** Maintenance requirements, prohibitions, cleanliness, and occupancy rules.
+    5.**Owner Rights:** Inspection protocols, notice periods, and property access conditions.
+    6.**Termination:** Notice periods, penalties for early exit, and deposit refund conditions.
+    7.**Alterations:** Restrictions on modifications, approval process, and restoration requirements.
+    8.**AMENITIES**: Must provide a clear description of available amenities ({', '.join(amenities)}), along with their usage rules, restrictions, and maintenance responsibilities.
+    """
