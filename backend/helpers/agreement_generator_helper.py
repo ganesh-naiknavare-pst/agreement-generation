@@ -7,7 +7,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle, Image
 from reportlab.lib import colors
 from PIL import Image as PILImage
-import pypandoc
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
 from typing import List, Tuple, Optional
 from reportlab.lib.colors import Color
 
@@ -16,9 +17,9 @@ PAGE_WIDTH, PAGE_HEIGHT = A4
 def add_watermark(c, doc):
     """Adds a large semi-transparent 'DRAFT' watermark at the center of each page."""
     c.saveState()
-    
+
     c.setFillColor(Color(0.85, 0.85, 0.85, alpha=0.3))
-    
+
     text = "DRAFT"
     font_name = "Helvetica-Bold"
     font_size = 80
@@ -28,7 +29,7 @@ def add_watermark(c, doc):
     c.rotate(45)
     c.drawCentredString(0, 0, text)
     c.restoreState()
-    
+
 def extract_text_from_pdf(pdf_path: str, chunk_size: int = 1000) -> List[str]:
     """Extracts text from a PDF file and returns it in manageable chunks."""
     doc = fitz.open(pdf_path)
@@ -78,20 +79,31 @@ def doc_template(output_pdf_path):
     return SimpleDocTemplate(
         output_pdf_path,
         pagesize=A4,
-        rightMargin=72,
-        leftMargin=72,
-        topMargin=72,
-        bottomMargin=72
+        rightMargin=40,
+        leftMargin=40,
+        topMargin=40,
+        bottomMargin=40
     )
 
 def get_styles(font_name, font_file):
+    if not font_file:
+        font_name = "Times-Roman"
+        font_file = "fonts/times-roman/Times-Roman.ttf"
     styles = getSampleStyleSheet()
     custom_styles = {
         "heading1": ParagraphStyle(name='CustomHeading1', parent=styles['Heading1'], fontName=font_name if font_file else "Helvetica", fontSize=16, spaceAfter=2),
         "heading2": ParagraphStyle(name='CustomHeading2', parent=styles['Heading2'], fontName=font_name if font_file else "Helvetica", fontSize=14, spaceAfter=2),
         "heading3": ParagraphStyle(name='CustomHeading3', parent=styles['Heading3'], fontName=font_name if font_file else "Helvetica", fontSize=12, spaceAfter=2),
         "bullet": ParagraphStyle(name='CustomBullet', parent=styles['Normal'], fontName=font_name if font_file else "Helvetica", leftIndent=12, spaceAfter=5),
-        "normal": ParagraphStyle(name='CustomNormal', parent=styles['Normal'], fontName=font_name if font_file else "Helvetica", fontSize=10, spaceAfter=2),
+        "normal": ParagraphStyle(
+            name='CustomNormal',
+            parent=styles['Normal'],
+            fontName=font_name if font_file else "Helvetica",
+            fontSize=10,
+            spaceAfter=2,
+            alignment=4,
+            leading=12
+        ),
     }
     return custom_styles
 
@@ -111,9 +123,9 @@ def process_bullet(line, custom_styles):
 def process_table(lines, index, custom_styles, doc, temp_files):
     table_data = []
     header_row = [cell.strip() for cell in lines[index].split('|')[1:-1]]
-    table_data.append([Paragraph(h, custom_styles['normal']) for h in header_row])
+    table_data.append([Paragraph(f"<b>{h}</b>", custom_styles['normal']) for h in header_row])
     index += 2
-    
+
     while index < len(lines) and lines[index].startswith('|'):
         row_cells = []
         cells = [cell.strip() for cell in lines[index].split('|')[1:-1]]
@@ -127,9 +139,9 @@ def process_table(lines, index, custom_styles, doc, temp_files):
                     row_cells.append(Image(resized_img, width=80, height=50))
                     temp_files.append(resized_img)
             else:
-                cell = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', cell)
-                row_cells.append(Paragraph(cell, custom_styles['normal']))
-        
+                formatted_cell = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', cell)
+                row_cells.append(Paragraph(formatted_cell, custom_styles['normal']))
+
         table_data.append(row_cells)
         index += 1
 
@@ -137,56 +149,193 @@ def process_table(lines, index, custom_styles, doc, temp_files):
     table = Table(table_data, colWidths=[col_width] * len(header_row))
     table.setStyle(TableStyle([
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
     ]))
 
-
     return table, Spacer(1, 12), index - 1
 
 def create_pdf_file(
-    content: str, 
-    output_pdf_path: str = "output.pdf", 
-    font_name: str = "Times-Roman", 
-    font_file: Optional[str] = "fonts/times.ttf",
-    isDraft: bool = False
+    content: str,
+    output_pdf_path: str = "output.pdf",
+    font_name: str = "Times-Roman",
+    font_file: Optional[str] = "fonts/times-roman/Times-Roman.ttf",
+    isDraft: bool = False,
+    preserve_line_breaks: bool = True
 ) -> str:
     temp_files = []
     try:
         doc = doc_template(output_pdf_path)
         custom_styles = get_styles(font_name, font_file)
+
+        left_aligned_style = ParagraphStyle(
+            name='LeftAligned',
+            parent=custom_styles['normal'],
+            alignment=0
+        )
+
         elements = []
         lines = content.split('\n')
         i = 0
-        
-        while i < len(lines):
-            line = lines[i].strip()
-            
-            if heading := process_heading(line, custom_styles):
-                elements.extend(heading)
-            elif line.startswith('- '):
-                elements.append(process_bullet(line, custom_styles))
-            elif line.startswith('|') and i + 2 < len(lines) and lines[i+1].startswith('|---'):
-                table, spacer, i = process_table(lines, i, custom_styles, doc, temp_files)
-                elements.append(table)
-                elements.append(spacer)
-            elif line:
-                line = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line)
-                def replace_image(match):
-                    img_path = match.group(2)
-                    resized_img = resize_image(img_path)
-                    if resized_img:
-                        temp_files.append(resized_img)
-                        return f'<br/><br/><img src="{resized_img}" width="80" height="50"/>'
-                    return ""
-                line = re.sub(r'!\[(.*?)\]\((.*?)\)', replace_image, line)
-                elements.append(Paragraph(line, custom_styles['normal']))
-                elements.append(Spacer(1, 6))
 
-            i += 1
-        
-        if isDraft: 
+        if preserve_line_breaks:
+            while i < len(lines):
+                line = lines[i].strip()
+
+                if line.startswith('#'):
+                    if heading := process_heading(line, custom_styles):
+                        elements.extend(heading)
+                elif line.startswith('- '):
+                    elements.append(process_bullet(line, custom_styles))
+                elif line.startswith('|') and i + 2 < len(lines) and lines[i+1].startswith('|---'):
+                    table, spacer, i = process_table(lines, i, custom_styles, doc, temp_files)
+                    elements.append(table)
+                    elements.append(spacer)
+                else:
+                    img_match = re.search(r'!\[(.*?)\]\((.*?)\)', line)
+                    if img_match:
+                        text_before_img = line[:img_match.start()].strip()
+                        if text_before_img:
+                            formatted_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text_before_img)
+                            elements.append(Paragraph(formatted_text, left_aligned_style))
+
+                        img_path = img_match.group(2)
+                        resized_img = resize_image(img_path)
+                        if resized_img:
+                            temp_files.append(resized_img)
+                            img = Image(resized_img, width=80, height=50)
+                            t = Table([[img]], colWidths=[doc.width])
+                            t.setStyle(TableStyle([
+                                ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+                                ('VALIGN', (0, 0), (0, 0), 'MIDDLE'),
+                                ('LEFTPADDING', (0, 0), (0, 0), 0),
+                                ('RIGHTPADDING', (0, 0), (0, 0), 0),
+                                ('TOPPADDING', (0, 0), (0, 0), 0),
+                                ('BOTTOMPADDING', (0, 0), (0, 0), 0),
+                            ]))
+                            elements.append(t)
+                            elements.append(Spacer(1, 5))
+
+                        text_after_img = line[img_match.end():].strip()
+                        if text_after_img:
+                            formatted_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text_after_img)
+                            elements.append(Paragraph(formatted_text, left_aligned_style))
+                    elif line:
+                        formatted_line = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line)
+                        elements.append(Paragraph(formatted_line, left_aligned_style))
+                    else:
+                        elements.append(Spacer(1, 10))
+
+                i += 1
+        else:
+            text_buffer = []
+
+            while i < len(lines):
+                line = lines[i].strip()
+
+                is_special_format = (
+                    not line or
+                    line.startswith('#') or
+                    line.startswith('-') or
+                    (line.startswith('|') and i + 2 < len(lines) and lines[i+1].startswith('|---'))
+                )
+
+                if is_special_format:
+                    if text_buffer:
+                        combined_text = ' '.join(text_buffer)
+                        combined_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', combined_text)
+
+                        img_matches = list(re.finditer(r'!\[(.*?)\]\((.*?)\)', combined_text))
+                        if img_matches:
+                            current_pos = 0
+                            for match in img_matches:
+                                if match.start() > current_pos:
+                                    text_segment = combined_text[current_pos:match.start()]
+                                    if text_segment.strip():
+                                        elements.append(Paragraph(text_segment, left_aligned_style))
+
+                                img_path = match.group(2)
+                                resized_img = resize_image(img_path)
+                                if resized_img:
+                                    temp_files.append(resized_img)
+                                    img = Image(resized_img, width=80, height=50)
+                                    t = Table([[img]], colWidths=[doc.width])
+                                    t.setStyle(TableStyle([
+                                        ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+                                        ('VALIGN', (0, 0), (0, 0), 'MIDDLE'),
+                                        ('LEFTPADDING', (0, 0), (0, 0), 0),
+                                        ('RIGHTPADDING', (0, 0), (0, 0), 0),
+                                        ('TOPPADDING', (0, 0), (0, 0), 0),
+                                        ('BOTTOMPADDING', (0, 0), (0, 0), 0),
+                                    ]))
+                                    elements.append(t)
+                                    elements.append(Spacer(1, 5))
+
+                                current_pos = match.end()
+
+                            if current_pos < len(combined_text):
+                                text_segment = combined_text[current_pos:]
+                                if text_segment.strip():
+                                    elements.append(Paragraph(text_segment, left_aligned_style))
+                        else:
+                            elements.append(Paragraph(combined_text, custom_styles['normal']))
+
+                        elements.append(Spacer(1, 6))
+                        text_buffer = []
+
+                    if heading := process_heading(line, custom_styles):
+                        elements.extend(heading)
+                    elif line.startswith('- '):
+                        elements.append(process_bullet(line, custom_styles))
+                    elif line.startswith('|') and i + 2 < len(lines) and lines[i+1].startswith('|---'):
+                        table, spacer, i = process_table(lines, i, custom_styles, doc, temp_files)
+                        elements.append(table)
+                        elements.append(spacer)
+                else:
+                    text_buffer.append(line)
+
+                i += 1
+
+            if text_buffer:
+                combined_text = ' '.join(text_buffer)
+                combined_text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', combined_text)
+
+                img_matches = list(re.finditer(r'!\[(.*?)\]\((.*?)\)', combined_text))
+                if img_matches:
+                    current_pos = 0
+                    for match in img_matches:
+                        if match.start() > current_pos:
+                            text_segment = combined_text[current_pos:match.start()]
+                            if text_segment.strip():
+                                elements.append(Paragraph(text_segment, left_aligned_style))
+
+                        img_path = match.group(2)
+                        resized_img = resize_image(img_path)
+                        if resized_img:
+                            temp_files.append(resized_img)
+                            img = Image(resized_img, width=80, height=50)
+                            t = Table([[img]], colWidths=[doc.width])
+                            t.setStyle(TableStyle([
+                                ('ALIGN', (0, 0), (0, 0), 'LEFT'),
+                                ('VALIGN', (0, 0), (0, 0), 'MIDDLE'),
+                                ('LEFTPADDING', (0, 0), (0, 0), 0),
+                                ('RIGHTPADDING', (0, 0), (0, 0), 0),
+                                ('TOPPADDING', (0, 0), (0, 0), 0),
+                                ('BOTTOMPADDING', (0, 0), (0, 0), 0),
+                            ]))
+                            elements.append(t)
+                            elements.append(Spacer(1, 5))
+
+                        current_pos = match.end()
+
+                    if current_pos < len(combined_text):
+                        text_segment = combined_text[current_pos:]
+                        if text_segment.strip():
+                            elements.append(Paragraph(text_segment, left_aligned_style))
+                else:
+                    elements.append(Paragraph(combined_text, custom_styles['normal']))
+
+        if isDraft:
             doc.build(elements, onFirstPage=add_watermark, onLaterPages=add_watermark)
         else:
             doc.build(elements)
