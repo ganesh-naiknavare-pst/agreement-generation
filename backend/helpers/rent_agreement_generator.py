@@ -9,6 +9,7 @@ from PIL import Image
 from templates import format_agreement_details
 from prompts import AGREEMENT_SYSTEM_PROMPT
 from typing import List, Dict
+from helpers.agreement_generator_helper import create_pdf_file
 
 os.environ["OPENAI_API_KEY"] = "XXX"
 
@@ -27,23 +28,26 @@ llm = ChatOpenAI(
 def generate_table(owner_name: str, owner_address: str, tenants: List[Dict[str, str]]) -> str:
     table = "\n## Approval and Signature\n\n"
     table += (
-        "| Name and Address               | Photo           | Signature           |  \n"
+        "| Name & Address                                    | Photo           | Signature           |  \n"
     )
     table += (
-        "|--------------------------------|-----------------|---------------------|  \n"
+        "|--------------------------------------------------|-----------------|---------------------|  \n"
     )
 
     # Owner details
-    table += f"| **Owner:**                     |                 |                     |  \n"
     table += (
-        f"| **Name:** {owner_name}       | [OWNER PHOTO]   | [OWNER SIGNATURE]   |  \n"
+        f"|**Owner:**<br/>**Name:** {owner_name}<br/>**Address:** {owner_address} "
+        "| [OWNER PHOTO]   | [OWNER SIGNATURE]   |  \n"
     )
-    table += (
-        f"| **Address:** {owner_address} |                 |                     |  \n"
-    )
-    table += (
-        "|--------------------------------|-----------------|---------------------|  \n"
-    )
+    
+    # Tenant details
+    for idx, tenant in enumerate(tenants, start=1):
+        table += (
+            f"|**Tenant {idx}:**<br/>**Name:**{tenant['name']}<br/>**Address:**{tenant['address']} "
+            f"| [TENANT {idx} PHOTO] | [TENANT {idx} SIGNATURE] |  \n"
+        )
+    
+    return table
 
     # Tenant details
     for idx, tenant in enumerate(tenants, start=1):
@@ -174,6 +178,7 @@ def create_pdf(state: State):
     if not state:
         raise ValueError("No active agreement state found")
 
+    isDraft = True
     if state.is_fully_approved():
         # Replace owner signature with image
         if os.path.isfile(state.owner_signature):
@@ -230,9 +235,7 @@ def create_pdf(state: State):
     temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf", dir=base_dir)
     temp_pdf_path = temp_pdf.name
 
-    pypandoc.convert_text(
-        content, "pdf", "md", encoding="utf-8", outputfile=temp_pdf_path
-    )
+    create_pdf_file(content=content, output_pdf_path=temp_pdf_path, isDraft=isDraft)
     state.pdf_file_path = temp_pdf_path
     return {"messages": content}
 

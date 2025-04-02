@@ -2,11 +2,9 @@ import fitz
 import os
 import re
 from collections import Counter
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, KeepTogether, Table, TableStyle, Image, HRFlowable
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle, Image
 from reportlab.lib import colors
 from PIL import Image as PILImage
 import pypandoc
@@ -76,98 +74,76 @@ def resize_image(image_path: str, max_width: int = 80, max_height: int = 50) -> 
     except Exception as e:
         return None
 
-def preprocess_table_data(data: List[List[str]]) -> List[List[str]]:
-    """Preprocess table data to merge grouped rows while keeping the header intact."""
-    if not data:
-        return []
-    header = data[0]
-    merged_data = [header]
-    row_count = len(data)
-    col_count = len(header)
+def doc_template(output_pdf_path):
+    return SimpleDocTemplate(
+        output_pdf_path,
+        pagesize=A4,
+        rightMargin=72,
+        leftMargin=72,
+        topMargin=72,
+        bottomMargin=72
+    )
 
-    i = 1
-    while i < row_count:
-        if i + 2 < row_count:
-            merged_row = data[i][:]
-            for col in range(col_count):
-                if data[i + 1][col] == data[i + 2][col]:
-                    merged_row[col] = data[i][col] 
-                else:
-                    merged_row[col] = f"{data[i][col]}\n{data[i + 1][col]}\n{data[i + 2][col]}"  # Merge contents
-            merged_data.append(merged_row)
-            i += 3
-        else:
-            merged_data.append(data[i])
-            i += 1
-    return merged_data
-
-def clean_html_for_reportlab(html: str) -> str:
-    html = re.sub(r'<b>\s*</b>', '', html)
-    html = re.sub(r'<para>\s*</para>', '', html)
-    html = re.sub(r'(<br\s*/?>\s*)+', '<br/>', html)
-    html = re.sub(r'<para fontSize="(\d+)"><b>(.*?)</b></para>', r'<p style="font-size:\1px; font-weight:bold;">\2</p>', html)
-    html = re.sub(r'<para fontSize="(\d+)">(.*?)</para>', r'<p style="font-size:\1px;">\2</p>', html)
-    html = re.sub(r'<para>', '<p>', html)
-    html = re.sub(r'</para>', '</p>', html)
-    html = html.replace('<hr width="100%"/>', '<hr/>')
-    return html.strip()
-
-def markdown_to_html(text: str) -> str:
-    text = re.sub(r'### (.*?)\s*\n?', r'<para fontSize="14"><b>\1</b></para><br/><br/>', text)
-    text = re.sub(r'## (.*?)\s*\n?', r'<para fontSize="12"><b>\1</b></para><br/><br/>', text)
-    text = re.sub(r'# (.*?)\s*\n?', r'<para fontSize="16"><b>\1</b></para><br/><br/>', text)
-    text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-    text = re.sub(r'\*(.*?)\*', r'<i>\1</i>', text)
-    text = re.sub(r'(?m)^\s*[-•] (.*?)$', r'• \1', text)
-    text = text.replace("\n", "<br/>")  
-    return text
-
-def parse_markdown_table(md_table: str, temp_files: Optional[List[str]] = None) -> Table:
-    """Parses a Markdown table and ensures images are correctly inserted."""
-    lines = md_table.strip().split("\n")
-    rows = [line.split("|")[1:-1] for line in lines if "|" in line]
-    data = [[cell.strip() for cell in row] for row in rows]
-    data = [row for row in data if not all(re.match(r"^[-:]+$", cell) for cell in row)]
-
-    if len(data) > 0 and "Photo" in data[0] and "Signature" in data[0]:
-        data = preprocess_table_data(data)
-
-    image_pattern = re.compile(r"!\[(.*?)\]\((.*?)\)")
+def get_styles(font_name, font_file):
     styles = getSampleStyleSheet()
-    body_style = styles["BodyText"]
-    for row_idx in range(1, len(data)):
-        for col_idx in range(len(data[row_idx])):
-            cell_content = data[row_idx][col_idx]
-            match = image_pattern.search(cell_content)
-            if match:
-                _, img_path = match.groups()
-                img_path = img_path.strip()
-                if os.path.exists(img_path):
-                    resized_img = resize_image(img_path)
-                    if resized_img:
-                        data[row_idx][col_idx] = Image(resized_img, width=80, height=50)
-                        temp_files.append(resized_img)
-            else:
-                html_content = pypandoc.convert_text(cell_content, "html", format="md")
-                html_content = re.sub(r"</strong>\s*<strong>", r"</strong><br/><strong>", html_content)
-                html_content = re.sub(r"(?<!<br/>)\s*<strong>", r"<br/><strong>", html_content)
-                html_content = re.sub(r"<p>(.*?)</p>", r"\1<br/>", html_content)
-                data[row_idx][col_idx] = Paragraph(html_content, body_style)
+    custom_styles = {
+        "heading1": ParagraphStyle(name='CustomHeading1', parent=styles['Heading1'], fontName=font_name if font_file else "Helvetica", fontSize=16, spaceAfter=2),
+        "heading2": ParagraphStyle(name='CustomHeading2', parent=styles['Heading2'], fontName=font_name if font_file else "Helvetica", fontSize=14, spaceAfter=2),
+        "heading3": ParagraphStyle(name='CustomHeading3', parent=styles['Heading3'], fontName=font_name if font_file else "Helvetica", fontSize=12, spaceAfter=2),
+        "bullet": ParagraphStyle(name='CustomBullet', parent=styles['Normal'], fontName=font_name if font_file else "Helvetica", leftIndent=12, spaceAfter=5),
+        "normal": ParagraphStyle(name='CustomNormal', parent=styles['Normal'], fontName=font_name if font_file else "Helvetica", fontSize=10, spaceAfter=2),
+    }
+    return custom_styles
 
-    col_widths = [PAGE_WIDTH * 0.25] * len(data[0])
-    table = Table(data, colWidths=col_widths)
-    style = [
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ("ALIGN", (0, 0), (-1, 0), "CENTER"),
-        ("ALIGN", (0, 1), (0, -1), "LEFT"),
-        ("ALIGN", (1, 1), (-1, -1), "CENTER"),
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-    ]
-    table.setStyle(TableStyle(style))
-    return table
+def process_heading(line, custom_styles):
+    if line.startswith('# '):
+        return Paragraph(line[2:], custom_styles['heading1']), Spacer(1, 6)
+    elif line.startswith('## '):
+        return Paragraph(line[3:], custom_styles['heading2']), Spacer(1, 4)
+    elif line.startswith('### '):
+        return Paragraph(line[4:], custom_styles['heading3']), Spacer(1, 2)
+    return None
+
+def process_bullet(line, custom_styles):
+    content = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line[2:])
+    return Paragraph('• ' + content, custom_styles['bullet'])
+
+def process_table(lines, index, custom_styles, doc, temp_files):
+    table_data = []
+    header_row = [cell.strip() for cell in lines[index].split('|')[1:-1]]
+    table_data.append([Paragraph(h, custom_styles['normal']) for h in header_row])
+    index += 2
+    
+    while index < len(lines) and lines[index].startswith('|'):
+        row_cells = []
+        cells = [cell.strip() for cell in lines[index].split('|')[1:-1]]
+
+        for cell in cells:
+            img_match = re.search(r'!\[.*?\]\((.*?)\)', cell)
+            if img_match:
+                img_path = img_match.group(1)
+                resized_img = resize_image(img_path)
+                if resized_img:
+                    row_cells.append(Image(resized_img, width=80, height=50))
+                    temp_files.append(resized_img)
+            else:
+                cell = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', cell)
+                row_cells.append(Paragraph(cell, custom_styles['normal']))
+        
+        table_data.append(row_cells)
+        index += 1
+
+    col_width = doc.width / len(header_row)
+    table = Table(table_data, colWidths=[col_width] * len(header_row))
+    table.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+    ]))
+
+
+    return table, Spacer(1, 12), index - 1
 
 def create_pdf_file(
     content: str, 
@@ -176,73 +152,47 @@ def create_pdf_file(
     font_file: Optional[str] = "fonts/times.ttf",
     isDraft: bool = False
 ) -> str:
-    """Creates a PDF file with formatted text, images, and properly styled tables, ensuring temp files are cleaned up."""
-    doc = SimpleDocTemplate(output_pdf_path, pagesize=A4)
-    styles = getSampleStyleSheet()
-    custom_style = ParagraphStyle(
-        "Custom",
-        parent=styles["Normal"],
-        fontName=font_name if font_file else "Helvetica",
-        fontSize=10,
-        leading=12,
-        spaceAfter=10
-    )
-
-    if font_file and os.path.exists(font_file):
-        pdfmetrics.registerFont(TTFont(font_name, font_file))
-
-    story = []
     temp_files = []
-
     try:
-        paragraphs = content.split("\n\n")
-        table_pattern = re.compile(r"(\|.+?\|(?:\n\|[-:]+[-|:]+\|)+\n(?:\|.+?\|\n?)+)")
-        image_pattern = re.compile(r"!\[(.*?)\]\((.*?)\)")
+        doc = doc_template(output_pdf_path)
+        custom_styles = get_styles(font_name, font_file)
+        elements = []
+        lines = content.split('\n')
+        i = 0
+        
+        while i < len(lines):
+            line = lines[i].strip()
+            
+            if heading := process_heading(line, custom_styles):
+                elements.extend(heading)
+            elif line.startswith('- '):
+                elements.append(process_bullet(line, custom_styles))
+            elif line.startswith('|') and i + 2 < len(lines) and lines[i+1].startswith('|---'):
+                table, spacer, i = process_table(lines, i, custom_styles, doc, temp_files)
+                elements.append(table)
+                elements.append(spacer)
+            elif line:
+                line = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line)
+                def replace_image(match):
+                    img_path = match.group(2)
+                    resized_img = resize_image(img_path)
+                    if resized_img:
+                        temp_files.append(resized_img)
+                        return f'<br/><br/><img src="{resized_img}" width="80" height="50"/>'
+                    return ""
+                line = re.sub(r'!\[(.*?)\]\((.*?)\)', replace_image, line)
+                elements.append(Paragraph(line, custom_styles['normal']))
+                elements.append(Spacer(1, 6))
 
-        for para in paragraphs:
-            if table_pattern.match(para):
-                table = parse_markdown_table(para, temp_files)
-                story.append(KeepTogether([table]))
-            else:
-                html_content = markdown_to_html(para)
-                clean_content = clean_html_for_reportlab(html_content)
-                elements = []
-                temp_text = clean_content
-                image_replacements = {}
-
-                for match in image_pattern.finditer(para):
-                    label, img_path = match.groups()
-                    placeholder = f"[[IMAGE_{len(image_replacements)}]]"
-                    image_replacements[placeholder] = img_path
-                    temp_text = temp_text.replace(match.group(0), placeholder)
-
-                parts = re.split(r"(\[\[IMAGE_\d+\]\])", temp_text)
-
-                for part in parts:
-                    if part in image_replacements:
-                        img_path = image_replacements[part]
-                        if os.path.exists(img_path):
-                            resized_img_path = resize_image(img_path)
-                            if resized_img_path:
-                                elements.append(Image(resized_img_path, width=80, height=50))
-                                temp_files.append(resized_img_path)
-                    elif part.strip() == "---":
-                        elements.append(HRFlowable(width="100%", thickness=1, color="black", spaceBefore=10, spaceAfter=10))
-                    else:
-                        elements.append(Paragraph(part, custom_style))
-
-                story.append(KeepTogether(elements))
-            story.append(Spacer(1, 12))
-        if isDraft:
-            doc.build(story, onFirstPage=add_watermark, onLaterPages=add_watermark)
+            i += 1
+        
+        if isDraft: 
+            doc.build(elements, onFirstPage=add_watermark, onLaterPages=add_watermark)
         else:
-            doc.build(story)
+            doc.build(elements)
 
         return output_pdf_path
-
     finally:
         for temp_file in temp_files:
-            try:
+            if os.path.exists(temp_file):
                 os.remove(temp_file)
-            except Exception as e:
-                pass
