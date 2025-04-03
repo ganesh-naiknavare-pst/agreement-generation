@@ -597,12 +597,20 @@ export function AgreementGenerator() {
       setShowMessage(true);
       fetchAgreements({ method: "GET", params: { user_id: user?.id } });
     }, 2000);
+
+    const transformedFurnitureList = furnitureList.map((item, index) => ({
+      sr_no: (index + 1).toString(),
+      name: item.name,
+      units: item.quantity.toString(),
+    }));
+
     const requestData = {
       owner_name: form.values.ownerFullName,
       owner_email: form.values.ownerEmailAddress,
       tenant_details: form.values.tenants.map((tenant) => ({
         name: tenant.fullName,
         email: tenant.email,
+        address: tenant.address,
       })),
       property_address: form.values.address,
       city: form.values.city,
@@ -610,6 +618,14 @@ export function AgreementGenerator() {
       agreement_period: form.values.agreementPeriod.map((date) =>
         date.toISOString()
       ),
+      owner_address: form.values.ownerAddress,
+      furnishing_type: furnishingType,
+      security_deposit: form.values.securityAmount,
+      bhk_type: form.values.bhkType,
+      area: form.values.propertyArea,
+      registration_date: form.values.registrationDate.toISOString(),
+      furniture_and_appliances: transformedFurnitureList,
+      amenities: form.values.amenities,
       user_id: user?.id,
     };
     try {

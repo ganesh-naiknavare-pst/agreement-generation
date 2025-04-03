@@ -21,24 +21,14 @@ from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_t
 from constants import MAX_RETRIES, RETRY_DELAY
 from datetime import datetime
 import base64
-from langchain_core.prompts.prompt import PromptTemplate
-from prompts import template
 from prisma.enums import AgreementStatus
+from typing import List, Dict
+from prompts import PREFIX, FORMAT_INSTRUCTIONS, SUFFIX
 import uuid
+from models.rental_agreement import AgreementRequest
 
 logging.basicConfig(level=logging.INFO)
-
-
-class AgreementRequest(BaseModel):
-    owner_name: str
-    owner_email: str
-    tenant_details: list[dict]
-    property_address: str
-    city: str
-    rent_amount: int
-    agreement_period: list[datetime]
-    user_id: str
-
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 def run_agreement_tool(user_input: str, agreement_id: int) -> str:
     state = {
@@ -122,6 +112,16 @@ def save_base64_image(photo_data: str, user_id: str, is_signature: bool = False)
 
     return photo_path
 
+prompt = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            " You are a helpful assistant to Generate a rental agreement from the provided details. Output only the agreement text",
+        ),
+        ("user", "{input}"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
+    ]
+)
 
 def log_before_retry(retry_state):
     attempt = retry_state.attempt_number
@@ -166,6 +166,7 @@ async def create_agreement_details(
         state_manager.set_current_agreement_id(agreement_id)
         current_state = state_manager.get_agreement_state(agreement_id)
         current_state.set_owner(request.owner_name, request.owner_email)
+        current_state.set_agreement_details(request)
         tools = create_tool_with_agreement_id(agreement_id)
 
         agent = initialize_agent(
@@ -176,7 +177,12 @@ async def create_agreement_details(
             memory=memory,
             max_iterations=1,
             early_stopping_method="generate",
-            prompt=PromptTemplate.from_template(template),
+            agent_kwargs={
+                "prefix": PREFIX,
+                "format_instructions": FORMAT_INSTRUCTIONS,
+                "suffix": SUFFIX,
+                "prompt": prompt,
+            },
         )
 
 
@@ -197,6 +203,13 @@ async def create_agreement_details(
             city=request.city,
             rent_amount=request.rent_amount,
             agreement_period=[date.isoformat() for date in request.agreement_period],
+            owner_address=request.owner_address,
+            furnishing_type=request.furnishing_type,
+            security_deposit=request.security_deposit,
+            bhk_type=request.bhk_type,
+            area=request.area,
+            registration_date=request.registration_date,
+            amenities=request.amenities,
         )
 
         try:

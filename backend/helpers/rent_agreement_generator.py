@@ -7,24 +7,72 @@ from langchain.memory import ConversationBufferMemory
 from helpers.state_manager import State, state_manager
 import os
 from PIL import Image
-import io
+from templates import format_agreement_details
+from prompts import AGREEMENT_SYSTEM_PROMPT
+from typing import List, Dict
 
 os.environ["OPENAI_API_KEY"] = "XXX"
 
 memory = ConversationBufferMemory(memory_key="chat_history")
 llm = ChatOpenAI(
     model=Model.GPT_MODEL.value,
-    temperature=0,
+    temperature=0.7,
     max_tokens=None,
     timeout=None,
     max_retries=2,
     api_key="",
     base_url=CHAT_OPENAI_BASE_URL,
 )
-from prompts import AGREEMENT_SYSTEM_PROMPT
+
+
+def generate_table(owner_name: str, owner_address: str, tenants: List[Dict[str, str]]) -> str:
+    table = "\n### In acknowledgment of the terms and conditions stated herein, both Owner and the Tenant(s) have set their respective hands and signatures on this Agreement on the day, month, and year first above written.\n\n"
+    table += (
+        "| Name and Address               | Photo           | Signature           |  \n"
+    )
+    table += (
+        "|--------------------------------|-----------------|---------------------|  \n"
+    )
+
+    # Owner details
+    table += f"| **Owner:**                     |                 |                     |  \n"
+    table += (
+        f"| **Name:** {owner_name}       | [OWNER PHOTO]   | [OWNER SIGNATURE]   |  \n"
+    )
+    table += (
+        f"| **Address:** {owner_address} |                 |                     |  \n"
+    )
+    table += (
+        "|--------------------------------|-----------------|---------------------|  \n"
+    )
+
+    # Tenant details
+    for idx, tenant in enumerate(tenants, start=1):
+        table += f"| **Tenant {idx}:**                  |                 |                     |  \n"
+        table += f"| **Name:** {tenant['name']}      | [TENANT {idx} PHOTO]| [TENANT {idx} SIGNATURE]|  \n"
+        table += f"| **Address:** {tenant['address']} |                 |                     |  \n"
+        table += "|--------------------------------|-----------------|---------------------|  \n"
+
+    return table
+
+
+def generate_furniture_table(furniture: List[Dict[str, str]]) -> str:
+    if not furniture:
+        return "\n### The Owner hereby lets out the Demised Premises to the Tenant on an unfurnished basis, with NO furniture or appliances provided as part of this Agreement."
+
+    table = "\n### The Owner hereby lets out the Demised Premises to Tenant with following furniture and appliances, forming an integral part of this Agreement: \n\n"
+    table += "| Sr. No. | Name              | Units |\n"
+    table += "|---------|-------------------|-------|\n"
+    for item in furniture:
+        table += (
+            f"| {item['sr_no']}       | {item['name']}       | {item['units']}     |\n"
+        )
+
+    return table
 
 
 def generate_agreement(state: State):
+    """Generates the complete rental agreement by combining all sections."""
     agreement_id = state["agreement_id"]
     current_state = state_manager.get_agreement_state(agreement_id)
     if not current_state:
@@ -34,14 +82,58 @@ def generate_agreement(state: State):
     memory.clear()
     if current_state.is_pdf_generated:
         return {"messages": current_state.agreement_text, "agreement_id": agreement_id}
-    system_msg = {
-        "role": "system",
-        "content": AGREEMENT_SYSTEM_PROMPT,
-    }
-    messages = [system_msg] + state["messages"]
+    # Extract details from the current state
+    owner = current_state.owner_name
+    owner_address = current_state.owner_address
+    tenant_details = current_state.tenant_details
+    property_address = current_state.property_address
+    city = current_state.city
+    bhk_type = current_state.bhk_type
+    area = current_state.area
+    furnishing_type = current_state.furnishing_type
+    rent_amount = current_state.rent_amount
+    agreement_period = current_state.agreement_period
+    security_deposit = current_state.security_deposit
+    registration_date = current_state.registration_date
+    amenities = current_state.amenities
+    furniture_and_appliances = current_state.furniture_and_appliances
+
+    agreement_details = format_agreement_details(
+        owner_name=owner,
+        tenant_details=tenant_details,
+        property_address=property_address,
+        city=city,
+        rent_amount=rent_amount,
+        agreement_period=[date.isoformat() for date in agreement_period],
+        owner_address=owner_address,
+        furnishing_type=furnishing_type,
+        security_deposit=security_deposit,
+        bhk_type=bhk_type,
+        area=area,
+        registration_date=registration_date,
+        amenities=amenities,
+    )
+
+    messages = [
+        {"role": "system", "content": state["messages"][-1].content},
+        {"role": "system", "content": AGREEMENT_SYSTEM_PROMPT},
+        {"role": "user", "content": agreement_details},
+    ]
     response = llm.invoke(messages)
-    current_state.agreement_text = response.content
-    return {"messages": response, "agreement_id": agreement_id}
+    content_response = response.content
+
+    # Combine all sections into the final agreement
+    final_agreement = "\n\n".join(
+        [
+            content_response,
+            generate_furniture_table(furniture_and_appliances),
+            generate_table(owner, owner_address, tenant_details),
+        ]
+    )
+
+    current_state.agreement_text = final_agreement
+
+    return {"messages": final_agreement, "agreement_id": agreement_id}
 
 
 def resize_image(image_path, max_width, max_height):
