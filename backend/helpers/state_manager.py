@@ -1,9 +1,10 @@
-from typing import Annotated, Dict, Optional
+from typing import Annotated, Dict, Optional, List
 import uuid
 from typing_extensions import TypedDict
 from langgraph.graph.message import add_messages
 from dataclasses import dataclass, field
-
+from datetime import datetime
+from models.rental_agreement import AgreementRequest
 
 class State(TypedDict):
     messages: Annotated[list, add_messages]
@@ -27,6 +28,20 @@ class AgreementState:
     pdf_file_path: str = ""
     is_pdf_generated: bool = False
     agreement_id: Optional[int] = None
+    property_address: str = ""
+    city: str = ""
+    rent_amount: int = 0
+    agreement_period: List[datetime] = field(default_factory=list)
+    owner_address: str = ""
+    tenant_details: list[dict] = field(default_factory=list)
+    furnishing_type: str = ""
+    security_deposit: int = 0
+    bhk_type: str = ""
+    area: int = 0
+    registration_date: str = ""
+    furniture_and_appliances: List[Dict[str, str]] = field(default_factory=list)
+    amenities: List[str] = field(default_factory=list)
+    user_id: str = ""
 
     def reset(self) -> None:
         """Resets the agreement state to its default values."""
@@ -48,6 +63,37 @@ class AgreementState:
         """Sets the owner's name."""
         self.owner_name = owner_name
         self.owner_email = owner_email
+        
+    def set_agreement_details(self, request: AgreementRequest) -> None:
+        """
+        Sets only the required agreement details from the request object.
+        """
+        fields_to_set = [
+            "property_address",
+            "city",
+            "rent_amount",
+            "agreement_period",
+            "owner_address",
+            "furnishing_type",
+            "security_deposit",
+            "bhk_type",
+            "area",
+            "registration_date",
+            "furniture_and_appliances",
+            "amenities",
+            "user_id",
+        ]
+
+        for field in fields_to_set:
+            if hasattr(request, field):
+                setattr(self, field, getattr(request, field))
+
+        # Handle tenant_details explicitly
+        if hasattr(request, "tenant_details") and isinstance(request.tenant_details, list):
+            if all(isinstance(tenant, dict) for tenant in request.tenant_details):
+                self.tenant_details = request.tenant_details
+            else:
+                raise ValueError("tenant_details must be a list of dictionaries.")
 
     def is_fully_approved(self) -> bool:
         """Checks if the agreement is fully approved."""
@@ -69,6 +115,8 @@ class TemplateAgreementState:
     template_file_path: str = ""
     is_pdf_generated: bool = False
     agreement_id: Optional[int] = None
+    pdf_font_name: str = ""
+    pdf_font_file: str = ""
 
     def reset(self) -> None:
         """Agreement state to its default values."""
