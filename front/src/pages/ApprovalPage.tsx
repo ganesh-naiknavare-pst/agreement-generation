@@ -142,13 +142,93 @@ const ApprovalPage = () => {
 
   useWebSocket(websocket_url, onMessage);
 
-  // Only show ResponseCard for specific statuses
-  const shouldShowResponseCard = agreement && (
-    agreement.status === "APPROVED" ||
-    agreement.status === "REJECTED" ||
-    agreement.status === "EXPIRED" ||
-    agreement.status === "FAILED"
-  );
+  // Get the current status from either the agreement or user state
+  const currentStatus = agreement?.status || user?.status || status;
+
+  // Determine what to show based on the status
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <Center mt={50}>
+          <Loader />
+        </Center>
+      );
+    }
+
+    switch (currentStatus) {
+      case "APPROVED":
+        return <ResponseCard type="APPROVED" />;
+      case "REJECTED":
+        return <ResponseCard type="REJECTED" />;
+      case "EXPIRED":
+        return <ResponseCard type="EXPIRED" />;
+      case "FAILED":
+        return <ResponseCard type="FAILED" />;
+      case "PROCESSING":
+        return (
+          <Container mt={10}>
+            <Card shadow="md" p="lg" radius="md" withBorder>
+              <Title order={3} mb="lg">
+                Agreement Approval Form
+                <Text size="md" c="dimmed" mb={5} mt={10}>
+                  Please complete all the required fields in the form to submit
+                  the agreement. You can approve or reject agreements based on
+                  your review.
+                </Text>
+              </Title>
+
+              <Divider my="sm" />
+              <Group justify="flex-start" mt="md" mb={5}>
+                <Text size="sm" fw={700}>
+                  Signature{" "}
+                  <Text component="span" c={COLORS.asteric}>
+                    *
+                  </Text>
+                </Text>
+              </Group>
+              <SignatureButton onSignatureSave={handleSignatureSave} />
+
+              {isRentAgreement && (
+                <>
+                  <Group justify="flex-start" mt="lg">
+                    <Text size="sm" fw={700}>
+                      Image capture{" "}
+                      <Text component="span" c={COLORS.asteric}>
+                        *
+                      </Text>
+                    </Text>
+                  </Group>
+                  <Box my={10}>
+                    <WebcamComponent
+                      imageUrl={form.values.imageUrl}
+                      setFieldValue={(value) => {
+                        form.setFieldValue("imageUrl", value);
+                        setShowAlertForPhoto(false);
+                      }}
+                    />
+                  </Box>
+                </>
+              )}
+
+              <Flex justify="flex-end" gap="md" mt="xl">
+                <Button color="green" onClick={processApproval}>
+                  Approve Agreement
+                </Button>
+                <Button color="red" onClick={processRejection}>
+                  Reject Agreement
+                </Button>
+              </Flex>
+            </Card>
+          </Container>
+        );
+      default:
+        return (
+          <Center mt={50}>
+            <Text>Loading agreement details...</Text>
+          </Center>
+        );
+    }
+  };
 
   return (
     <>
@@ -176,68 +256,7 @@ const ApprovalPage = () => {
         </Alert>
       )}
 
-      {loading ? (
-        <Center mt={50}>
-          <Loader />
-        </Center>
-      ) : shouldShowResponseCard ? (
-        <ResponseCard type={user?.status ?? status} />
-      ) : (
-        <Container mt={10}>
-          <Card shadow="md" p="lg" radius="md" withBorder>
-            <Title order={3} mb="lg">
-              Agreement Approval Form
-              <Text size="md" c="dimmed" mb={5} mt={10}>
-                Please complete all the required fields in the form to submit
-                the agreement. You can approve or reject agreements based on
-                your review.
-              </Text>
-            </Title>
-
-            <Divider my="sm" />
-            <Group justify="flex-start" mt="md" mb={5}>
-              <Text size="sm" fw={700}>
-                Signature{" "}
-                <Text component="span" c={COLORS.asteric}>
-                  *
-                </Text>
-              </Text>
-            </Group>
-            <SignatureButton onSignatureSave={handleSignatureSave} />
-
-            {isRentAgreement && (
-              <>
-                <Group justify="flex-start" mt="lg">
-                  <Text size="sm" fw={700}>
-                    Image capture{" "}
-                    <Text component="span" c={COLORS.asteric}>
-                      *
-                    </Text>
-                  </Text>
-                </Group>
-                <Box my={10}>
-                  <WebcamComponent
-                    imageUrl={form.values.imageUrl}
-                    setFieldValue={(value) => {
-                      form.setFieldValue("imageUrl", value);
-                      setShowAlertForPhoto(false);
-                    }}
-                  />
-                </Box>
-              </>
-            )}
-
-            <Flex justify="flex-end" gap="md" mt="xl">
-              <Button color="green" onClick={processApproval}>
-                Approve Agreement
-              </Button>
-              <Button color="red" onClick={processRejection}>
-                Reject Agreement
-              </Button>
-            </Flex>
-          </Card>
-        </Container>
-      )}
+      {renderContent()}
     </>
   );
 };
