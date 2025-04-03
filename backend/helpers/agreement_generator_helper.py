@@ -86,9 +86,6 @@ def doc_template(output_pdf_path):
     )
 
 def get_styles(font_name, font_file):
-    if not font_file:
-        font_name = "Times-Roman"
-        font_file = "fonts/times-roman/Times-Roman.ttf"
     styles = getSampleStyleSheet()
     custom_styles = {
         "heading1": ParagraphStyle(name='CustomHeading1', parent=styles['Heading1'], fontName=font_name if font_file else "Helvetica", fontSize=16, spaceAfter=2),
@@ -163,6 +160,12 @@ def create_pdf_file(
     isDraft: bool = False,
     preserve_line_breaks: bool = True
 ) -> str:
+    if not font_name or not font_file:
+        font_name = "Times-Roman"
+        font_file = "fonts/times-roman/Times-Roman.ttf"
+    if font_name != "Times-Roman":
+        pdfmetrics.registerFont(TTFont(font_name, font_file))
+
     temp_files = []
     try:
         doc = doc_template(output_pdf_path)
