@@ -9,12 +9,12 @@ from reportlab.lib import colors
 from PIL import Image as PILImage
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Union
 from reportlab.lib.colors import Color
 
 PAGE_WIDTH, PAGE_HEIGHT = A4
 
-def add_watermark(c, doc):
+def add_watermark(c, doc) -> None:
     """Adds a large semi-transparent 'DRAFT' watermark at the center of each page."""
     c.saveState()
 
@@ -75,7 +75,7 @@ def resize_image(image_path: str, max_width: int = 80, max_height: int = 50) -> 
     except Exception as e:
         return None
 
-def doc_template(output_pdf_path):
+def doc_template(output_pdf_path: str) -> SimpleDocTemplate:
     return SimpleDocTemplate(
         output_pdf_path,
         pagesize=A4,
@@ -85,7 +85,7 @@ def doc_template(output_pdf_path):
         bottomMargin=40
     )
 
-def get_styles(font_name, font_file):
+def get_styles(font_name: str, font_file: Optional[str]) -> Dict[str, ParagraphStyle]:
     styles = getSampleStyleSheet()
     custom_styles = {
         "heading1": ParagraphStyle(name='CustomHeading1', parent=styles['Heading1'], fontName=font_name if font_file else "Helvetica", fontSize=16, spaceAfter=2),
@@ -104,7 +104,7 @@ def get_styles(font_name, font_file):
     }
     return custom_styles
 
-def process_heading(line, custom_styles):
+def process_heading(line: str, custom_styles: Dict[str, ParagraphStyle]) -> Optional[Tuple[Paragraph, Spacer]]:
     if line.startswith('# '):
         return Paragraph(line[2:], custom_styles['heading1']), Spacer(1, 6)
     elif line.startswith('## '):
@@ -113,11 +113,17 @@ def process_heading(line, custom_styles):
         return Paragraph(line[4:], custom_styles['heading3']), Spacer(1, 2)
     return None
 
-def process_bullet(line, custom_styles):
+def process_bullet(line: str, custom_styles: Dict[str, ParagraphStyle]) -> Paragraph:
     content = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', line[2:])
     return Paragraph('• ' + content, custom_styles['bullet'])
 
-def process_table(lines, index, custom_styles, doc, temp_files):
+def process_table(
+    lines: List[str],
+    index: int,
+    custom_styles: Dict[str, ParagraphStyle],
+    doc: SimpleDocTemplate,
+    temp_files: List[str]
+) -> Tuple[Table, Spacer, int]:
     table_data = []
     header_row = [cell.strip() for cell in lines[index].split('|')[1:-1]]
     table_data.append([Paragraph(f"<b>{h}</b>", custom_styles['normal']) for h in header_row])
@@ -166,7 +172,7 @@ def create_pdf_file(
     if font_name != "Times-Roman":
         pdfmetrics.registerFont(TTFont(font_name, font_file))
 
-    temp_files = []
+    temp_files: List[str] = []
     try:
         doc = doc_template(output_pdf_path)
         custom_styles = get_styles(font_name, font_file)
@@ -177,7 +183,7 @@ def create_pdf_file(
             alignment=0
         )
 
-        elements = []
+        elements: List[Union[Paragraph, Spacer, Table, Image]] = []
         lines = content.split('\n')
         i = 0
 
@@ -231,7 +237,7 @@ def create_pdf_file(
 
                 i += 1
         else:
-            text_buffer = []
+            text_buffer: List[str] = []
 
             while i < len(lines):
                 line = lines[i].strip()
