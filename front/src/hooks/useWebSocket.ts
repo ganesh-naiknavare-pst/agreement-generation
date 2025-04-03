@@ -3,6 +3,8 @@ import { useEffect, useRef, useCallback } from "react";
 const useWebSocket = (url: string, onMessage: (message: any) => void) => {
   const ws = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<number | undefined>(undefined);
+  const reconnectAttempts = useRef<number>(0);
+  const MAX_RECONNECT_ATTEMPTS = 5;
 
   const connect = useCallback(() => {
     try {
@@ -10,6 +12,7 @@ const useWebSocket = (url: string, onMessage: (message: any) => void) => {
 
       ws.current.onopen = () => {
         console.log("WebSocket connection opened");
+        reconnectAttempts.current = 0;
       };
 
       ws.current.onmessage = (event) => {
@@ -23,8 +26,14 @@ const useWebSocket = (url: string, onMessage: (message: any) => void) => {
 
       ws.current.onclose = () => {
         console.log("WebSocket connection closed");
-        // Attempt to reconnect after 3 seconds
-        reconnectTimeout.current = window.setTimeout(connect, 3000);
+        if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttempts.current += 1;
+          // Attempt to reconnect after 3 seconds
+          reconnectTimeout.current = window.setTimeout(connect, 3000);
+        } else {
+          console.error("Max reconnection attempts reached");
+          // Don't trigger the failed state, just log the error
+        }
       };
 
       ws.current.onerror = (error) => {
@@ -32,8 +41,14 @@ const useWebSocket = (url: string, onMessage: (message: any) => void) => {
       };
     } catch (error) {
       console.error("Error creating WebSocket connection:", error);
-      // Attempt to reconnect after 3 seconds
-      reconnectTimeout.current = window.setTimeout(connect, 3000);
+      if (reconnectAttempts.current < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttempts.current += 1;
+        // Attempt to reconnect after 3 seconds
+        reconnectTimeout.current = window.setTimeout(connect, 3000);
+      } else {
+        console.error("Max reconnection attempts reached");
+        // Don't trigger the failed state, just log the error
+      }
     }
   }, [url, onMessage]);
 

@@ -138,9 +138,17 @@ const ApprovalPage = () => {
         getTemplateAgreementUser({ method: "GET", params: { agreement_id: param.agreementId, user_id: param.id } });
       }
     }
-  }, [param.agreementId]);
+  }, [param.agreementId, isRentAgreement, getRentAgreementUser, getTemplateAgreementUser]);
 
   useWebSocket(websocket_url, onMessage);
+
+  // Only show ResponseCard for specific statuses
+  const shouldShowResponseCard = agreement && (
+    agreement.status === "APPROVED" ||
+    agreement.status === "REJECTED" ||
+    agreement.status === "EXPIRED" ||
+    agreement.status === "FAILED"
+  );
 
   return (
     <>
@@ -172,7 +180,7 @@ const ApprovalPage = () => {
         <Center mt={50}>
           <Loader />
         </Center>
-      ) : agreement ? (
+      ) : shouldShowResponseCard ? (
         <ResponseCard type={user?.status ?? status} />
       ) : (
         <Container mt={10}>
