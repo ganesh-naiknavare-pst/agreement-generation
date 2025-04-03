@@ -26,7 +26,13 @@ class ApprovalResult(Enum):
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
+import asyncio
+import ssl
 
+ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+ssl_context.load_cert_chain(certfile="192.168.1.76+2.pem", keyfile="192.168.1.76+2-key.pem")
+ssl_context.check_hostname = False  # Only for local testing
+ssl_context.verify_mode = ssl.CERT_NONE  
 
 async def listen_for_approval(
     timeout_seconds: int = 300, is_template: bool = False, agreement_id: str = None
@@ -42,7 +48,7 @@ async def listen_for_approval(
         ApprovalTimeoutError: If no response received within timeout period
     """
     try:
-        async with websockets.connect(WEBSOCKET_URL) as websocket:
+        async with websockets.connect(WEBSOCKET_URL, ssl=ssl_context) as websocket:
             while True:
                 try:
                     # Set timeout for receiving messages

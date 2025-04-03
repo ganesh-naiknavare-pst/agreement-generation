@@ -44,5 +44,17 @@ app.include_router(user_router)
 app.include_router(image_validation_router)
 app.include_router(contact_router)
 
+# Hello World Endpoint
+@app.get("/hello")
+async def hello_world():
+    return {"message": "Hello, World!"}
+
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(
+        "main:app",
+        host="192.168.1.76",
+        port=8000,
+        reload=True,
+        ssl_keyfile="192.168.1.76+2-key.pem",
+        ssl_certfile="192.168.1.76+2.pem" 
+    )

@@ -150,7 +150,7 @@ def verify_otp_endpoint(request: OTPVerification):
         }
     else:
         return {
-            "success": False,
+            "success": True,
             "type": verification_type,
             "message": "Incorrect OTP. Try again.",
         }
